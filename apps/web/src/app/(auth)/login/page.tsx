@@ -25,6 +25,26 @@ export default function LoginPage() {
     setLoading(true);
     setError('');
 
+    // Demo mode: phone contains "11111" and pin is "111111"
+    if (phone.includes('11111') && pin === '111111') {
+      setTokens('demo-access-token', 'demo-refresh-token');
+      setUser({
+        id: 'demo-user',
+        phoneNumber: phone,
+        phoneVerified: true,
+        firstName: 'Demo',
+        lastName: 'User',
+        displayName: 'Demo User',
+        country: 'GT',
+        kycLevel: 1,
+        kycStatus: 'approved',
+        status: 'active',
+        createdAt: new Date().toISOString(),
+      });
+      router.push('/dashboard');
+      return;
+    }
+
     try {
       const res = await apiClient.post('/auth/login', { phoneNumber: phone, pin });
       setTokens(res.data.accessToken, res.data.refreshToken);
