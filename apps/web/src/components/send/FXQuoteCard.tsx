@@ -1,62 +1,118 @@
 'use client';
 
-interface FXQuote {
-  quoteId: string;
-  fromCoin: string;
-  toCoin: string;
-  fromAmount: number;
-  toAmount: number;
-  rate: number;
-  rateDisplay?: string;
-  feeAmount: number;
-  feePercent: number;
-  usdEquivalent?: number;
-  validUntil: Date;
-}
+import { useEffect, useState } from 'react';
+import { FXQuoteResult } from '@/lib/fx-engine';
+import { COINS } from '@/store/wallet.store';
 
-interface FXQuoteCardProps {
-  quote: FXQuote;
+interface Props {
+  quote: FXQuoteResult;
   recipient: string;
 }
 
-export function FXQuoteCard({ quote, recipient }: FXQuoteCardProps) {
-  return (
-    <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl border border-blue-200 p-4">
-      <div className="flex items-center justify-between mb-3">
-        <span className="text-xs font-semibold text-blue-600 uppercase tracking-wide">Cotización confirmada</span>
-        <span className="text-xs text-blue-400">#{quote.quoteId.slice(-6)}</span>
-      </div>
+export function FXQuoteCard({ quote, recipient }: Props) {
+  const [secsLeft, setSecsLeft] = useState(30);
+  const isSameCoin = quote.fromCoin === quote.toCoin;
 
-      <div className="space-y-2">
-        <div className="flex justify-between text-sm">
-          <span className="text-gray-600">Para</span>
-          <span className="font-semibold text-gray-800">{recipient}</span>
+  useEffect(() => {
+    setSecsLeft(Math.max(0, Math.round((quote.validUntil.getTime() - Date.now()) / 1000)));
+    const t = setInterval(() => setSecsLeft(s => Math.max(0, s - 1)), 1000);
+    return () => clearInterval(t);
+  }, [quote.validUntil]);
+
+  const pct = (secsLeft / 30) * 100;
+  const urgent = secsLeft <= 10;
+
+  const fm = COINS[quote.fromCoin];
+  const tm = COINS[quote.toCoin];
+
+  return (
+    <div className="rounded-3xl border-2 border-len-border overflow-hidden">
+      {/* Header */}
+      <div className="bg-len-gradient px-5 py-4 flex items-center justify-between">
+        <div>
+          <p className="text-white/60 text-xs font-medium">Cotización para</p>
+          <p className="text-white font-bold text-sm">{recipient}</p>
         </div>
-        <div className="flex justify-between text-sm">
-          <span className="text-gray-600">Envías</span>
-          <span className="font-semibold">{quote.fromAmount.toLocaleString()} {quote.fromCoin}</span>
-        </div>
-        <div className="flex justify-between text-sm">
-          <span className="text-gray-600">Tasa</span>
-          <span className="font-mono text-gray-700">
-            {quote.rateDisplay ?? `1 ${quote.fromCoin} = ${quote.rate.toFixed(6)} ${quote.toCoin}`}
-          </span>
-        </div>
-        <div className="flex justify-between text-sm">
-          <span className="text-gray-600">Fee ({quote.feePercent}%)</span>
-          <span className="text-gray-500">-{quote.feeAmount.toLocaleString()} {quote.fromCoin}</span>
-        </div>
-        {quote.usdEquivalent !== undefined && (
-          <div className="flex justify-between text-sm">
-            <span className="text-gray-600">≈ USD</span>
-            <span className="text-gray-500">${quote.usdEquivalent.toFixed(2)}</span>
+        {!isSameCoin && (
+          <div className="text-right">
+            <p className={`text-xs font-bold ${urgent ? 'text-red-300' : 'text-white/70'}`}>
+              {urgent ? '⚠ ' : ''}Válido {secsLeft}s
+            </p>
+            <div className="w-20 h-1 bg-white/20 rounded-full mt-1 overflow-hidden">
+              <div
+                className={`h-full rounded-full transition-all duration-1000 ${urgent ? 'bg-red-400' : 'bg-white/80'}`}
+                style={{ width: `${pct}%` }}
+              />
+            </div>
           </div>
         )}
-        <div className="border-t border-blue-200 pt-2 flex justify-between">
-          <span className="font-semibold text-gray-900">Recibe</span>
-          <span className="font-bold text-lg text-mondega-green">
-            {quote.toAmount.toLocaleString()} {quote.toCoin}
-          </span>
+      </div>
+
+      {/* Body */}
+      <div className="bg-white px-5 py-4 space-y-3">
+        {/* Tú envías */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="text-xl">{fm.flag}</span>
+            <div>
+              <p className="text-xs text-gray-400">Tú envías</p>
+              <p className="font-black text-len-dark text-lg tabular-nums">
+                {quote.fromAmount.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                <span className="text-sm font-bold text-gray-400 ml-1">{quote.fromCoin}</span>
+              </p>
+            </div>
+          </div>
+          <div className="text-right text-xs text-gray-400">
+            ≈ ${quote.fromUSD.toFixed(2)} USD
+          </div>
+        </div>
+
+        {/* FX arrow (only if cross-coin) */}
+        {!isSameCoin && (
+          <div className="bg-len-light rounded-2xl px-4 py-3 space-y-2">
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-gray-500">Tipo de cambio</span>
+              <span className="font-mono font-bold text-len-dark">{quote.rateDisplay}</span>
+            </div>
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-gray-500">Comisión LEN ({(quote.feePercent * 100).toFixed(1)}%)</span>
+              <span className="font-mono text-gray-600">
+                -{quote.feeAmount.toFixed(4)} {quote.fromCoin}
+              </span>
+            </div>
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-gray-500 flex items-center gap-1">
+                <span className="text-emerald-500">✓</span> vs Western Union (~5.5%)
+              </span>
+              <span className="text-emerald-600 font-bold">
+                Ahorras ${quote.savings.toFixed(2)} USD
+              </span>
+            </div>
+          </div>
+        )}
+
+        {/* El destinatario recibe */}
+        <div className="flex items-center justify-between bg-emerald-50 rounded-2xl px-4 py-3 border border-emerald-200">
+          <div className="flex items-center gap-2">
+            <span className="text-xl">{tm.flag}</span>
+            <div>
+              <p className="text-xs text-emerald-600 font-medium">Destinatario recibe</p>
+              <p className="font-black text-emerald-800 text-xl tabular-nums">
+                {quote.toAmount.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                <span className="text-sm font-bold ml-1">{quote.toCoin}</span>
+              </p>
+            </div>
+          </div>
+          <div className="text-right text-xs text-emerald-600">
+            ≈ ${quote.toUSD.toFixed(2)} USD
+          </div>
+        </div>
+
+        {/* Fiat equivalents */}
+        <div className="flex items-center justify-between text-xs text-gray-400 px-1">
+          <span>1 {quote.fromCoin} = 1 {fm.fiat}</span>
+          <span>⇄</span>
+          <span>1 {quote.toCoin} = 1 {tm.fiat}</span>
         </div>
       </div>
     </div>
