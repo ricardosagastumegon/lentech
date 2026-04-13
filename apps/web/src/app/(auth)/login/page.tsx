@@ -8,13 +8,14 @@ import { PINInput } from '@/components/ui/pin-input';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { apiClient } from '@/lib/api-client';
 
-const DEMO_COINS = [
-  { code: 'QUETZA',  flag: '🇬🇹', fiat: 'GTQ', country: 'Guatemala' },
-  { code: 'MEXCOIN', flag: '🇲🇽', fiat: 'MXN', country: 'México' },
-  { code: 'LEMPI',   flag: '🇭🇳', fiat: 'HNL', country: 'Honduras' },
-  { code: 'COLON',   flag: '🇸🇻', fiat: 'USD', country: 'El Salvador' },
-  { code: 'NICORD',  flag: '🇳🇮', fiat: 'NIO', country: 'Nicaragua' },
-  { code: 'CORI',    flag: '🇨🇷', fiat: 'CRC', country: 'Costa Rica' },
+// Phase 1 — active; Phase 2+ shown as "coming soon" on hero
+const ACTIVE_NETWORK = [
+  { code: 'QUETZA',  flag: '🇬🇹', fiat: 'GTQ', country: 'Guatemala',  active: true  },
+  { code: 'MEXCOIN', flag: '🇲🇽', fiat: 'MXN', country: 'México',      active: true  },
+  { code: 'LEMPI',   flag: '🇭🇳', fiat: 'HNL', country: 'Honduras',    active: true  },
+  { code: 'COLON',   flag: '🇸🇻', fiat: 'USD', country: 'El Salvador', active: false },
+  { code: 'DOLAR',   flag: '🌎',  fiat: 'USD', country: 'USA',          active: false },
+  { code: 'TIKAL',   flag: '🇧🇿', fiat: 'BZD', country: 'Belize',      active: false },
 ];
 
 export default function LoginPage() {
@@ -136,14 +137,20 @@ export default function LoginPage() {
 
           {/* Coin network pills */}
           <div>
-            <p className="text-white/50 text-xs uppercase tracking-widest mb-3 font-semibold">Red activa</p>
+            <p className="text-white/50 text-xs uppercase tracking-widest mb-3 font-semibold">Red TokenCoin</p>
             <div className="flex flex-wrap gap-2">
-              {DEMO_COINS.map(c => (
+              {ACTIVE_NETWORK.map(c => (
                 <div key={c.code}
-                  className="flex items-center gap-1.5 bg-white/10 backdrop-blur rounded-full px-3 py-1.5 border border-white/20">
+                  className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 border backdrop-blur
+                    ${c.active
+                      ? 'bg-white/15 border-white/30'
+                      : 'bg-white/5 border-white/10 opacity-60'}`}>
                   <span className="text-sm">{c.flag}</span>
-                  <span className="text-white text-xs font-bold">{c.code}</span>
-                  <span className="text-white/50 text-xs">=1 {c.fiat}</span>
+                  <span className={`text-xs font-bold ${c.active ? 'text-white' : 'text-white/60'}`}>{c.code}</span>
+                  {c.active
+                    ? <span className="text-white/50 text-xs">=1 {c.fiat}</span>
+                    : <span className="text-white/30 text-[10px] italic">pronto</span>
+                  }
                 </div>
               ))}
             </div>
@@ -152,13 +159,14 @@ export default function LoginPage() {
           {/* Stats */}
           <div className="grid grid-cols-3 gap-4 pt-4 border-t border-white/10">
             {[
-              { value: '8', label: 'Países' },
-              { value: '0.3%', label: 'Fee mínimo' },
-              { value: '$800B', label: 'Mercado' },
+              { value: '3', label: 'Países activos', sub: '+5 en camino' },
+              { value: '0.3%', label: 'Fee mínimo', sub: 'vs 5.5% WU' },
+              { value: '$800B', label: 'Mercado TAM', sub: 'remesas 2024' },
             ].map(s => (
               <div key={s.label}>
                 <div className="text-2xl font-black text-white">{s.value}</div>
                 <div className="text-white/50 text-xs">{s.label}</div>
+                <div className="text-white/30 text-[10px] mt-0.5">{s.sub}</div>
               </div>
             ))}
           </div>
