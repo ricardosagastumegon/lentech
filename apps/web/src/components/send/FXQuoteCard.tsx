@@ -19,7 +19,7 @@ export function FXQuoteCard({ quote, recipient }: Props) {
     return () => clearInterval(t);
   }, [quote.validUntil]);
 
-  const pct = (secsLeft / 30) * 100;
+  const pct    = (secsLeft / 30) * 100;
   const urgent = secsLeft <= 10;
 
   const fm = COINS[quote.fromCoin];
@@ -50,6 +50,7 @@ export function FXQuoteCard({ quote, recipient }: Props) {
 
       {/* Body */}
       <div className="bg-white px-5 py-4 space-y-3">
+
         {/* Tú envías */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -62,12 +63,13 @@ export function FXQuoteCard({ quote, recipient }: Props) {
               </p>
             </div>
           </div>
-          <div className="text-right text-xs text-gray-400">
-            ≈ ${quote.fromUSD.toFixed(2)} USD
+          {/* Fiat local — same number, different label (1:1 peg) */}
+          <div className="text-right text-xs text-gray-400 font-medium">
+            = {quote.fromAmount.toLocaleString('en-US', { minimumFractionDigits: 2 })} {fm.fiat}
           </div>
         </div>
 
-        {/* FX arrow (only if cross-coin) */}
+        {/* FX breakdown (only if cross-coin) */}
         {!isSameCoin && (
           <div className="bg-len-light rounded-2xl px-4 py-3 space-y-2">
             <div className="flex items-center justify-between text-xs">
@@ -78,14 +80,6 @@ export function FXQuoteCard({ quote, recipient }: Props) {
               <span className="text-gray-500">Comisión LEN ({(quote.feePercent * 100).toFixed(1)}%)</span>
               <span className="font-mono text-gray-600">
                 -{quote.feeAmount.toFixed(4)} {quote.fromCoin}
-              </span>
-            </div>
-            <div className="flex items-center justify-between text-xs">
-              <span className="text-gray-500 flex items-center gap-1">
-                <span className="text-emerald-500">✓</span> vs Western Union (~5.5%)
-              </span>
-              <span className="text-emerald-600 font-bold">
-                Ahorras ${quote.savings.toFixed(2)} USD
               </span>
             </div>
           </div>
@@ -103,13 +97,14 @@ export function FXQuoteCard({ quote, recipient }: Props) {
               </p>
             </div>
           </div>
-          <div className="text-right text-xs text-emerald-600">
-            ≈ ${quote.toUSD.toFixed(2)} USD
+          {/* Local fiat equivalent */}
+          <div className="text-right text-xs text-emerald-600 font-medium">
+            = {quote.toAmount.toLocaleString('en-US', { minimumFractionDigits: 2 })} {tm.fiat}
           </div>
         </div>
 
-        {/* Fiat equivalents */}
-        <div className="flex items-center justify-between text-xs text-gray-400 px-1">
+        {/* Peg reminder */}
+        <div className="flex items-center justify-between text-xs text-gray-300 px-1">
           <span>1 {quote.fromCoin} = 1 {fm.fiat}</span>
           <span>⇄</span>
           <span>1 {quote.toCoin} = 1 {tm.fiat}</span>

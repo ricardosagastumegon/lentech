@@ -158,24 +158,27 @@ export default function SendPage() {
             onToCoinChange={setToCoin}
           />
 
-          {/* Preview rate */}
+          {/* Preview rate — sin USD */}
           {isFX && amount && parseFloat(amount) > 0 && (() => {
             const q = calculateFXQuote(fromCoin, toCoin, parseFloat(amount));
+            const fm = COINS[fromCoin];
+            const tm = COINS[toCoin];
             return (
-              <div className="bg-len-light rounded-2xl px-4 py-3 border border-len-border text-xs space-y-1">
+              <div className="bg-len-light rounded-2xl px-4 py-3 border border-len-border text-xs space-y-2">
                 <div className="flex justify-between">
                   <span className="text-gray-500">Tipo de cambio</span>
                   <span className="font-mono font-bold text-len-dark">{q.rateDisplay}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-500">El destinatario recibirá ~</span>
+                  <span className="text-gray-500">Recibirá ~</span>
                   <span className="font-bold text-emerald-700">
                     {q.toAmount.toLocaleString('en-US', { minimumFractionDigits: 2 })} {toCoin}
+                    <span className="text-gray-400 ml-1">({tm.fiat})</span>
                   </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-500">Comisión ({(q.feePercent * 100).toFixed(1)}%)</span>
-                  <span className="text-gray-500">{q.feeAmount.toFixed(4)} {fromCoin}</span>
+                  <span className="text-gray-500">-{q.feeAmount.toFixed(4)} {fromCoin}</span>
                 </div>
               </div>
             );
@@ -225,7 +228,7 @@ export default function SendPage() {
             onConfirm={executeTransfer}
             loading={loading}
             title="Confirma tu envío"
-            description={`Autoriza el envío de ${quote.fromAmount.toLocaleString()} ${fromCoin}`}
+            description={`Autoriza el envío de ${quote.fromAmount.toLocaleString('en-US', { minimumFractionDigits: 2 })} ${fromCoin} (${COINS[fromCoin].fiat})`}
           />
 
           <button className="btn-secondary w-full" onClick={() => { setStep('amount'); setQuote(null); }}>
@@ -249,12 +252,12 @@ export default function SendPage() {
           <p className="text-gray-300 text-xs mb-8 font-mono">ID: {txId}</p>
 
           {isFX && (
-            <div className="bg-emerald-50 rounded-2xl p-4 mb-6 border border-emerald-200">
-              <p className="text-emerald-700 text-sm font-semibold">
-                Ahorraste ${quote.savings.toFixed(2)} USD vs Western Union
+            <div className="bg-len-light rounded-2xl p-4 mb-6 border border-len-border">
+              <p className="text-len-purple text-sm font-bold">
+                Comisión LEN: {(quote.feePercent * 100).toFixed(1)}%
               </p>
-              <p className="text-emerald-600 text-xs mt-0.5">
-                LEN cobró {(quote.feePercent * 100).toFixed(1)}% · WU hubiera cobrado ~5.5%
+              <p className="text-gray-400 text-xs mt-0.5">
+                Tipo de cambio: {quote.rateDisplay}
               </p>
             </div>
           )}
