@@ -25,25 +25,78 @@ export default function LoginPage() {
     setLoading(true);
     setError('');
 
-    // Demo mode: phone contains "11111" and pin is "111111"
-    if (phone.includes('11111') && pin === '111111') {
-      setTokens('demo-access-token', 'demo-refresh-token');
+    // ── DEMO MODE ─────────────────────────────────────────────
+    // PIN 111111 + teléfono que empiece con el código de país:
+    //   11111  → Guatemala  (QUETZA / GTQ)
+    //   22222  → México     (MEXCOIN / MXN)
+    //   33333  → Honduras   (LEMPI / HNL)
+    if (pin === '111111' && (phone.includes('11111') || phone.includes('22222') || phone.includes('33333'))) {
+      const isMX = phone.includes('22222');
+      const isHN = phone.includes('33333');
+      const country = isMX ? 'MX' : isHN ? 'HN' : 'GT';
+      const profiles: Record<string, { name: string; coin: string; balance: string; usd: number }> = {
+        GT: { name: 'Carlos Mendoza',  coin: 'QUETZA',  balance: '2,450.00', usd: 315.50 },
+        MX: { name: 'Sofía Hernández', coin: 'MEXCOIN', balance: '4,800.00', usd: 252.00 },
+        HN: { name: 'José Reyes',      coin: 'LEMPI',   balance: '12,600.00', usd: 504.00 },
+      };
+      const p = profiles[country];
+      setTokens('demo-token', 'demo-refresh');
       setUser({
-        id: 'demo-user',
+        id: `demo-${country.toLowerCase()}`,
         phoneNumber: phone,
         phoneVerified: true,
-        firstName: 'Demo',
-        lastName: 'User',
-        displayName: 'Demo User',
-        country: 'GT',
-        kycLevel: 1,
+        firstName: p.name.split(' ')[0],
+        lastName: p.name.split(' ')[1],
+        displayName: p.name,
+        country,
+        kycLevel: 2,
         kycStatus: 'approved',
         status: 'active',
         createdAt: new Date().toISOString(),
       });
+      // Pre-cargar wallet con datos de demostración
+      const walletStore = (await import('@/store/wallet.store')).useWalletStore.getState();
+      const coin = p.coin as import('@/store/wallet.store').CoinCode;
+      const otherCoin = (isMX ? 'QUETZA' : 'MEXCOIN') as import('@/store/wallet.store').CoinCode;
+      walletStore.setWallets([{
+        coin,
+        balance: p.balance.replace(',', ''),
+        available: p.balance.replace(',', ''),
+        balanceUSD: p.usd,
+      }]);
+      walletStore.setTransactions([
+        {
+          id: 'demo-tx-1',
+          type: 'transfer',
+          status: 'completed',
+          direction: 'received',
+          fromCoin: otherCoin,
+          toCoin: coin,
+          fromAmount: '500.00',
+          toAmount: p.balance.split('.')[0],
+          fxRate: isMX ? 18.9 : (isHN ? 25.2 : 0.097),
+          fee: '2.50',
+          description: 'Pago recibido',
+          createdAt: new Date(Date.now() - 86400000).toISOString(),
+        },
+        {
+          id: 'demo-tx-2',
+          type: 'fiat_load',
+          status: 'completed',
+          direction: 'received',
+          fromCoin: coin,
+          toCoin: coin,
+          fromAmount: p.balance.replace(',', ''),
+          toAmount: p.balance.replace(',', ''),
+          fee: '0',
+          description: `Carga de ${p.coin}`,
+          createdAt: new Date(Date.now() - 172800000).toISOString(),
+        },
+      ]);
       router.push('/dashboard');
       return;
     }
+    // ── FIN DEMO MODE ─────────────────────────────────────────
 
     try {
       const res = await apiClient.post('/auth/login', { phoneNumber: phone, pin });
@@ -76,7 +129,18 @@ export default function LoginPage() {
           {step === 'phone' ? (
             <>
               <h2 className="text-xl font-bold text-gray-900 mb-1">Iniciar sesión</h2>
-              <p className="text-gray-500 text-sm mb-6">Ingresa tu número de teléfono</p>
+              <p className="text-gray-500 text-sm mb-4">Ingresa tu número de teléfono</p>
+
+              {/* Demo banner */}
+              <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 mb-4 text-xs text-amber-800">
+                <p className="font-semibold mb-1">🧪 Modo demo — elige un país:</p>
+                <div className="space-y-1">
+                  <p>🇬🇹 <strong>11111</strong> → Guatemala (QUETZA)</p>
+                  <p>🇲🇽 <strong>22222</strong> → México (MEXCOIN)</p>
+                  <p>🇭🇳 <strong>33333</strong> → Honduras (LEMPI)</p>
+                </div>
+                <p className="mt-1 text-amber-600">PIN para todos: <strong>111111</strong></p>
+              </div>
 
               <PhoneInput
                 value={phone}

@@ -8,6 +8,8 @@ import { FXQuoteCard } from '@/components/send/fx-quote-card';
 import { PINConfirmModal } from '@/components/ui/pin-confirm-modal';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { apiClient } from '@/lib/api-client';
+import { CoinCode, COUNTRY_TO_COIN } from '@/store/wallet.store';
+import { useAuthStore } from '@/store/auth.store';
 
 type Step = 'recipient' | 'amount' | 'quote' | 'pin' | 'success';
 
@@ -31,9 +33,12 @@ export default function SendPage() {
   const [step, setStep] = useState<Step>('recipient');
   const [recipient, setRecipient] = useState('');
   const [recipientInfo, setRecipientInfo] = useState<{ userId: string; displayName: string; walletAddress: string; kycLevel: number } | null>(null);
+  const { user } = useAuthStore();
+  const defaultCoin: CoinCode = (user?.country ? COUNTRY_TO_COIN[user.country] : 'QUETZA') ?? 'QUETZA';
+
   const [amount, setAmount] = useState('');
-  const [fromCoin, setFromCoin] = useState('QUETZA');
-  const [toCoin, setToCoin] = useState('QUETZA');
+  const [fromCoin, setFromCoin] = useState<CoinCode>(defaultCoin);
+  const [toCoin, setToCoin] = useState<CoinCode>(defaultCoin);
   const [quote, setQuote] = useState<FXQuote | null>(null);
   const [description, setDescription] = useState('');
   const [loading, setLoading] = useState(false);

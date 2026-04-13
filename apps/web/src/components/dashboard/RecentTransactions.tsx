@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { useWalletStore } from '@/store/wallet.store';
+import { useWalletStore, COINS } from '@/store/wallet.store';
 
 const statusColors: Record<string, string> = {
   completed:  'text-green-600',
@@ -50,36 +50,46 @@ export function RecentTransactions({ loading }: { loading: boolean }) {
 
   return (
     <div className="space-y-1">
-      {transactions.map((tx) => (
-        <Link
-          key={tx.id}
-          href={`/transactions/${tx.id}`}
-          className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 transition-colors"
-        >
-          <div className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center text-gray-600 font-bold text-lg flex-shrink-0">
-            {typeIcons[tx.type] ?? (tx.direction === 'received' ? '⬇' : '→')}
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-gray-900 capitalize">
-                {tx.description ?? tx.type.replace(/_/g, ' ')}
-              </span>
-              <span className="text-sm font-semibold text-gray-900 ml-2 flex-shrink-0">
-                {tx.direction === 'received' ? '+' : '-'}
-                {Number(tx.amountMondg).toLocaleString()} MONDG
-              </span>
+      {transactions.map((tx) => {
+        const isReceived = tx.direction === 'received';
+        const isFX = tx.fromCoin !== tx.toCoin;
+        const coinMeta = COINS[tx.toCoin];
+
+        return (
+          <Link
+            key={tx.id}
+            href={`/transactions/${tx.id}`}
+            className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 transition-colors"
+          >
+            <div className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center text-gray-600 font-bold text-lg flex-shrink-0">
+              {isFX ? '⇄' : (typeIcons[tx.type] ?? (isReceived ? '⬇' : '→'))}
             </div>
-            <div className="flex items-center justify-between mt-0.5">
-              <span className={`text-xs ${statusColors[tx.status] ?? 'text-gray-400'}`}>
-                {tx.status}
-              </span>
-              <span className="text-xs text-gray-400">
-                {new Date(tx.createdAt).toLocaleDateString('es-GT')}
-              </span>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium text-gray-900">
+                  {tx.description ?? tx.type.replace(/_/g, ' ')}
+                  {isFX && (
+                    <span className="ml-1 text-xs text-blue-500 font-normal">
+                      {tx.fromCoin}→{tx.toCoin}
+                    </span>
+                  )}
+                </span>
+                <span className={`text-sm font-semibold ml-2 flex-shrink-0 ${isReceived ? 'text-green-600' : 'text-gray-900'}`}>
+                  {isReceived ? '+' : '-'}{Number(tx.toAmount).toLocaleString()} {tx.toCoin}
+                </span>
+              </div>
+              <div className="flex items-center justify-between mt-0.5">
+                <span className={`text-xs ${statusColors[tx.status] ?? 'text-gray-400'}`}>
+                  {tx.status}
+                </span>
+                <span className="text-xs text-gray-400">
+                  {new Date(tx.createdAt).toLocaleDateString('es-GT')}
+                </span>
+              </div>
             </div>
-          </div>
-        </Link>
-      ))}
+          </Link>
+        );
+      })}
     </div>
   );
 }
