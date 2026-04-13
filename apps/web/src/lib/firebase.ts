@@ -4,12 +4,12 @@ import { getMessaging, type Messaging } from 'firebase/messaging';
 // Project: lentech-216a0
 // Fill remaining values from: Firebase Console → Configuración → Aplicaciones → Web
 const firebaseConfig = {
-  apiKey:            process.env.NEXT_PUBLIC_FIREBASE_API_KEY!,
-  authDomain:        process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN ?? 'lentech-216a0.firebaseapp.com',
-  projectId:         process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID  ?? 'lentech-216a0',
-  storageBucket:     process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET ?? 'lentech-216a0.appspot.com',
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID!,
-  appId:             process.env.NEXT_PUBLIC_FIREBASE_APP_ID!,
+  apiKey:            process.env.NEXT_PUBLIC_FIREBASE_API_KEY            ?? 'AIzaSyCNHgU4WyhsaixGvfX9lj0gBGJFxg5aynU',
+  authDomain:        process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN        ?? 'lentech-216a0.firebaseapp.com',
+  projectId:         process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID         ?? 'lentech-216a0',
+  storageBucket:     process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET     ?? 'lentech-216a0.firebasestorage.app',
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID ?? '1093466431411',
+  appId:             process.env.NEXT_PUBLIC_FIREBASE_APP_ID             ?? '1:1093466431411:web:359cbbc32bc49b07f4f5c6',
 };
 
 let firebaseApp: FirebaseApp;
