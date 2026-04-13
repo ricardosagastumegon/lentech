@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>LEN — Reporte de Estado · v0.3 · 13 Abril 2026</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:'Inter',sans-serif;color:#1E1B4B;background:#fff;font-size:13px;line-height:1.6}
+  .page{max-width:960px;margin:0 auto;padding:48px 40px}
+
+  /* Header */
+  .header{display:flex;align-items:center;justify-content:space-between;margin-bottom:40px;padding-bottom:24px;border-bottom:3px solid #6C5CE7}
+  .logo{display:flex;align-items:center;gap:12px}
+  .logo-box{width:48px;height:48px;background:linear-gradient(135deg,#6C5CE7,#A29BFE);border-radius:14px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:900;font-size:22px}
+  .logo-text{font-size:28px;font-weight:900;color:#1E1B4B}
+  .badge-version{background:#6C5CE7;color:#fff;font-size:11px;font-weight:800;padding:4px 12px;border-radius:99px}
+  .meta{text-align:right;color:#888;font-size:12px}
+  .meta strong{color:#1E1B4B}
+
+  /* Sections */
+  h1{font-size:22px;font-weight:900;color:#1E1B4B;margin-bottom:4px}
+  h2{font-size:16px;font-weight:800;color:#1E1B4B;margin:32px 0 12px;display:flex;align-items:center;gap:8px}
+  h2 .dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+  h3{font-size:13px;font-weight:700;color:#1E1B4B;margin-bottom:6px}
+  p{color:#555;margin-bottom:8px}
+
+  /* Status table */
+  table{width:100%;border-collapse:collapse;margin-bottom:24px;font-size:12px}
+  th{background:#F5F3FF;color:#6C5CE7;font-weight:800;text-align:left;padding:8px 12px;font-size:11px;text-transform:uppercase;letter-spacing:.05em}
+  td{padding:8px 12px;border-bottom:1px solid #EDE9FE;vertical-align:top}
+  tr:last-child td{border-bottom:none}
+  tr:hover td{background:#FAFAFE}
+
+  /* Badges */
+  .ok   {display:inline-block;padding:2px 8px;border-radius:99px;font-size:10px;font-weight:800;background:#d1fae5;color:#065f46}
+  .warn {display:inline-block;padding:2px 8px;border-radius:99px;font-size:10px;font-weight:800;background:#fef3c7;color:#92400e}
+  .no   {display:inline-block;padding:2px 8px;border-radius:99px;font-size:10px;font-weight:800;background:#fee2e2;color:#991b1b}
+  .part {display:inline-block;padding:2px 8px;border-radius:99px;font-size:10px;font-weight:800;background:#e0e7ff;color:#3730a3}
+
+  /* Columns */
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px}
+  .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:20px}
+  .card{background:#F5F3FF;border-radius:14px;padding:18px;border:1px solid #EDE9FE}
+  .card-title{font-size:11px;font-weight:800;color:#6C5CE7;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px}
+  .card-value{font-size:28px;font-weight:900;color:#1E1B4B}
+  .card-sub{font-size:11px;color:#888;margin-top:2px}
+
+  /* Priority list */
+  .priority-list{list-style:none;margin-bottom:24px}
+  .priority-list li{display:flex;align-items:flex-start;gap:12px;padding:10px 0;border-bottom:1px solid #EDE9FE}
+  .priority-list li:last-child{border-bottom:none}
+  .prio-num{width:24px;height:24px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900;flex-shrink:0;margin-top:1px}
+  .p1{background:#fee2e2;color:#991b1b}
+  .p2{background:#fef3c7;color:#92400e}
+  .p3{background:#d1fae5;color:#065f46}
+  .prio-text strong{display:block;font-weight:700;color:#1E1B4B;font-size:13px}
+  .prio-text span{color:#777;font-size:12px}
+
+  /* Architecture */
+  .arch-row{display:flex;gap:8px;align-items:stretch;margin-bottom:16px;flex-wrap:wrap}
+  .arch-box{flex:1;min-width:120px;border-radius:10px;padding:12px;text-align:center;border:1.5px solid #EDE9FE}
+  .arch-box .icon{font-size:22px;margin-bottom:6px}
+  .arch-box .name{font-size:11px;font-weight:800;color:#1E1B4B}
+  .arch-box .status-text{font-size:10px;margin-top:4px}
+  .arch-ok{border-color:#6ee7b7;background:#f0fdf4}
+  .arch-warn{border-color:#fcd34d;background:#fffbeb}
+  .arch-no{border-color:#fca5a5;background:#fff5f5}
+  .arch-part{border-color:#a5b4fc;background:#eef2ff}
+
+  /* Deploy section */
+  .deploy-box{background:#1E1B4B;border-radius:14px;padding:20px;margin-bottom:24px;color:#fff}
+  .deploy-box h3{color:#A29BFE;font-size:12px;text-transform:uppercase;letter-spacing:.08em;margin-bottom:12px}
+  .deploy-row{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.08)}
+  .deploy-row:last-child{border-bottom:none}
+  .deploy-label{font-size:12px;color:#ccc}
+  .deploy-url{font-family:monospace;font-size:11px;color:#A29BFE}
+  .deploy-status-ok{color:#6ee7b7;font-size:11px;font-weight:800}
+  .deploy-status-no{color:#fca5a5;font-size:11px;font-weight:800}
+
+  /* Version history */
+  .ver-row{display:grid;grid-template-columns:90px 1fr 120px;gap:16px;padding:10px 0;border-bottom:1px solid #EDE9FE;align-items:start;font-size:12px}
+  .ver-row:last-child{border-bottom:none}
+  .ver-tag{font-weight:900;color:#6C5CE7;font-size:13px}
+  .ver-date{color:#aaa;font-size:11px}
+
+  /* Footer */
+  .footer{margin-top:48px;padding-top:20px;border-top:1px solid #EDE9FE;display:flex;justify-content:space-between;color:#aaa;font-size:11px}
+
+  @media print{
+    body{print-color-adjust:exact;-webkit-print-color-adjust:exact}
+    .page{padding:24px 28px}
+    .no-print{display:none}
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="logo">
+      <div class="logo-box">L</div>
+      <span class="logo-text">LEN</span>
+      <span class="badge-version">v0.3.0</span>
+    </div>
+    <div class="meta">
+      <strong>Reporte de Estado del Proyecto</strong><br/>
+      13 Abril 2026 · 16:00 hrs<br/>
+      Generado: Claude Sonnet 4.6
+    </div>
+  </div>
+
+  <!-- Summary KPIs -->
+  <div class="grid3">
+    <div class="card">
+      <div class="card-title">Versión actual</div>
+      <div class="card-value">v0.3.0</div>
+      <div class="card-sub">10 commits · main branch</div>
+    </div>
+    <div class="card">
+      <div class="card-title">Web App desplegada</div>
+      <div class="card-value" style="font-size:20px;padding-top:4px">Railway</div>
+      <div class="card-sub">web-production-1c372.up.railway.app</div>
+    </div>
+    <div class="card">
+      <div class="card-title">Módulos completados</div>
+      <div class="card-value">6/13</div>
+      <div class="card-sub">46% — Fase 1 en progreso</div>
+    </div>
+  </div>
+
+  <!-- Deploy Status -->
+  <div class="deploy-box">
+    <h3>Estado de despliegue</h3>
+    <div class="deploy-row">
+      <span class="deploy-label">🌐 Web App (Next.js)</span>
+      <span class="deploy-url">web-production-1c372.up.railway.app</span>
+      <span class="deploy-status-ok">● LIVE</span>
+    </div>
+    <div class="deploy-row">
+      <span class="deploy-label">🛡 Admin Panel (Next.js)</span>
+      <span class="deploy-url">No desplegado</span>
+      <span class="deploy-status-no">● OFFLINE</span>
+    </div>
+    <div class="deploy-row">
+      <span class="deploy-label">🔐 Auth Service (NestJS)</span>
+      <span class="deploy-url">No desplegado</span>
+      <span class="deploy-status-no">● OFFLINE</span>
+    </div>
+    <div class="deploy-row">
+      <span class="deploy-label">💼 Wallet Service (NestJS)</span>
+      <span class="deploy-url">No desplegado</span>
+      <span class="deploy-status-no">● OFFLINE</span>
+    </div>
+    <div class="deploy-row">
+      <span class="deploy-label">💱 FX Engine (NestJS)</span>
+      <span class="deploy-url">No desplegado (cliente funciona)</span>
+      <span class="deploy-status-no">● OFFLINE</span>
+    </div>
+    <div class="deploy-row">
+      <span class="deploy-label">🏦 Fiat Bridge (NestJS)</span>
+      <span class="deploy-url">No desplegado</span>
+      <span class="deploy-status-no">● OFFLINE</span>
+    </div>
+    <div class="deploy-row">
+      <span class="deploy-label">⚙️ TX Engine (Go)</span>
+      <span class="deploy-url">No desplegado</span>
+      <span class="deploy-status-no">● OFFLINE</span>
+    </div>
+    <div class="deploy-row">
+      <span class="deploy-label">📱 Mobile App (React Native)</span>
+      <span class="deploy-url">Código base existe — no publicado</span>
+      <span class="deploy-status-no">● NO PUBLICADA</span>
+    </div>
+  </div>
+
+  <!-- Architecture Status -->
+  <h2><span class="dot" style="background:#6C5CE7"></span>Arquitectura — Estado por capa</h2>
+  <div class="arch-row">
+    <div class="arch-box arch-ok">
+      <div class="icon">🌐</div>
+      <div class="name">Web App</div>
+      <div class="status-text"><span class="ok">LIVE</span></div>
+    </div>
+    <div class="arch-box arch-no">
+      <div class="icon">📱</div>
+      <div class="name">Mobile</div>
+      <div class="status-text"><span class="no">Sin publicar</span></div>
+    </div>
+    <div class="arch-box arch-no">
+      <div class="icon">🛡</div>
+      <div class="name">Admin</div>
+      <div class="status-text"><span class="no">Sin deploy</span></div>
+    </div>
+    <div class="arch-box arch-no">
+      <div class="icon">🔐</div>
+      <div class="name">Auth Service</div>
+      <div class="status-text"><span class="no">Sin deploy</span></div>
+    </div>
+    <div class="arch-box arch-no">
+      <div class="icon">💼</div>
+      <div class="name">Wallet Service</div>
+      <div class="status-text"><span class="no">Sin deploy</span></div>
+    </div>
+    <div class="arch-box arch-no">
+      <div class="icon">💱</div>
+      <div class="name">FX Engine</div>
+      <div class="status-text"><span class="no">Sin deploy</span></div>
+    </div>
+    <div class="arch-box arch-no">
+      <div class="icon">📋</div>
+      <div class="name">Compliance</div>
+      <div class="status-text"><span class="no">Sin deploy</span></div>
+    </div>
+    <div class="arch-box arch-no">
+      <div class="icon">🏦</div>
+      <div class="name">Fiat Bridge</div>
+      <div class="status-text"><span class="no">Sin deploy</span></div>
+    </div>
+    <div class="arch-box arch-no">
+      <div class="icon">⚙️</div>
+      <div class="name">TX Engine</div>
+      <div class="status-text"><span class="no">Sin deploy</span></div>
+    </div>
+    <div class="arch-box arch-part">
+      <div class="icon">⛓</div>
+      <div class="name">Blockchain</div>
+      <div class="status-text"><span class="part">Sin contrato</span></div>
+    </div>
+    <div class="arch-box arch-warn">
+      <div class="icon">🔑</div>
+      <div class="name">MPC/HSM</div>
+      <div class="status-text"><span class="warn">Placeholder</span></div>
+    </div>
+  </div>
+
+  <!-- Web App Features -->
+  <h2><span class="dot" style="background:#6ee7b7"></span>Web App — Funcionalidades implementadas</h2>
+  <table>
+    <tr><th>Pantalla / Flujo</th><th>Estado</th><th>Demo funciona</th><th>Backend conectado</th></tr>
+    <tr><td>Login con 3 usuarios demo (GT/MX/HN)</td><td><span class="ok">Completo</span></td><td><span class="ok">Sí</span></td><td><span class="no">No</span></td></tr>
+    <tr><td>Dashboard — balance, transacciones recientes, rates ticker</td><td><span class="ok">Completo</span></td><td><span class="ok">Sí</span></td><td><span class="no">No</span></td></tr>
+    <tr><td>Enviar — 3 pasos: destinatario → monto → cotización → éxito</td><td><span class="ok">Completo</span></td><td><span class="ok">Sí</span></td><td><span class="no">No</span></td></tr>
+    <tr><td>FX Engine — cotización QUETZA/MEXCOIN/LEMPI sin USD visible</td><td><span class="ok">Completo</span></td><td><span class="ok">Sí</span></td><td><span class="part">Cliente</span></td></tr>
+    <tr><td>Adquirir — compra de tokens con banco local</td><td><span class="ok">Completo</span></td><td><span class="ok">Sí</span></td><td><span class="no">No</span></td></tr>
+    <tr><td>Historial — búsqueda, filtros tipo/moneda/fecha</td><td><span class="ok">Completo</span></td><td><span class="ok">Demo data</span></td><td><span class="no">No</span></td></tr>
+    <tr><td>Recibir — QR code</td><td><span class="ok">Completo</span></td><td><span class="ok">Sí</span></td><td><span class="no">No</span></td></tr>
+    <tr><td>Tarjeta Mastercard (Coming Soon Q1 2026)</td><td><span class="warn">Mock</span></td><td><span class="ok">Sí</span></td><td><span class="no">No</span></td></tr>
+    <tr><td>Perfil / Settings / KYC level</td><td><span class="ok">Completo</span></td><td><span class="ok">Sí</span></td><td><span class="no">No</span></td></tr>
+    <tr><td>Rates ticker en vivo (simulado 8s)</td><td><span class="ok">Completo</span></td><td><span class="ok">Sí</span></td><td><span class="no">No</span></td></tr>
+    <tr><td>Bottom Nav — Cash App style con FAB central</td><td><span class="ok">Completo</span></td><td><span class="ok">Sí</span></td><td>—</td></tr>
+    <tr><td>Balance mostrando USD al usuario</td><td><span class="no">Pendiente</span></td><td><span class="no">No</span></td><td><span class="no">No</span></td></tr>
+    <tr><td>Vista de saldo en GTQ/MXN/HNL (fiat local)</td><td><span class="no">Pendiente</span></td><td><span class="no">No</span></td><td><span class="no">No</span></td></tr>
+    <tr><td>Flujo compra de tokens con saldo GTQ pendiente</td><td><span class="no">Pendiente</span></td><td><span class="no">No</span></td><td><span class="no">No</span></td></tr>
+    <tr><td>Indicadores de seguridad durante transacciones</td><td><span class="no">Pendiente</span></td><td><span class="no">No</span></td><td>—</td></tr>
+    <tr><td>Versionado visible en la app</td><td><span class="no">Pendiente</span></td><td><span class="no">No</span></td><td>—</td></tr>
+  </table>
+
+  <!-- Backend Services -->
+  <h2><span class="dot" style="background:#fcd34d"></span>Backend Services — Estado del código</h2>
+  <table>
+    <tr><th>Servicio</th><th>Código</th><th>Compilable</th><th>Desplegado</th><th>Integración real</th></tr>
+    <tr><td>Auth Service (NestJS) — JWT, PIN, 2FA, OTP, KYC</td><td><span class="ok">Completo</span></td><td><span class="warn">No verificado</span></td><td><span class="no">No</span></td><td><span class="no">No</span></td></tr>
+    <tr><td>Wallet Service (NestJS) — balances, transfers, Redis locks</td><td><span class="ok">Completo</span></td><td><span class="warn">No verificado</span></td><td><span class="no">No</span></td><td><span class="no">No</span></td></tr>
+    <tr><td>FX Engine (NestJS) — rates, quotes, multi-provider</td><td><span class="ok">Completo</span></td><td><span class="warn">No verificado</span></td><td><span class="no">No</span></td><td><span class="no">No</span></td></tr>
+    <tr><td>Compliance (NestJS) — AML, screening FATF, reportes</td><td><span class="ok">Completo</span></td><td><span class="warn">No verificado</span></td><td><span class="no">No</span></td><td><span class="no">No</span></td></tr>
+    <tr><td>Notification (NestJS) — SMS, Push, Email, WhatsApp</td><td><span class="ok">Completo</span></td><td><span class="warn">No verificado</span></td><td><span class="no">No</span></td><td><span class="no">No</span></td></tr>
+    <tr><td>Fiat Bridge (NestJS) — Banrural, SPEI/OXXO webhooks</td><td><span class="ok">Completo</span></td><td><span class="warn">No verificado</span></td><td><span class="no">No</span></td><td><span class="no">No</span></td></tr>
+    <tr><td>TX Engine (Go) — procesamiento on-chain</td><td><span class="ok">Existe</span></td><td><span class="warn">No verificado</span></td><td><span class="no">No</span></td><td><span class="no">No</span></td></tr>
+    <tr><td>Card Service (NestJS)</td><td><span class="ok">Base existe</span></td><td><span class="warn">No verificado</span></td><td><span class="no">No</span></td><td><span class="no">No</span></td></tr>
+  </table>
+
+  <!-- Infraestructura -->
+  <h2><span class="dot" style="background:#fca5a5"></span>Infraestructura — Lo que falta</h2>
+  <table>
+    <tr><th>Componente</th><th>Estado</th><th>Prioridad</th></tr>
+    <tr><td>Railway: Web App</td><td><span class="ok">Desplegado</span></td><td>—</td></tr>
+    <tr><td>Railway: Admin Panel</td><td><span class="no">Falta configurar</span></td><td>Alta</td></tr>
+    <tr><td>Railway: Auth + Wallet + FX services</td><td><span class="no">Falta configurar</span></td><td>Alta</td></tr>
+    <tr><td>PostgreSQL (Railway)</td><td><span class="no">No provisioned</span></td><td>Alta</td></tr>
+    <tr><td>Redis (Railway / Upstash)</td><td><span class="no">No provisioned</span></td><td>Alta</td></tr>
+    <tr><td>Polygon smart contract (QUETZA/MEXCOIN/LEMPI)</td><td><span class="no">Código base, no desplegado</span></td><td>Crítica</td></tr>
+    <tr><td>Fireblocks MPC (wallets production)</td><td><span class="warn">Placeholder en código</span></td><td>Alta</td></tr>
+    <tr><td>Cloudflare / AWS Shield (DDoS)</td><td><span class="no">No configurado</span></td><td>Media</td></tr>
+    <tr><td>Jumio KYC real</td><td><span class="warn">Código existe, no conectado</span></td><td>Alta</td></tr>
+    <tr><td>Banrural webhook real</td><td><span class="warn">Proveedor escrito, no activo</span></td><td>Alta</td></tr>
+    <tr><td>SPEI/CoDi webhook real</td><td><span class="warn">Proveedor escrito, no activo</span></td><td>Alta</td></tr>
+    <tr><td>CI/CD (GitHub Actions)</td><td><span class="no">No configurado</span></td><td>Media</td></tr>
+    <tr><td>Snyk / Dependabot</td><td><span class="no">No configurado</span></td><td>Baja</td></tr>
+  </table>
+
+  <!-- What can be done NOW -->
+  <h2><span class="dot" style="background:#6C5CE7"></span>¿Qué se puede hacer AHORA? — Prioridades inmediatas</h2>
+  <ul class="priority-list">
+    <li>
+      <span class="prio-num p1">1</span>
+      <div class="prio-text">
+        <strong>Wallet: Vista en moneda local + flujo compra de tokens (negocio LEN)</strong>
+        <span>Usuario deposita GTQ al banco → ve saldo GTQ en LEN → compra tokens QUETZA 1:1.
+        Implementable en Web App sin backend. Requiere aclarar preguntas de negocio.</span>
+      </div>
+    </li>
+    <li>
+      <span class="prio-num p1">2</span>
+      <div class="prio-text">
+        <strong>Versión visible en la app + URL de deploy actualizada por versión</strong>
+        <span>Badge v0.3.0 en Settings/footer. VERSIONS.md en repo. Deployable hoy.</span>
+      </div>
+    </li>
+    <li>
+      <span class="prio-num p1">3</span>
+      <div class="prio-text">
+        <strong>Desplegar Admin Panel en Railway</strong>
+        <span>Mismo proceso que web app. Solo requiere crear Railway service + variables de entorno.</span>
+      </div>
+    </li>
+    <li>
+      <span class="prio-num p2">4</span>
+      <div class="prio-text">
+        <strong>Desplegar Auth Service + PostgreSQL + Redis en Railway</strong>
+        <span>Provisionar DB y Redis en Railway (click en UI). Configurar variables de entorno. Primer backend real online.</span>
+      </div>
+    </li>
+    <li>
+      <span class="prio-num p2">5</span>
+      <div class="prio-text">
+        <strong>Indicadores de seguridad visibles durante transacciones</strong>
+        <span>"Firmado por MPC", "3 confirmaciones blockchain", estado del proceso. Importante para el pitch.</span>
+      </div>
+    </li>
+    <li>
+      <span class="prio-num p2">6</span>
+      <div class="prio-text">
+        <strong>Balance card: quitar USD, mostrar solo moneda local</strong>
+        <span>BalanceCard actualmente muestra "≈ $318.00 USD". Debe mostrar solo QUETZA / GTQ.</span>
+      </div>
+    </li>
+    <li>
+      <span class="prio-num p3">7</span>
+      <div class="prio-text">
+        <strong>Desplegar Wallet Service + FX Engine en Railway</strong>
+        <span>Dependiente de #4. Da vida a cotizaciones reales y balances on-chain.</span>
+      </div>
+    </li>
+    <li>
+      <span class="prio-num p3">8</span>
+      <div class="prio-text">
+        <strong>Smart contract QUETZA en Polygon Mumbai testnet</strong>
+        <span>ERC-20 por coin. Requiere Hardhat/Foundry deploy. Testnet no cuesta nada.</span>
+      </div>
+    </li>
+  </ul>
+
+  <!-- Version History -->
+  <h2><span class="dot" style="background:#a5b4fc"></span>Historial de versiones</h2>
+  <div class="ver-row" style="font-weight:800;color:#888;font-size:11px">
+    <span>Versión</span><span>Cambios</span><span>Fecha</span>
+  </div>
+  <div class="ver-row">
+    <div><span class="ver-tag">v0.3.0</span><div class="ver-date">Actual</div></div>
+    <div>Phase 1 coin system (QUETZA/MEXCOIN/LEMPI activos, resto oculto). Cash App nav con FAB central. Historial con filtros (tipo/moneda/fecha/búsqueda). Admin: Puente Bancario panel en tiempo real. Quitar USD de UI. Rebrandear "Adquirir". Eliminar WU.</div>
+    <span>13 Abr 2026</span>
+  </div>
+  <div class="ver-row">
+    <div><span class="ver-tag">v0.2.0</span></div>
+    <div>LEN rebrand completo (purple design system). FX Engine cliente (cotizaciones sin backend). 3 usuarios demo GT/MX/HN. Add-money, Receive QR, Card coming soon, Settings. Bottom nav glassmorphism.</div>
+    <span>12 Abr 2026</span>
+  </div>
+  <div class="ver-row">
+    <div><span class="ver-tag">v0.1.0</span></div>
+    <div>Setup inicial. Railway deployment. pnpm-lock.yaml. Root redirect. Login demo básico. Dashboard esqueleto.</div>
+    <span>10 Abr 2026</span>
+  </div>
+
+  <!-- Business Logic Questions -->
+  <h2><span class="dot" style="background:#fcd34d"></span>Preguntas de negocio — Lógica Wallet GTQ</h2>
+  <div class="card" style="background:#fffbeb;border-color:#fcd34d">
+    <div class="card-title" style="color:#92400e">Entendido así — confirmar o corregir</div>
+    <br/>
+    <p><strong>Flujo que entiendo:</strong></p>
+    <ol style="padding-left:18px;color:#555;margin-bottom:12px">
+      <li style="margin-bottom:6px">Usuario tiene cuenta bancaria en Banrural con <strong>GTQ</strong></li>
+      <li style="margin-bottom:6px">Usuario hace transferencia GTQ a cuenta LEN en Banrural (con su referencia)</li>
+      <li style="margin-bottom:6px">Fiat-bridge detecta el depósito → LEN wallet muestra <strong>"GTQ recibido: 2,450 — disponible para convertir"</strong></li>
+      <li style="margin-bottom:6px">Usuario hace clic en <strong>"Comprar QUETZA"</strong> → LEN vende 2,450 QUETZA tokens al usuario a cambio de 2,450 GTQ</li>
+      <li style="margin-bottom:6px">Saldo GTQ pasa a 0, saldo QUETZA sube a 2,450. LEN retiene los GTQ en Banrural como <strong>respaldo 1:1</strong></li>
+    </ol>
+    <p><strong>Preguntas abiertas:</strong></p>
+    <ol style="padding-left:18px;color:#555">
+      <li style="margin-bottom:6px">¿La conversión GTQ → QUETZA es <strong>automática</strong> al detectar el depósito, o el usuario tiene que hacer el clic de "Comprar"?</li>
+      <li style="margin-bottom:6px">¿El usuario ve un <strong>saldo GTQ intermedio</strong> ("tienes Q2,450 sin convertir") o va directo a QUETZA?</li>
+      <li style="margin-bottom:6px">¿Hay una <strong>comisión</strong> en la compra de tokens, o es 1:1 sin costo de entrada?</li>
+      <li style="margin-bottom:6px">¿El usuario puede <strong>retirar GTQ</strong> (vender QUETZA de vuelta a GTQ) o solo en una dirección?</li>
+    </ol>
+  </div>
+
+  <!-- Footer -->
+  <div class="footer">
+    <span>LEN — Red TokenCoin Mesoamérica · Confidencial</span>
+    <span>Reporte generado: 13 Abril 2026 · v0.3.0 · github.com/ricardosagastumegon/lentech</span>
+  </div>
+
+  <div class="no-print" style="margin-top:32px;text-align:center;color:#aaa;font-size:12px">
+    💡 Para guardar como PDF: Ctrl+P → "Guardar como PDF" → Sin márgenes → Escala 85%
+  </div>
+
+</div>
+</body>
+</html>
