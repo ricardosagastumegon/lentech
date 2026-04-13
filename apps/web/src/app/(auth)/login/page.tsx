@@ -35,10 +35,12 @@ export default function LoginPage() {
 
     // ── DEMO MODE ──────────────────────────────────────────────
     if (pin === '111111') {
-      const demos: Record<string, { name: string; coin: string; balance: string; usd: number; country: string }> = {
-        '11111': { name: 'Carlos Mendoza',  coin: 'QUETZA',  balance: '2450.00', usd: 318.00, country: 'GT' },
-        '22222': { name: 'Sofía Hernández', coin: 'MEXCOIN', balance: '4800.00', usd: 252.00, country: 'MX' },
-        '33333': { name: 'José Reyes',      coin: 'LEMPI',   balance: '12600.00', usd: 505.00, country: 'HN' },
+      // fiatBalance = GTQ/MXN/HNL deposited from bank, not yet converted to tokens
+      // balance     = tokens already purchased
+      const demos: Record<string, { name: string; coin: string; balance: string; fiatBalance: string; usd: number; country: string }> = {
+        '11111': { name: 'Carlos Mendoza',  coin: 'QUETZA',  balance: '1200.00', fiatBalance: '1250.00', usd: 155.00, country: 'GT' },
+        '22222': { name: 'Sofía Hernández', coin: 'MEXCOIN', balance: '2400.00', fiatBalance: '2400.00', usd: 126.00, country: 'MX' },
+        '33333': { name: 'José Reyes',      coin: 'LEMPI',   balance: '7600.00', fiatBalance: '5000.00', usd: 512.00, country: 'HN' },
       };
       const key = Object.keys(demos).find(k => phone.includes(k));
       const p = key ? demos[key] : demos['11111'];
@@ -59,8 +61,16 @@ export default function LoginPage() {
       });
 
       const coin = p.coin as import('@/store/wallet.store').CoinCode;
+      const coinMeta = (await import('@/store/wallet.store')).COINS[coin];
       const { setWallets, setTransactions } = (await import('@/store/wallet.store')).useWalletStore.getState();
-      setWallets([{ coin, balance: p.balance, available: p.balance, balanceUSD: p.usd }]);
+      setWallets([{
+        coin,
+        balance:      p.balance,
+        available:    p.balance,
+        fiatBalance:  p.fiatBalance,
+        fiatCurrency: coinMeta.fiat,
+        balanceUSD:   p.usd,
+      }]);
       setTransactions([
         {
           id: 'tx-1', type: 'fiat_load', status: 'completed', direction: 'received',
