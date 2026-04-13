@@ -16,6 +16,12 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // If wallet already has data (demo mode), skip API call
+    const current = useWalletStore.getState();
+    if (current.wallets.length > 0) {
+      setLoading(false);
+      return;
+    }
     async function fetchData() {
       try {
         const [balanceRes, txRes] = await Promise.all([
@@ -24,8 +30,8 @@ export default function DashboardPage() {
         ]);
         setBalance(balanceRes.data);
         setTransactions(txRes.data.items);
-      } catch (err) {
-        console.error('Dashboard fetch error:', err);
+      } catch {
+        // Backend not yet connected
       } finally {
         setLoading(false);
       }
@@ -34,19 +40,19 @@ export default function DashboardPage() {
   }, [setBalance, setTransactions]);
 
   const greeting = () => {
-    const hour = new Date().getHours();
-    if (hour < 12) return 'Buenos días';
-    if (hour < 18) return 'Buenas tardes';
+    const h = new Date().getHours();
+    if (h < 12) return 'Buenos días';
+    if (h < 18) return 'Buenas tardes';
     return 'Buenas noches';
   };
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6 pb-20">
+    <div className="space-y-4 pb-6">
       {/* Header */}
-      <div className="pt-6 px-4">
-        <p className="text-gray-500 text-sm">{greeting()},</p>
-        <h1 className="text-2xl font-bold text-gray-900">
-          {user?.firstName ?? `Cuenta ···${user?.phoneNumber?.slice(-4)}`}
+      <div className="pt-5 px-4">
+        <p className="text-gray-400 text-sm">{greeting()},</p>
+        <h1 className="text-2xl font-black text-len-dark">
+          {user?.firstName ?? 'Bienvenido'} 👋
         </h1>
       </div>
 
@@ -57,26 +63,28 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* Balance Card */}
+      {/* Balance */}
       <div className="px-4">
         <BalanceCard loading={loading} />
       </div>
 
-      {/* Quick Actions */}
+      {/* Actions */}
       <div className="px-4">
         <QuickActions />
       </div>
 
-      {/* FX Rates Ticker */}
+      {/* FX Rates */}
       <div className="px-4">
         <RatesTicker />
       </div>
 
-      {/* Recent Transactions */}
+      {/* Transactions */}
       <div className="px-4">
         <div className="flex items-center justify-between mb-3">
-          <h2 className="font-semibold text-gray-900">Movimientos recientes</h2>
-          <a href="/transactions" className="text-mondega-green text-sm font-medium">Ver todos</a>
+          <h2 className="font-bold text-len-dark">Movimientos recientes</h2>
+          <a href="/transactions" className="text-len-purple text-sm font-semibold hover:underline">
+            Ver todos →
+          </a>
         </div>
         <RecentTransactions loading={loading} />
       </div>

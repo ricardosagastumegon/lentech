@@ -3,12 +3,19 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import Image from 'next/image';
 import { useAuthStore } from '@/store/auth.store';
 import { PINInput } from '@/components/ui/pin-input';
-import { PhoneInput } from '@/components/ui/phone-input';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { apiClient } from '@/lib/api-client';
+
+const DEMO_COINS = [
+  { code: 'QUETZA',  flag: '🇬🇹', fiat: 'GTQ', country: 'Guatemala' },
+  { code: 'MEXCOIN', flag: '🇲🇽', fiat: 'MXN', country: 'México' },
+  { code: 'LEMPI',   flag: '🇭🇳', fiat: 'HNL', country: 'Honduras' },
+  { code: 'COLON',   flag: '🇸🇻', fiat: 'USD', country: 'El Salvador' },
+  { code: 'NICORD',  flag: '🇳🇮', fiat: 'NIO', country: 'Nicaragua' },
+  { code: 'CORI',    flag: '🇨🇷', fiat: 'CRC', country: 'Costa Rica' },
+];
 
 export default function LoginPage() {
   const router = useRouter();
@@ -25,78 +32,57 @@ export default function LoginPage() {
     setLoading(true);
     setError('');
 
-    // ── DEMO MODE ─────────────────────────────────────────────
-    // PIN 111111 + teléfono que empiece con el código de país:
-    //   11111  → Guatemala  (QUETZA / GTQ)
-    //   22222  → México     (MEXCOIN / MXN)
-    //   33333  → Honduras   (LEMPI / HNL)
-    if (pin === '111111' && (phone.includes('11111') || phone.includes('22222') || phone.includes('33333'))) {
-      const isMX = phone.includes('22222');
-      const isHN = phone.includes('33333');
-      const country = isMX ? 'MX' : isHN ? 'HN' : 'GT';
-      const profiles: Record<string, { name: string; coin: string; balance: string; usd: number }> = {
-        GT: { name: 'Carlos Mendoza',  coin: 'QUETZA',  balance: '2,450.00', usd: 315.50 },
-        MX: { name: 'Sofía Hernández', coin: 'MEXCOIN', balance: '4,800.00', usd: 252.00 },
-        HN: { name: 'José Reyes',      coin: 'LEMPI',   balance: '12,600.00', usd: 504.00 },
+    // ── DEMO MODE ──────────────────────────────────────────────
+    if (pin === '111111') {
+      const demos: Record<string, { name: string; coin: string; balance: string; usd: number; country: string }> = {
+        '11111': { name: 'Carlos Mendoza',  coin: 'QUETZA',  balance: '2450.00', usd: 318.00, country: 'GT' },
+        '22222': { name: 'Sofía Hernández', coin: 'MEXCOIN', balance: '4800.00', usd: 252.00, country: 'MX' },
+        '33333': { name: 'José Reyes',      coin: 'LEMPI',   balance: '12600.00', usd: 505.00, country: 'HN' },
       };
-      const p = profiles[country];
+      const key = Object.keys(demos).find(k => phone.includes(k));
+      const p = key ? demos[key] : demos['11111'];
+
       setTokens('demo-token', 'demo-refresh');
       setUser({
-        id: `demo-${country.toLowerCase()}`,
-        phoneNumber: phone,
+        id: `demo-${p.country.toLowerCase()}`,
+        phoneNumber: phone || '11111',
         phoneVerified: true,
         firstName: p.name.split(' ')[0],
         lastName: p.name.split(' ')[1],
         displayName: p.name,
-        country,
+        country: p.country,
         kycLevel: 2,
         kycStatus: 'approved',
         status: 'active',
         createdAt: new Date().toISOString(),
       });
-      // Pre-cargar wallet con datos de demostración
-      const walletStore = (await import('@/store/wallet.store')).useWalletStore.getState();
+
       const coin = p.coin as import('@/store/wallet.store').CoinCode;
-      const otherCoin = (isMX ? 'QUETZA' : 'MEXCOIN') as import('@/store/wallet.store').CoinCode;
-      walletStore.setWallets([{
-        coin,
-        balance: p.balance.replace(',', ''),
-        available: p.balance.replace(',', ''),
-        balanceUSD: p.usd,
-      }]);
-      walletStore.setTransactions([
+      const { setWallets, setTransactions } = (await import('@/store/wallet.store')).useWalletStore.getState();
+      setWallets([{ coin, balance: p.balance, available: p.balance, balanceUSD: p.usd }]);
+      setTransactions([
         {
-          id: 'demo-tx-1',
-          type: 'transfer',
-          status: 'completed',
-          direction: 'received',
-          fromCoin: otherCoin,
-          toCoin: coin,
-          fromAmount: '500.00',
-          toAmount: p.balance.split('.')[0],
-          fxRate: isMX ? 18.9 : (isHN ? 25.2 : 0.097),
-          fee: '2.50',
-          description: 'Pago recibido',
-          createdAt: new Date(Date.now() - 86400000).toISOString(),
-        },
-        {
-          id: 'demo-tx-2',
-          type: 'fiat_load',
-          status: 'completed',
-          direction: 'received',
-          fromCoin: coin,
-          toCoin: coin,
-          fromAmount: p.balance.replace(',', ''),
-          toAmount: p.balance.replace(',', ''),
-          fee: '0',
-          description: `Carga de ${p.coin}`,
+          id: 'tx-1', type: 'fiat_load', status: 'completed', direction: 'received',
+          fromCoin: coin, toCoin: coin,
+          fromAmount: p.balance, toAmount: p.balance, fee: '0',
+          description: `Carga inicial ${p.coin}`,
           createdAt: new Date(Date.now() - 172800000).toISOString(),
         },
+        {
+          id: 'tx-2', type: 'transfer', status: 'completed', direction: 'received',
+          fromCoin: (p.country === 'MX' ? 'QUETZA' : 'MEXCOIN') as import('@/store/wallet.store').CoinCode,
+          toCoin: coin,
+          fromAmount: '500.00', toAmount: p.country === 'MX' ? '9450.00' : p.country === 'HN' ? '6800.00' : '65.00',
+          fxRate: p.country === 'MX' ? 18.9 : p.country === 'HN' ? 13.6 : 0.13,
+          fee: '1.50', description: 'Pago internacional recibido',
+          createdAt: new Date(Date.now() - 86400000).toISOString(),
+        },
       ]);
+
       router.push('/dashboard');
       return;
     }
-    // ── FIN DEMO MODE ─────────────────────────────────────────
+    // ── FIN DEMO ───────────────────────────────────────────────
 
     try {
       const res = await apiClient.post('/auth/login', { phoneNumber: phone, pin });
@@ -104,7 +90,8 @@ export default function LoginPage() {
       setUser(res.data.user);
       router.push('/dashboard');
     } catch (err: unknown) {
-      const msg = (err as { response?: { data?: { message?: string } } }).response?.data?.message ?? 'Error al iniciar sesión';
+      const msg = (err as { response?: { data?: { message?: string } } }).response?.data?.message
+        ?? 'Número o PIN incorrecto';
       setError(msg);
       setPin('');
     } finally {
@@ -113,73 +100,167 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-mondega-dark to-mondega-green px-4">
-      <div className="w-full max-w-md">
-        {/* Logo */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-white rounded-2xl shadow-lg mb-4">
-            <span className="text-3xl font-bold text-mondega-green">M</span>
-          </div>
-          <h1 className="text-2xl font-bold text-white">Mondega Digital</h1>
-          <p className="text-green-200 text-sm mt-1">La moneda digital de Mesoamérica</p>
+    <div className="min-h-screen flex flex-col lg:flex-row">
+
+      {/* ── LEFT PANEL — hero ── */}
+      <div className="hidden lg:flex lg:w-1/2 bg-len-gradient flex-col justify-between p-12 relative overflow-hidden">
+        {/* Background decoration */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute -top-32 -right-32 w-96 h-96 rounded-full bg-white/5" />
+          <div className="absolute -bottom-48 -left-24 w-[500px] h-[500px] rounded-full bg-white/5" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 rounded-full bg-white/3" />
         </div>
 
-        {/* Card */}
-        <div className="bg-white rounded-3xl shadow-2xl p-8">
-          {step === 'phone' ? (
-            <>
-              <h2 className="text-xl font-bold text-gray-900 mb-1">Iniciar sesión</h2>
-              <p className="text-gray-500 text-sm mb-4">Ingresa tu número de teléfono</p>
+        {/* Logo */}
+        <div className="relative">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-len-lg">
+              <span className="text-len-purple font-black text-xl">L</span>
+            </div>
+            <span className="text-white font-bold text-2xl tracking-tight">LEN</span>
+          </div>
+        </div>
 
-              {/* Demo banner */}
-              <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 mb-4 text-xs text-amber-800">
-                <p className="font-semibold mb-1">🧪 Modo demo — elige un país:</p>
-                <div className="space-y-1">
-                  <p>🇬🇹 <strong>11111</strong> → Guatemala (QUETZA)</p>
-                  <p>🇲🇽 <strong>22222</strong> → México (MEXCOIN)</p>
-                  <p>🇭🇳 <strong>33333</strong> → Honduras (LEMPI)</p>
+        {/* Headline */}
+        <div className="relative space-y-6">
+          <div>
+            <h1 className="text-5xl font-black text-white leading-tight">
+              Por que cada<br />
+              <span className="text-len-violet">LEN</span> cuenta.
+            </h1>
+            <p className="mt-4 text-white/70 text-lg leading-relaxed max-w-sm">
+              La primera red de TokenCoins nativa de Mesoamérica.
+              Un token por país, tipo de cambio automático, comisiones desde <strong className="text-white">0.3%</strong>.
+            </p>
+          </div>
+
+          {/* Coin network pills */}
+          <div>
+            <p className="text-white/50 text-xs uppercase tracking-widest mb-3 font-semibold">Red activa</p>
+            <div className="flex flex-wrap gap-2">
+              {DEMO_COINS.map(c => (
+                <div key={c.code}
+                  className="flex items-center gap-1.5 bg-white/10 backdrop-blur rounded-full px-3 py-1.5 border border-white/20">
+                  <span className="text-sm">{c.flag}</span>
+                  <span className="text-white text-xs font-bold">{c.code}</span>
+                  <span className="text-white/50 text-xs">=1 {c.fiat}</span>
                 </div>
-                <p className="mt-1 text-amber-600">PIN para todos: <strong>111111</strong></p>
+              ))}
+            </div>
+          </div>
+
+          {/* Stats */}
+          <div className="grid grid-cols-3 gap-4 pt-4 border-t border-white/10">
+            {[
+              { value: '8', label: 'Países' },
+              { value: '0.3%', label: 'Fee mínimo' },
+              { value: '$800B', label: 'Mercado' },
+            ].map(s => (
+              <div key={s.label}>
+                <div className="text-2xl font-black text-white">{s.value}</div>
+                <div className="text-white/50 text-xs">{s.label}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* ── RIGHT PANEL — form ── */}
+      <div className="flex-1 flex flex-col items-center justify-center px-6 py-12 bg-len-surface">
+        {/* Mobile logo */}
+        <div className="lg:hidden flex items-center gap-2 mb-8">
+          <div className="w-10 h-10 bg-len-gradient rounded-xl flex items-center justify-center">
+            <span className="text-white font-black text-lg">L</span>
+          </div>
+          <span className="text-len-dark font-bold text-xl">LEN</span>
+        </div>
+
+        <div className="w-full max-w-sm">
+          {step === 'phone' ? (
+            <div className="space-y-6">
+              <div>
+                <h2 className="text-2xl font-bold text-len-dark">Bienvenido</h2>
+                <p className="text-gray-500 text-sm mt-1">Ingresa tu número para continuar</p>
               </div>
 
-              <PhoneInput
-                value={phone}
-                onChange={setPhone}
-                className="mb-6"
-              />
+              {/* Demo hint */}
+              <div className="bg-len-light rounded-2xl p-4 border border-len-border">
+                <p className="text-xs font-semibold text-len-purple mb-2">🧪 Demo — escoge un país:</p>
+                <div className="grid grid-cols-3 gap-2">
+                  {[
+                    { num: '11111', flag: '🇬🇹', label: 'Guatemala', coin: 'QUETZA' },
+                    { num: '22222', flag: '🇲🇽', label: 'México', coin: 'MEXCOIN' },
+                    { num: '33333', flag: '🇭🇳', label: 'Honduras', coin: 'LEMPI' },
+                  ].map(d => (
+                    <button
+                      key={d.num}
+                      onClick={() => { setPhone(d.num); }}
+                      className={`flex flex-col items-center gap-1 p-2 rounded-xl border-2 transition-all text-center
+                        ${phone === d.num
+                          ? 'border-len-purple bg-white shadow-len'
+                          : 'border-len-border bg-white/60 hover:border-len-violet'}`}
+                    >
+                      <span className="text-xl">{d.flag}</span>
+                      <span className="text-xs font-bold text-len-dark">{d.coin}</span>
+                      <span className="text-[10px] text-gray-400">{d.label}</span>
+                    </button>
+                  ))}
+                </div>
+                <p className="text-[11px] text-gray-400 mt-2 text-center">PIN demo: <strong className="text-len-purple">111111</strong></p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Número de teléfono</label>
+                <input
+                  type="tel"
+                  className="input-field text-lg font-semibold"
+                  placeholder="Ej. 50211111111"
+                  value={phone}
+                  onChange={e => setPhone(e.target.value.replace(/\D/g, ''))}
+                />
+              </div>
 
               <button
                 className="btn-primary w-full"
-                onClick={() => { if (phone.length >= 8) setStep('pin'); }}
-                disabled={phone.length < 8}
+                onClick={() => { if (phone.length >= 5) setStep('pin'); }}
+                disabled={phone.length < 5}
               >
-                Continuar
+                Continuar →
               </button>
-            </>
+
+              <p className="text-center text-sm text-gray-500">
+                ¿Primera vez?{' '}
+                <Link href="/register" className="text-len-purple font-semibold hover:underline">
+                  Crear cuenta gratis
+                </Link>
+              </p>
+            </div>
           ) : (
-            <>
+            <div className="space-y-6">
               <button
                 onClick={() => { setStep('phone'); setPin(''); setError(''); }}
-                className="text-mondega-green text-sm mb-4 flex items-center gap-1"
+                className="flex items-center gap-2 text-len-purple text-sm font-medium hover:underline"
               >
                 ← Cambiar número
               </button>
 
-              <h2 className="text-xl font-bold text-gray-900 mb-1">Tu PIN</h2>
-              <p className="text-gray-500 text-sm mb-6">
-                Ingresa tu PIN de 6 dígitos para <span className="font-medium text-gray-700">{phone}</span>
-              </p>
+              <div>
+                <h2 className="text-2xl font-bold text-len-dark">Tu PIN</h2>
+                <p className="text-gray-500 text-sm mt-1">
+                  Ingresa el PIN de 6 dígitos para <span className="font-semibold text-len-dark">{phone}</span>
+                </p>
+              </div>
 
               <PINInput
                 length={6}
                 value={pin}
                 onChange={setPin}
                 onComplete={handleLogin}
-                className="mb-4"
+                className="mb-2"
               />
 
               {error && (
-                <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl p-3 text-sm mb-4">
+                <div className="bg-red-50 border border-red-200 text-red-700 rounded-2xl p-3 text-sm text-center">
                   {error}
                 </div>
               )}
@@ -189,21 +270,14 @@ export default function LoginPage() {
                 onClick={handleLogin}
                 disabled={pin.length < 6 || loading}
               >
-                {loading ? <LoadingSpinner size="sm" /> : 'Entrar'}
+                {loading ? <LoadingSpinner size="sm" /> : 'Entrar a LEN'}
               </button>
 
-              <Link href="/pin/reset" className="block text-center text-mondega-green text-sm mt-4">
+              <Link href="/pin/reset" className="block text-center text-len-purple text-sm hover:underline">
                 ¿Olvidaste tu PIN?
               </Link>
-            </>
+            </div>
           )}
-
-          <div className="mt-6 pt-6 border-t border-gray-100 text-center">
-            <span className="text-gray-500 text-sm">¿No tienes cuenta? </span>
-            <Link href="/register" className="text-mondega-green font-semibold text-sm">
-              Regístrate gratis
-            </Link>
-          </div>
         </div>
       </div>
     </div>

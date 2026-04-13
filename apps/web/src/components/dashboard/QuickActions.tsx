@@ -1,10 +1,50 @@
 import Link from 'next/link';
 
 const ACTIONS = [
-  { label: 'Enviar',   href: '/send',       icon: '↑', color: 'bg-blue-50 text-blue-600' },
-  { label: 'Recibir',  href: '/receive',    icon: '↓', color: 'bg-green-50 text-green-600' },
-  { label: 'Agregar',  href: '/add-money',  icon: '+', color: 'bg-purple-50 text-purple-600' },
-  { label: 'Tarjeta',  href: '/card',       icon: '▣', color: 'bg-orange-50 text-orange-600' },
+  {
+    label: 'Enviar',
+    href: '/send',
+    bg: 'bg-len-light',
+    iconBg: 'bg-len-purple',
+    icon: (
+      <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+      </svg>
+    ),
+  },
+  {
+    label: 'Recibir',
+    href: '/receive',
+    bg: 'bg-emerald-50',
+    iconBg: 'bg-emerald-500',
+    icon: (
+      <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+      </svg>
+    ),
+  },
+  {
+    label: 'Agregar',
+    href: '/add-money',
+    bg: 'bg-blue-50',
+    iconBg: 'bg-blue-500',
+    icon: (
+      <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+      </svg>
+    ),
+  },
+  {
+    label: 'Tarjeta',
+    href: '/card',
+    bg: 'bg-amber-50',
+    iconBg: 'bg-amber-500',
+    icon: (
+      <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+      </svg>
+    ),
+  },
 ];
 
 export function QuickActions() {
@@ -14,12 +54,13 @@ export function QuickActions() {
         <Link
           key={action.href}
           href={action.href}
-          className="flex flex-col items-center gap-2 p-3 rounded-2xl border border-gray-100 hover:border-gray-200 hover:shadow-sm transition-all"
+          className={`flex flex-col items-center gap-2.5 p-3 rounded-2xl ${action.bg}
+            border border-transparent hover:border-len-border hover:shadow-sm transition-all`}
         >
-          <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg font-bold ${action.color}`}>
+          <div className={`w-11 h-11 ${action.iconBg} rounded-xl flex items-center justify-center shadow-sm`}>
             {action.icon}
           </div>
-          <span className="text-xs font-medium text-gray-600">{action.label}</span>
+          <span className="text-xs font-semibold text-len-dark">{action.label}</span>
         </Link>
       ))}
     </div>

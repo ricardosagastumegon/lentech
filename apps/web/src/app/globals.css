@@ -2,52 +2,69 @@
 @tailwind components;
 @tailwind utilities;
 
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
 :root {
-  --mondega-green:   #0D6E3E;
-  --mondega-dark:    #0A2E1A;
-  --mondega-gold:    #C9A84C;
-  --mondega-surface: #F8FAF9;
-  --mondega-border:  #E2EDE8;
+  --len-purple:  #6C5CE7;
+  --len-violet:  #A29BFE;
+  --len-dark:    #1E1B4B;
+  --len-light:   #F5F3FF;
+  --len-border:  #EDE9FE;
+  --len-surface: #FAFAFE;
 }
 
 @layer base {
   body {
-    @apply bg-mondega-surface text-gray-900 antialiased;
+    @apply bg-len-surface text-len-dark antialiased font-sans;
   }
-
   * {
-    @apply border-mondega-border;
+    @apply border-len-border;
   }
 }
 
 @layer components {
+  /* Buttons */
   .btn-primary {
-    @apply bg-mondega-green text-white font-semibold py-3 px-6 rounded-xl
-           hover:bg-opacity-90 active:scale-95 transition-all duration-150
-           disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply bg-len-purple text-white font-semibold py-3.5 px-6 rounded-2xl
+           hover:bg-opacity-90 active:scale-[0.98] transition-all duration-150
+           disabled:opacity-40 disabled:cursor-not-allowed shadow-len;
   }
-
   .btn-secondary {
-    @apply border-2 border-mondega-green text-mondega-green font-semibold py-3 px-6
-           rounded-xl hover:bg-mondega-green hover:text-white transition-all duration-150;
+    @apply border-2 border-len-purple text-len-purple font-semibold py-3.5 px-6
+           rounded-2xl hover:bg-len-purple hover:text-white transition-all duration-150;
+  }
+  .btn-ghost {
+    @apply text-len-purple font-medium py-2 px-4 rounded-xl
+           hover:bg-len-light transition-colors;
   }
 
+  /* Cards */
   .card {
-    @apply bg-white rounded-2xl shadow-sm border border-mondega-border p-6;
+    @apply bg-white rounded-3xl shadow-sm border border-len-border p-6;
+  }
+  .card-glass {
+    @apply bg-white/60 backdrop-blur-xl rounded-3xl border border-white/40 p-6;
   }
 
+  /* Inputs */
   .input-field {
-    @apply w-full border border-mondega-border rounded-xl px-4 py-3 text-sm
-           focus:outline-none focus:ring-2 focus:ring-mondega-green focus:border-transparent
-           placeholder:text-gray-400;
+    @apply w-full border-2 border-len-border rounded-2xl px-4 py-3.5 text-sm
+           focus:outline-none focus:ring-0 focus:border-len-purple transition-colors
+           placeholder:text-gray-400 bg-white;
   }
 
+  /* Badges */
+  .badge-success { @apply bg-emerald-100 text-emerald-700 text-xs font-semibold px-2.5 py-1 rounded-full; }
+  .badge-warning { @apply bg-amber-100 text-amber-700 text-xs font-semibold px-2.5 py-1 rounded-full; }
+  .badge-error   { @apply bg-red-100 text-red-700 text-xs font-semibold px-2.5 py-1 rounded-full; }
+  .badge-purple  { @apply bg-len-light text-len-purple text-xs font-semibold px-2.5 py-1 rounded-full; }
+
+  /* Amount display */
   .amount-display {
-    @apply text-4xl font-bold text-mondega-dark tabular-nums;
+    @apply text-4xl font-bold text-len-dark tabular-nums;
   }
-
-  .badge-success { @apply bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded-full; }
-  .badge-warning { @apply bg-yellow-100 text-yellow-800 text-xs font-medium px-2.5 py-0.5 rounded-full; }
-  .badge-error   { @apply bg-red-100 text-red-800 text-xs font-medium px-2.5 py-0.5 rounded-full; }
-  .badge-info    { @apply bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded-full; }
 }
+
+/* Scrollbar hide */
+.scrollbar-hide::-webkit-scrollbar { display: none; }
+.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
