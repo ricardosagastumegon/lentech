@@ -4,9 +4,8 @@ nixPkgs = ["nodejs_20"]
 [phases.install]
 cmds = [
   "npm install -g pnpm@9",
-  "pnpm install --frozen-lockfile"
+  "pnpm install --no-frozen-lockfile"
 ]
-cacheDirectories = [".pnpm-store"]
 
 [phases.build]
 cmds = ["pnpm --filter admin build"]
