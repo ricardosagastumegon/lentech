@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { RecipientInput } from '@/components/send/recipient-input';
 import { AmountInput } from '@/components/send/amount-input';
