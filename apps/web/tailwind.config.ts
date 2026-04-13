@@ -9,7 +9,11 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        'mondega-green': '#0D6E3E',
+        'mondega-green':   '#0D6E3E',
+        'mondega-dark':    '#0A2E1A',
+        'mondega-gold':    '#C9A84C',
+        'mondega-surface': '#F8FAF9',
+        'mondega-border':  '#E2EDE8',
       },
     },
   },

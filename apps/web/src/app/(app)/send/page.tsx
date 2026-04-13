@@ -30,7 +30,7 @@ export default function SendPage() {
 
   const [step, setStep] = useState<Step>('recipient');
   const [recipient, setRecipient] = useState('');
-  const [recipientInfo, setRecipientInfo] = useState<{ name: string; phone?: string } | null>(null);
+  const [recipientInfo, setRecipientInfo] = useState<{ userId: string; displayName: string; walletAddress: string; kycLevel: number } | null>(null);
   const [amount, setAmount] = useState('');
   const [fromCoin, setFromCoin] = useState('QUETZA');
   const [toCoin, setToCoin] = useState('QUETZA');
@@ -113,11 +113,11 @@ export default function SendPage() {
           {recipientInfo && (
             <div className="card flex items-center gap-3">
               <div className="w-10 h-10 rounded-full bg-mondega-green/10 flex items-center justify-center">
-                <span className="text-mondega-green font-bold">{recipientInfo.name[0]}</span>
+                <span className="text-mondega-green font-bold">{recipientInfo.displayName[0]}</span>
               </div>
               <div>
-                <p className="font-medium text-gray-900">{recipientInfo.name}</p>
-                {recipientInfo.phone && <p className="text-gray-500 text-sm">{recipientInfo.phone}</p>}
+                <p className="font-medium text-gray-900">{recipientInfo.displayName}</p>
+                <p className="text-gray-500 text-xs font-mono">{recipientInfo.walletAddress.slice(0, 8)}...</p>
               </div>
             </div>
           )}
@@ -154,7 +154,7 @@ export default function SendPage() {
       {/* Step: Quote confirmation */}
       {step === 'quote' && quote && (
         <div className="space-y-4">
-          <FXQuoteCard quote={quote} recipient={recipientInfo?.name ?? recipient} />
+          <FXQuoteCard quote={quote} recipient={recipientInfo?.displayName ?? recipient} />
 
           <div className="card bg-amber-50 border-amber-200">
             <p className="text-amber-800 text-sm">
@@ -187,7 +187,7 @@ export default function SendPage() {
           </div>
           <h2 className="text-2xl font-bold text-gray-900 mb-2">¡Enviado!</h2>
           <p className="text-gray-500 mb-2">
-            {amount} {fromCoin} enviados a {recipientInfo?.name ?? recipient}
+            {amount} {fromCoin} enviados a {recipientInfo?.displayName ?? recipient}
           </p>
           <p className="text-gray-400 text-xs mb-8">ID: {txId}</p>
 
@@ -211,11 +211,11 @@ function CountdownTimer({ validUntil }: { validUntil: Date }) {
     Math.max(0, Math.round((validUntil.getTime() - Date.now()) / 1000)),
   );
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  useState(() => {
+  useEffect(() => {
     const t = setInterval(() => setSecs(s => Math.max(0, s - 1)), 1000);
     return () => clearInterval(t);
-  });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return <span className="font-bold">{secs}s</span>;
 }

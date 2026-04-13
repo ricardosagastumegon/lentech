@@ -17,13 +17,14 @@ interface CountrySelectorProps {
   label?: string;
   disabled?: boolean;
   error?: string;
+  className?: string;
 }
 
-export function CountrySelector({ value, onChange, label, disabled, error }: CountrySelectorProps) {
+export function CountrySelector({ value, onChange, label, disabled, error, className }: CountrySelectorProps) {
   const selected = COUNTRIES.find(c => c.code === value);
 
   return (
-    <div>
+    <div className={className}>
       {label && <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>}
       <select
         value={value}

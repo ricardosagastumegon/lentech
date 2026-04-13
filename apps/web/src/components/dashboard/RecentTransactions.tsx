@@ -1,38 +1,45 @@
 import Link from 'next/link';
-
-interface Tx {
-  id: string;
-  type: string;
-  fromCoin: string;
-  toCoin: string;
-  fromAmount: string;
-  toAmount: string;
-  status: string;
-  description?: string;
-  createdAt: string;
-}
+import { useWalletStore } from '@/store/wallet.store';
 
 const statusColors: Record<string, string> = {
-  completed:   'text-green-600',
-  pending:     'text-yellow-600',
-  processing:  'text-blue-600',
-  confirming:  'text-blue-600',
-  failed:      'text-red-600',
-  reversed:    'text-gray-500',
+  completed:  'text-green-600',
+  pending:    'text-yellow-600',
+  processing: 'text-blue-600',
+  confirming: 'text-blue-600',
+  failed:     'text-red-600',
+  reversed:   'text-gray-500',
 };
 
 const typeIcons: Record<string, string> = {
-  transfer:     '→',
-  purchase:     '⬇',
-  sale:         '⬆',
-  fiat_load:    '＋',
-  fiat_withdraw:'－',
-  fx_swap:      '⇄',
-  fee:          '$',
-  refund:       '↩',
+  transfer:      '→',
+  purchase:      '⬇',
+  sale:          '⬆',
+  fiat_load:     '＋',
+  fiat_withdraw: '－',
+  fx_swap:       '⇄',
+  fee:           '$',
+  refund:        '↩',
 };
 
-export function RecentTransactions({ transactions }: { transactions: Tx[] }) {
+export function RecentTransactions({ loading }: { loading: boolean }) {
+  const transactions = useWalletStore((s) => s.transactions);
+
+  if (loading) {
+    return (
+      <div className="space-y-2">
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="flex items-center gap-3 p-3 rounded-xl animate-pulse">
+            <div className="w-10 h-10 rounded-xl bg-gray-200 flex-shrink-0" />
+            <div className="flex-1">
+              <div className="h-3 bg-gray-200 rounded w-32 mb-2" />
+              <div className="h-2 bg-gray-100 rounded w-20" />
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
   if (transactions.length === 0) {
     return (
       <div className="text-center py-8 text-gray-400 text-sm">
@@ -43,14 +50,14 @@ export function RecentTransactions({ transactions }: { transactions: Tx[] }) {
 
   return (
     <div className="space-y-1">
-      {transactions.map(tx => (
+      {transactions.map((tx) => (
         <Link
           key={tx.id}
           href={`/transactions/${tx.id}`}
           className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 transition-colors"
         >
           <div className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center text-gray-600 font-bold text-lg flex-shrink-0">
-            {typeIcons[tx.type] ?? '→'}
+            {typeIcons[tx.type] ?? (tx.direction === 'received' ? '⬇' : '→')}
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-center justify-between">
@@ -58,7 +65,8 @@ export function RecentTransactions({ transactions }: { transactions: Tx[] }) {
                 {tx.description ?? tx.type.replace(/_/g, ' ')}
               </span>
               <span className="text-sm font-semibold text-gray-900 ml-2 flex-shrink-0">
-                {Number(tx.toAmount).toLocaleString()} {tx.toCoin}
+                {tx.direction === 'received' ? '+' : '-'}
+                {Number(tx.amountMondg).toLocaleString()} MONDG
               </span>
             </div>
             <div className="flex items-center justify-between mt-0.5">
@@ -72,11 +80,6 @@ export function RecentTransactions({ transactions }: { transactions: Tx[] }) {
           </div>
         </Link>
       ))}
-      <div className="pt-2 text-center">
-        <Link href="/transactions" className="text-sm text-mondega-green font-medium hover:underline">
-          Ver todas →
-        </Link>
-      </div>
     </div>
   );
 }

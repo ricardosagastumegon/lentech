@@ -6,20 +6,24 @@ interface PINInputProps {
   length?: number;
   value: string;
   onChange: (val: string) => void;
+  onComplete?: () => void;
   disabled?: boolean;
   autoFocus?: boolean;
   label?: string;
   error?: string;
+  className?: string;
 }
 
 export function PINInput({
   length = 6,
   value,
   onChange,
+  onComplete,
   disabled = false,
   autoFocus = false,
   label,
   error,
+  className,
 }: PINInputProps) {
   const inputsRef = useRef<(HTMLInputElement | null)[]>([]);
 
@@ -34,6 +38,7 @@ export function PINInput({
     const next = digits.map((d, idx) => (idx === i ? char : d)).join('');
     onChange(next);
     if (char && i < length - 1) focus(i + 1);
+    if (char && i === length - 1 && next.length === length) onComplete?.();
   }
 
   function handleKeyDown(i: number, e: KeyboardEvent<HTMLInputElement>) {
@@ -58,7 +63,7 @@ export function PINInput({
   }
 
   return (
-    <div>
+    <div className={className}>
       {label && <label className="block text-sm font-medium text-gray-700 mb-2">{label}</label>}
       <div className="flex gap-3 justify-center">
         {digits.map((d, i) => (

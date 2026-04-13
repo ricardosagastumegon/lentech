@@ -1,11 +1,11 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { BalanceCard } from '@/components/dashboard/balance-card';
-import { QuickActions } from '@/components/dashboard/quick-actions';
-import { RecentTransactions } from '@/components/dashboard/recent-transactions';
-import { RatesTicker } from '@/components/dashboard/rates-ticker';
-import { KYCBanner } from '@/components/dashboard/kyc-banner';
+import { BalanceCard } from '@/components/dashboard/BalanceCard';
+import { QuickActions } from '@/components/dashboard/QuickActions';
+import { RecentTransactions } from '@/components/dashboard/RecentTransactions';
+import { RatesTicker } from '@/components/dashboard/RatesTicker';
+import { KYCBanner } from '@/components/dashboard/KYCBanner';
 import { useAuthStore } from '@/store/auth.store';
 import { useWalletStore } from '@/store/wallet.store';
 import { apiClient } from '@/lib/api-client';
@@ -31,7 +31,7 @@ export default function DashboardPage() {
       }
     }
     fetchData();
-  }, []);
+  }, [setBalance, setTransactions]);
 
   const greeting = () => {
     const hour = new Date().getHours();

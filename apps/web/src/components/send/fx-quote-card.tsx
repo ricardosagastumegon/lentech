@@ -1,0 +1,1 @@
+export { FXQuoteCard } from './FXQuoteCard';

@@ -5,19 +5,31 @@ import { PINInput } from './PINInput';
 interface OTPInputProps {
   value: string;
   onChange: (val: string) => void;
+  onComplete?: () => void;
   onResend?: () => void;
   resendCountdown?: number;
   disabled?: boolean;
   error?: string;
+  className?: string;
 }
 
-export function OTPInput({ value, onChange, onResend, resendCountdown = 0, disabled, error }: OTPInputProps) {
+export function OTPInput({
+  value,
+  onChange,
+  onComplete,
+  onResend,
+  resendCountdown = 0,
+  disabled,
+  error,
+  className,
+}: OTPInputProps) {
   return (
-    <div className="text-center">
+    <div className={`text-center ${className ?? ''}`}>
       <PINInput
         length={6}
         value={value}
         onChange={onChange}
+        onComplete={onComplete}
         disabled={disabled}
         error={error}
         autoFocus

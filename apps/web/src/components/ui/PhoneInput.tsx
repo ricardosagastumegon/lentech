@@ -9,15 +9,16 @@ const COUNTRY_PREFIXES: Record<string, string> = {
 
 interface PhoneInputProps {
   value: string;
-  country: string;
+  country?: string;
   onChange: (val: string) => void;
   disabled?: boolean;
   error?: string;
   label?: string;
+  className?: string;
 }
 
-export function PhoneInput({ value, country, onChange, disabled, error, label }: PhoneInputProps) {
-  const prefix = COUNTRY_PREFIXES[country] ?? '+1';
+export function PhoneInput({ value, country = 'GT', onChange, disabled, error, label, className }: PhoneInputProps) {
+  const prefix = COUNTRY_PREFIXES[country] ?? '+502';
 
   function handle(e: ChangeEvent<HTMLInputElement>) {
     const raw = e.target.value.replace(/\D/g, '');
@@ -27,7 +28,7 @@ export function PhoneInput({ value, country, onChange, disabled, error, label }:
   const displayValue = value.startsWith(prefix) ? value.slice(prefix.length) : value.replace(/^\+\d+/, '');
 
   return (
-    <div>
+    <div className={className}>
       {label && <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>}
       <div className={`flex border-2 rounded-xl overflow-hidden transition-colors
         ${error ? 'border-red-400' : 'border-gray-200 focus-within:border-mondega-green'}`}
