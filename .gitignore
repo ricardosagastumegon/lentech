@@ -1,0 +1,73 @@
+# ============================================================
+# MONDEGA DIGITAL — .gitignore
+# ============================================================
+
+# ---- Env / secrets — NUNCA subir a GitHub ----
+.env
+.env.local
+.env.*.local
+*.env
+
+# Firebase service account (SECRETO)
+firebase-service-account.json
+firebase-service-account*.json
+google-services.json
+GoogleService-Info.plist
+
+# Certificados mTLS
+certs/
+*.pem
+*.key
+*.crt
+*.p12
+
+# ---- Node ----
+node_modules/
+.pnpm-store/
+
+# ---- Build outputs ----
+dist/
+.next/
+out/
+build/
+*.tsbuildinfo
+
+# ---- Go ----
+services/tx-engine/tx-engine
+services/tx-engine/bin/
+
+# ---- Logs ----
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# ---- OS ----
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ---- IDE ----
+.idea/
+.vscode/settings.json
+*.swp
+*.swo
+
+# ---- Coverage ----
+coverage/
+*.lcov
+.nyc_output/
+
+# ---- Turbo cache ----
+.turbo/
+
+# ---- Expo / Mobile ----
+apps/mobile/.expo/
+apps/mobile/android/app/build/
+apps/mobile/ios/build/
+apps/mobile/ios/Pods/
+apps/mobile/ios/DerivedData/
+
+# ---- Hardhat / Blockchain ----
+blockchain/artifacts/
+blockchain/cache/
+blockchain/typechain-types/

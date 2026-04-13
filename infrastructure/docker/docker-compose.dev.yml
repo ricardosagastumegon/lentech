@@ -1,0 +1,198 @@
+# ============================================================
+# MONDEGA DIGITAL — Docker Compose (Development)
+# Runs: PostgreSQL, MongoDB, Redis, Kafka, Zookeeper
+# Usage: pnpm docker:up
+# ============================================================
+
+version: '3.9'
+
+networks:
+  mondega-net:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  mongo_data:
+  redis_data:
+  kafka_data:
+  zookeeper_data:
+
+services:
+
+  # ---- PostgreSQL 16 (Primary Database) ----
+  postgres:
+    image: postgres:16-alpine
+    container_name: mondega-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: mondega_db
+      POSTGRES_USER: mondega_user
+      POSTGRES_PASSWORD: mondega_dev_password_change_in_prod
+      POSTGRES_INITDB_ARGS: "--auth-host=scram-sha-256"
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-scripts/postgres:/docker-entrypoint-initdb.d
+    networks:
+      - mondega-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mondega_user -d mondega_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ---- MongoDB 7 (Logs, Audit, Events) ----
+  mongo:
+    image: mongo:7-jammy
+    container_name: mondega-mongo
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: mondega_admin
+      MONGO_INITDB_ROOT_PASSWORD: mondega_dev_password_change_in_prod
+      MONGO_INITDB_DATABASE: mondega_logs
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+      - ./init-scripts/mongo:/docker-entrypoint-initdb.d
+    networks:
+      - mondega-net
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ---- Redis 7.2 (Cache, Sessions, Queues) ----
+  redis:
+    image: redis:7.2-alpine
+    container_name: mondega-redis
+    restart: unless-stopped
+    command: >
+      redis-server
+      --requirepass mondega_dev_password_change_in_prod
+      --appendonly yes
+      --appendfsync everysec
+      --maxmemory 512mb
+      --maxmemory-policy allkeys-lru
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - mondega-net
+    healthcheck:
+      test: ["CMD", "redis-cli", "--pass", "mondega_dev_password_change_in_prod", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ---- Zookeeper (required by Kafka) ----
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.6.0
+    container_name: mondega-zookeeper
+    restart: unless-stopped
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    volumes:
+      - zookeeper_data:/var/lib/zookeeper/data
+    networks:
+      - mondega-net
+
+  # ---- Apache Kafka (Event Streaming) ----
+  kafka:
+    image: confluentinc/cp-kafka:7.6.0
+    container_name: mondega-kafka
+    restart: unless-stopped
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'true'
+      KAFKA_LOG_RETENTION_HOURS: 168  # 7 days
+    ports:
+      - "9092:9092"
+    volumes:
+      - kafka_data:/var/lib/kafka/data
+    networks:
+      - mondega-net
+    healthcheck:
+      test: ["CMD", "kafka-broker-api-versions", "--bootstrap-server", "localhost:9092"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+
+  # ---- Kafka topics initializer ----
+  kafka-init:
+    image: confluentinc/cp-kafka:7.6.0
+    container_name: mondega-kafka-init
+    depends_on:
+      kafka:
+        condition: service_healthy
+    entrypoint: ["/bin/bash", "-c"]
+    command: |
+      "
+      echo 'Creating Kafka topics...'
+      kafka-topics --create --if-not-exists --bootstrap-server kafka:29092 --replication-factor 1 --partitions 3 --topic tx-execute
+      kafka-topics --create --if-not-exists --bootstrap-server kafka:29092 --replication-factor 1 --partitions 3 --topic tx-completed
+      kafka-topics --create --if-not-exists --bootstrap-server kafka:29092 --replication-factor 1 --partitions 3 --topic tx-failed
+      kafka-topics --create --if-not-exists --bootstrap-server kafka:29092 --replication-factor 1 --partitions 3 --topic notifications
+      kafka-topics --create --if-not-exists --bootstrap-server kafka:29092 --replication-factor 1 --partitions 1 --topic kyc-events
+      kafka-topics --create --if-not-exists --bootstrap-server kafka:29092 --replication-factor 1 --partitions 1 --topic compliance-events
+      kafka-topics --create --if-not-exists --bootstrap-server kafka:29092 --replication-factor 1 --partitions 1 --topic fiat-bridge-events
+      echo 'All Kafka topics ready.'
+      "
+    networks:
+      - mondega-net
+    restart: "no"
+
+  # ---- Kafka UI (dev only) ----
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: mondega-kafka-ui
+    restart: unless-stopped
+    depends_on:
+      - kafka
+    ports:
+      - "8080:8080"
+    environment:
+      KAFKA_CLUSTERS_0_NAME: mondega-local
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:29092
+    networks:
+      - mondega-net
+    profiles:
+      - tools  # Only starts with: docker-compose --profile tools up
+
+  # ---- Redis Commander (dev only) ----
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: mondega-redis-ui
+    restart: unless-stopped
+    environment:
+      REDIS_HOSTS: local:redis:6379:0:mondega_dev_password_change_in_prod
+    ports:
+      - "8081:8081"
+    networks:
+      - mondega-net
+    profiles:
+      - tools
+
+  # ---- Mailhog (dev email catcher) ----
+  mailhog:
+    image: mailhog/mailhog:latest
+    container_name: mondega-mailhog
+    restart: unless-stopped
+    ports:
+      - "1025:1025"   # SMTP
+      - "8025:8025"   # Web UI
+    networks:
+      - mondega-net
+    profiles:
+      - tools
