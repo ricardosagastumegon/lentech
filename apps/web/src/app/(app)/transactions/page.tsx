@@ -53,12 +53,27 @@ const DEMO_TX_BASE: Transaction[] = [
     createdAt: new Date(Date.now() - 1800000).toISOString(),
   },
   {
-    id: 'tx-007', type: 'fiat_withdraw', status: 'completed', direction: 'sent',
+    id: 'tx-007', type: 'token_buy', status: 'completed', direction: 'internal',
+    fromCoin: 'QUETZA', toCoin: 'QUETZA', fromAmount: '1250.00', toAmount: '1250.00',
+    fee: '0', feePercent: 0, description: 'Compra 1,250.00 QUETZA · 0%',
+    createdAt: new Date(Date.now() - 3600000).toISOString(),
+    completedAt: new Date(Date.now() - 3590000).toISOString(),
+  },
+  {
+    id: 'tx-008', type: 'fiat_withdraw', status: 'completed', direction: 'sent',
     fromCoin: 'QUETZA', toCoin: 'QUETZA', fromAmount: '500.00', toAmount: '497.50',
     fee: '2.50', feeUSD: 0.32, description: 'Retiro a cuenta Banrural',
     senderName: 'Carlos Mendoza',
     createdAt: new Date(Date.now() - 259200000).toISOString(),
     completedAt: new Date(Date.now() - 259100000).toISOString(),
+  },
+  {
+    id: 'tx-009', type: 'fiat_load', status: 'completed', direction: 'received',
+    fromCoin: 'QUETZA', toCoin: 'QUETZA', fromAmount: '1250.00', toAmount: '1250.00',
+    fee: '0', description: 'Depósito GTQ · Banrural',
+    senderName: 'Banrural Guatemala',
+    createdAt: new Date(Date.now() - 7200000).toISOString(),
+    completedAt: new Date(Date.now() - 7100000).toISOString(),
   },
 ];
 
@@ -67,12 +82,14 @@ type FilterType = 'all' | 'sent' | 'received' | 'load' | 'swap';
 
 const TYPE_LABELS: Record<Transaction['type'], string> = {
   transfer:     'Transferencia',
-  fiat_load:    'Carga',
-  fiat_withdraw:'Retiro',
+  fiat_load:    'Depósito',
+  fiat_withdraw:'Retiro bancario',
   fx_swap:      'Swap',
   fee:          'Comisión',
   refund:       'Reembolso',
   purchase:     'Compra',
+  token_buy:    'Compra de tokens',
+  token_sell:   'Venta de tokens',
 };
 
 const STATUS_COLORS: Record<Transaction['status'], string> = {
