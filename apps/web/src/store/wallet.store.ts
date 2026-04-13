@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 
 export const COINS = {
   // ── PHASE 1 — ACTIVE ──────────────────────────────────────────
@@ -95,7 +96,10 @@ interface WalletState {
   sellTokens: (coinCode: CoinCode, tokenAmount: number) => void;
 }
 
-export const useWalletStore = create<WalletState>((set, get) => ({
+export const useWalletStore = create<WalletState>()(
+  persist(
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  (set, _get) => ({
   wallets: [],
   transactions: [],
 
@@ -191,4 +195,12 @@ export const useWalletStore = create<WalletState>((set, get) => ({
       return { wallets, transactions: [tx, ...s.transactions] };
     });
   },
-}));
+  }),
+  {
+    name: 'mondega-wallet',
+    partialize: (state) => ({
+      wallets:      state.wallets,
+      transactions: state.transactions,
+    }),
+  },
+));

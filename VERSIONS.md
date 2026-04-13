@@ -2,7 +2,9 @@
 
 | Versión | Fecha | Deploy URL | Estado |
 |---------|-------|------------|--------|
-| **v0.3.0** | 13 Abr 2026 | [web-production-1c372.up.railway.app](https://web-production-1c372.up.railway.app) | ✅ LIVE |
+| **v0.4.1** | 13 Abr 2026 | [web-production-1c372.up.railway.app](https://web-production-1c372.up.railway.app) | ✅ LIVE |
+| v0.4.0 | 13 Abr 2026 | (mismo URL) | reemplazado |
+| v0.3.0 | 13 Abr 2026 | (mismo URL) | reemplazado |
 | v0.2.0 | 12 Abr 2026 | (mismo URL) | reemplazado |
 | v0.1.0 | 10 Abr 2026 | (mismo URL) | reemplazado |
 

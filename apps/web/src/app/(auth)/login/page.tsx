@@ -38,9 +38,9 @@ export default function LoginPage() {
       // fiatBalance = GTQ/MXN/HNL deposited from bank, not yet converted to tokens
       // balance     = tokens already purchased
       const demos: Record<string, { name: string; coin: string; balance: string; fiatBalance: string; usd: number; country: string }> = {
-        '11111': { name: 'Carlos Mendoza',  coin: 'QUETZA',  balance: '1200.00', fiatBalance: '1250.00', usd: 155.00, country: 'GT' },
-        '22222': { name: 'Sofía Hernández', coin: 'MEXCOIN', balance: '2400.00', fiatBalance: '2400.00', usd: 126.00, country: 'MX' },
-        '33333': { name: 'José Reyes',      coin: 'LEMPI',   balance: '7600.00', fiatBalance: '5000.00', usd: 512.00, country: 'HN' },
+        '11111': { name: 'Carlos Mendoza',  coin: 'QUETZA',  balance: '50000.00',  fiatBalance: '25000.00',  usd: 9500.00, country: 'GT' },
+        '22222': { name: 'Sofía Hernández', coin: 'MEXCOIN', balance: '250000.00', fiatBalance: '100000.00', usd: 7200.00, country: 'MX' },
+        '33333': { name: 'José Reyes',      coin: 'LEMPI',   balance: '500000.00', fiatBalance: '200000.00', usd: 8500.00, country: 'HN' },
       };
       const key = Object.keys(demos).find(k => phone.includes(k));
       const p = key ? demos[key] : demos['11111'];
@@ -75,7 +75,7 @@ export default function LoginPage() {
         {
           id: 'tx-1', type: 'fiat_load', status: 'completed', direction: 'received',
           fromCoin: coin, toCoin: coin,
-          fromAmount: p.balance, toAmount: p.balance, fee: '0',
+          fromAmount: p.fiatBalance, toAmount: p.balance, fee: '0',
           description: `Carga inicial ${p.coin}`,
           createdAt: new Date(Date.now() - 172800000).toISOString(),
         },
