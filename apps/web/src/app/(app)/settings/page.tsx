@@ -87,6 +87,7 @@ export default function SettingsPage() {
           { icon: '💳', label: 'Tarjeta LEN', href: '/card', badge: 'Próximamente' },
           { icon: '🔔', label: 'Notificaciones', href: '/notifications', badge: null },
           { icon: '🛡', label: 'Seguridad y PIN', href: '/security', badge: null },
+          { icon: '⚙️', label: 'Panel de administración', href: '/admin', badge: 'Admin' },
         ].map(item => (
           <a
             key={item.href}
