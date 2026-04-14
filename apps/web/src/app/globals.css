@@ -4,66 +4,111 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
+/* ─── Paleta LEN — fuente única de verdad ──────────────────────────────────
+   Cambiar aquí cambia TODO sin necesitar rebuild de Tailwind.
+   #4338CA = índigo-700 (profundo, institucional — no el violeta eléctrico anterior)
+   ──────────────────────────────────────────────────────────────────────── */
 :root {
-  --len-purple:  #4338CA;   /* índigo-700 — profundo, institucional, no eléctrico */
-  --len-violet:  #818CF8;   /* índigo-400 — acento suave, no lavanda */
-  --len-dark:    #1E1B4B;   /* navy oscuro — se mantiene, es perfecto */
-  --len-light:   #EEF2FF;   /* índigo-50 — fondo limpio, apenas teñido */
-  --len-border:  #E0E7FF;   /* índigo-100 — borde sutil */
-  --len-surface: #F9FAFB;   /* blanco neutro — sin tinte púrpura */
+  --len-purple:   #4338CA;
+  --len-violet:   #818CF8;
+  --len-dark:     #1E1B4B;
+  --len-mid:      #312E81;
+  --len-light:    #EEF2FF;
+  --len-border:   #E0E7FF;
+  --len-surface:  #F9FAFB;
+  --len-gradient: linear-gradient(135deg, #1E1B4B 0%, #312E81 55%, #4338CA 100%);
+  --len-shadow:   0 4px 24px rgba(67, 56, 202, 0.15);
+  --len-shadow-lg:0 8px 40px rgba(67, 56, 202, 0.20);
 }
 
 @layer base {
   body {
-    @apply bg-len-surface text-len-dark antialiased font-sans;
-  }
-  * {
-    @apply border-len-border;
+    background-color: var(--len-surface);
+    color: var(--len-dark);
+    @apply antialiased font-sans;
   }
 }
 
 @layer components {
-  /* Buttons */
+  /* ── Buttons ── */
   .btn-primary {
-    @apply bg-len-purple text-white font-semibold py-3.5 px-6 rounded-2xl
-           hover:bg-opacity-90 active:scale-[0.98] transition-all duration-150
-           disabled:opacity-40 disabled:cursor-not-allowed shadow-len;
+    background-color: var(--len-purple);
+    color: #fff;
+    box-shadow: var(--len-shadow);
+    @apply font-semibold py-3.5 px-6 rounded-2xl
+           hover:opacity-90 active:scale-[0.98] transition-all duration-150
+           disabled:opacity-40 disabled:cursor-not-allowed;
   }
   .btn-secondary {
-    @apply border-2 border-len-purple text-len-purple font-semibold py-3.5 px-6
-           rounded-2xl hover:bg-len-purple hover:text-white transition-all duration-150;
+    border: 2px solid var(--len-purple);
+    color: var(--len-purple);
+    @apply font-semibold py-3.5 px-6 rounded-2xl transition-all duration-150;
+  }
+  .btn-secondary:hover {
+    background-color: var(--len-purple);
+    color: #fff;
   }
   .btn-ghost {
-    @apply text-len-purple font-medium py-2 px-4 rounded-xl
-           hover:bg-len-light transition-colors;
+    color: var(--len-purple);
+    @apply font-medium py-2 px-4 rounded-xl transition-colors;
+  }
+  .btn-ghost:hover {
+    background-color: var(--len-light);
   }
 
-  /* Cards */
+  /* ── Cards ── */
   .card {
-    @apply bg-white rounded-3xl shadow-sm border border-len-border p-6;
+    background: #fff;
+    border: 1px solid var(--len-border);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    @apply rounded-3xl p-6;
   }
   .card-glass {
     @apply bg-white/60 backdrop-blur-xl rounded-3xl border border-white/40 p-6;
   }
 
-  /* Inputs */
+  /* ── Inputs ── */
   .input-field {
-    @apply w-full border-2 border-len-border rounded-2xl px-4 py-3.5 text-sm
-           focus:outline-none focus:ring-0 focus:border-len-purple transition-colors
+    border: 2px solid var(--len-border);
+    @apply w-full rounded-2xl px-4 py-3.5 text-sm
+           focus:outline-none focus:ring-0 transition-colors
            placeholder:text-gray-400 bg-white;
   }
+  .input-field:focus {
+    border-color: var(--len-purple);
+  }
 
-  /* Badges */
+  /* ── Badges ── */
   .badge-success { @apply bg-emerald-100 text-emerald-700 text-xs font-semibold px-2.5 py-1 rounded-full; }
-  .badge-warning { @apply bg-amber-100 text-amber-700 text-xs font-semibold px-2.5 py-1 rounded-full; }
-  .badge-error   { @apply bg-red-100 text-red-700 text-xs font-semibold px-2.5 py-1 rounded-full; }
-  .badge-purple  { @apply bg-len-light text-len-purple text-xs font-semibold px-2.5 py-1 rounded-full; }
+  .badge-warning { @apply bg-amber-100  text-amber-700  text-xs font-semibold px-2.5 py-1 rounded-full; }
+  .badge-error   { @apply bg-red-100    text-red-700    text-xs font-semibold px-2.5 py-1 rounded-full; }
+  .badge-purple  {
+    background-color: var(--len-light);
+    color: var(--len-purple);
+    @apply text-xs font-semibold px-2.5 py-1 rounded-full;
+  }
 
-  /* Amount display */
+  /* ── Amount display ── */
   .amount-display {
-    @apply text-4xl font-bold text-len-dark tabular-nums;
+    color: var(--len-dark);
+    @apply text-4xl font-bold tabular-nums;
   }
 }
+
+/* ── Gradient utility — override Tailwind's cached value ──────────────────── */
+.bg-len-gradient {
+  background-image: var(--len-gradient) !important;
+}
+.bg-len-surface  { background-color: var(--len-surface)  !important; }
+.bg-len-light    { background-color: var(--len-light)    !important; }
+.border-len-border { border-color:   var(--len-border)   !important; }
+.text-len-purple { color:            var(--len-purple)   !important; }
+.text-len-dark   { color:            var(--len-dark)     !important; }
+.text-len-violet { color:            var(--len-violet)   !important; }
+.bg-len-purple   { background-color: var(--len-purple)   !important; }
+.border-len-purple { border-color:   var(--len-purple)   !important; }
+.shadow-len      { box-shadow:       var(--len-shadow)   !important; }
+.shadow-len-lg   { box-shadow:       var(--len-shadow-lg)!important; }
 
 /* Scrollbar hide */
 .scrollbar-hide::-webkit-scrollbar { display: none; }
