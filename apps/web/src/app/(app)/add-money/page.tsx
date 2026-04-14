@@ -3,111 +3,80 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/auth.store';
-import { COINS, COUNTRY_TO_COIN, CoinCode } from '@/store/wallet.store';
+import { useWalletStore, COINS, COUNTRY_TO_COIN, CoinCode } from '@/store/wallet.store';
+import { DEPOSIT_MODEL, BankCountry } from '@/store/bank.store';
 
-// Virtual account numbers per user (production: from fiat-bridge API)
-function getVirtualAccount(userId: string, country: string) {
-  const seed = userId.slice(-4).padStart(4, '0');
-  const accounts: Record<string, { methods: VirtualAccount[] }> = {
-    GT: {
-      methods: [
-        {
-          bank: 'Banrural',
-          logo: '🏦',
-          type: 'Transferencia bancaria',
-          accountNumber: `5020-${seed}-GT-LEN`,
-          reference: `LEN${seed.toUpperCase()}GT`,
-          instructions: 'Realiza una transferencia a la cuenta Banrural de LEN e incluye tu referencia en el concepto. Al confirmar el depósito, los tokens QUETZA aparecen en tu wallet automáticamente.',
-          min: 'Q 50',
-          max: 'Q 25,000/día',
-          time: '< 30 min (L-V hábil)',
-        },
-        {
-          bank: 'BAM',
-          logo: '🏛',
-          type: 'Transferencia bancaria',
-          accountNumber: `3010-${seed}-GT-LEN`,
-          reference: `LEN${seed.toUpperCase()}GT`,
-          instructions: 'Transfiere quetzales a la cuenta BAM de LEN. Tu referencia única identifica tu compra. Los tokens QUETZA se acreditan tras confirmar el depósito.',
-          min: 'Q 50',
-          max: 'Q 25,000/día',
-          time: '< 1 hora (L-V hábil)',
-        },
-      ],
-    },
-    MX: {
-      methods: [
-        {
-          bank: 'SPEI (cualquier banco MX)',
-          logo: '🇲🇽',
-          type: 'CLABE interbancaria',
-          accountNumber: `646180${seed}00000001`,
-          reference: `LEN${seed.toUpperCase()}MX`,
-          instructions: 'Usa esta CLABE desde tu banca en línea para transferir MXN. El MEXCOIN aparece en tu wallet automáticamente en minutos.',
-          min: '$50 MXN',
-          max: '$200,000 MXN/día',
-          time: 'Inmediato (SPEI 24/7)',
-        },
-        {
-          bank: 'OXXO Pay',
-          logo: '🏪',
-          type: 'Pago en tienda',
-          accountNumber: `${seed}00OXXOLEN`,
-          reference: `LEN${seed.toUpperCase()}`,
-          instructions: 'Presenta este código en cualquier OXXO. Di "pago de servicio LEN". Los MEXCOIN se acreditan en < 2 horas.',
-          min: '$20 MXN',
-          max: '$10,000 MXN/día',
-          time: '< 2 horas',
-        },
-      ],
-    },
-    HN: {
-      methods: [
-        {
-          bank: 'Banco Atlántida',
-          logo: '🏦',
-          type: 'Transferencia bancaria',
-          accountNumber: `3090-${seed}-HN-LEN`,
-          reference: `LEN${seed.toUpperCase()}HN`,
-          instructions: 'Transfiere lempiras a la cuenta LEN en Atlántida con tu referencia. Los tokens LEMPI se acreditan al confirmar el depósito.',
-          min: 'L 500',
-          max: 'L 100,000/día',
-          time: '< 1 hora (L-V hábil)',
-        },
-      ],
-    },
+// ─── Generate the user's deposit account info ─────────────────────────────────
+// GT/HN: LEN sub-account at Banrural/BAC — last 4 digits = wallet suffix
+// MX:    CLABE virtual 18 digits unique per user (STP)
+
+function getUserDepositInfo(userId: string, country: BankCountry) {
+  const walletSuffix = userId.replace(/\D/g, '').slice(-4).padStart(4, '0');
+  const model        = DEPOSIT_MODEL[country];
+
+  if (country === 'MX') {
+    // CLABE: STP prefix (646180) + 11 user digits (from userId hash) + check digit
+    const raw    = userId.replace(/\D/g, '').padStart(11, '0').slice(0, 11);
+    const base17 = `646180${raw}`;
+    const check  = clabeCheck(base17);
+    const clabe  = `${base17}${check}`;
+    return {
+      type:        'clabe' as const,
+      bank:        'STP — Red SPEI',
+      displayAccount: clabe,
+      copyValue:   clabe,
+      label:       'Tu CLABE LEN (exclusiva)',
+      subLabel:    'Transfiere desde CUALQUIER banco mexicano',
+      note:        'El depósito llega en segundos, 24/7. No necesitas concepto ni referencia.',
+      min:         '$50 MXN',
+      max:         '$200,000 MXN/día',
+      time:        'Inmediato (SPEI 24/7)',
+    };
+  }
+
+  // GT / HN — sub-account model
+  const accountNumber = `${model.poolAccount}${walletSuffix}`;
+  return {
+    type:           'sub-account' as const,
+    bank:           model.bank,
+    displayAccount: accountNumber,
+    copyValue:      accountNumber.replace(/-/g, ''),
+    label:          `Tu cuenta LEN en ${model.bank}`,
+    subLabel:       `Desde CUALQUIER banco de ${country === 'GT' ? 'Guatemala' : 'Honduras'}`,
+    note:           model.note,
+    min:            country === 'GT' ? 'Q 50' : 'L 500',
+    max:            country === 'GT' ? 'Q 25,000/día' : 'L 100,000/día',
+    time:           '15–30 min (L-V hábil)',
   };
-  return accounts[country] ?? accounts['GT'];
 }
 
-interface VirtualAccount {
-  bank: string;
-  logo: string;
-  type: string;
-  accountNumber: string;
-  reference: string;
-  instructions: string;
-  min: string;
-  max: string;
-  time: string;
+// CLABE check digit (Banxico Luhn)
+function clabeCheck(clabe17: string): string {
+  const w = [3, 7, 1, 3, 7, 1, 3, 7, 1, 3, 7, 1, 3, 7, 1, 3, 7];
+  const s = clabe17.split('').reduce((acc, d, i) => acc + (parseInt(d) * w[i]) % 10, 0);
+  return String((10 - (s % 10)) % 10);
 }
 
 export default function AdquirirPage() {
-  const router = useRouter();
-  const { user } = useAuthStore();
-  const [selectedMethod, setSelectedMethod] = useState(0);
+  const router        = useRouter();
+  const { user }      = useAuthStore();
+  const wallets       = useWalletStore(s => s.wallets);
   const [copied, setCopied] = useState<string | null>(null);
 
-  const country  = user?.country ?? 'GT';
-  const coin     = COUNTRY_TO_COIN[country] ?? 'QUETZA';
-  const coinMeta = COINS[coin as CoinCode];
-  const accountData = getVirtualAccount(user?.id ?? 'demo', country);
-  const method      = accountData.methods[selectedMethod];
+  const country   = (user?.country ?? 'GT') as BankCountry;
+  const coin      = COUNTRY_TO_COIN[country] ?? 'QUETZA';
+  const coinMeta  = COINS[coin as CoinCode];
+  const wallet    = wallets.find(w => w.coin === coin);
+  const fiatBalance = parseFloat(wallet?.fiatBalance ?? '0');
 
-  function copy(text: string, label: string) {
+  const deposit = getUserDepositInfo(user?.id ?? 'demo-gt', country);
+
+  const fmt = (n: number) => n.toLocaleString('en-US', { minimumFractionDigits: 2 });
+
+  function copy(text: string, key: string) {
     navigator.clipboard.writeText(text).catch(() => {});
-    setCopied(label);
-    setTimeout(() => setCopied(null), 2200);
+    setCopied(key);
+    setTimeout(() => setCopied(null), 2500);
   }
 
   return (
@@ -119,44 +88,37 @@ export default function AdquirirPage() {
           ← Volver
         </button>
         <h1 className="text-2xl font-black text-len-dark">
-          Adquirir {coinMeta.flag} {coin}
+          Cargar wallet {coinMeta.flag}
         </h1>
         <p className="text-gray-500 text-sm mt-1">
-          Compra tokens <strong className="text-len-purple">{coin}</strong> con tus {coinMeta.fiat} a precio 1:1
+          Deposita {coinMeta.fiat} · llega a tu saldo fiat automáticamente
         </p>
       </div>
 
-      {/* Token info card */}
-      <div className="rounded-3xl border-2 border-len-border bg-white p-4 mb-5 flex items-center gap-4">
-        <div className="w-14 h-14 bg-len-gradient rounded-2xl flex items-center justify-center text-3xl shadow-len flex-shrink-0">
-          {coinMeta.flag}
+      {/* Current fiat balance */}
+      <div className="bg-len-light rounded-2xl px-4 py-3 border border-len-border flex items-center justify-between mb-5">
+        <div>
+          <p className="text-xs text-gray-400 font-medium">Saldo fiat disponible</p>
+          <p className="text-lg font-black text-len-dark tabular-nums">
+            {fmt(fiatBalance)} <span className="text-gray-400 font-bold text-sm">{coinMeta.fiat}</span>
+          </p>
         </div>
-        <div className="flex-1 min-w-0">
-          <p className="font-black text-len-dark text-base">{coin}</p>
-          <p className="text-sm text-gray-500 mt-0.5">{coinMeta.name}</p>
-          <div className="flex items-center gap-1.5 mt-1">
-            <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full" />
-            <span className="text-xs text-emerald-600 font-semibold">Respaldado 1:1 con {coinMeta.fiat}</span>
-          </div>
-        </div>
-        <div className="text-right flex-shrink-0">
-          <div className="bg-emerald-100 text-emerald-800 text-sm font-black px-3 py-1.5 rounded-full">
-            1:1
-          </div>
-          <p className="text-[10px] text-gray-400 mt-1">1 {coin} = 1 {coinMeta.fiat}</p>
-        </div>
+        <span className="text-2xl">{coinMeta.flag}</span>
       </div>
 
       {/* How it works */}
-      <div className="bg-len-light rounded-3xl px-4 py-3 border border-len-border mb-5">
-        <p className="text-xs font-bold text-len-purple mb-2">¿Cómo funciona?</p>
-        <div className="space-y-1.5">
+      <div className="bg-len-light rounded-3xl px-4 py-4 border border-len-border mb-5">
+        <p className="text-xs font-bold text-len-purple mb-3">¿Cómo funciona?</p>
+        <div className="space-y-2.5">
           {[
-            `Transfieres ${coinMeta.fiat} a la cuenta LEN usando tu banco`,
-            `LEN emite ${coin} tokens equivalentes y los acredita en tu wallet`,
-            `Usas tus ${coin} para enviar, recibir o intercambiar`,
+            country === 'MX'
+              ? `Transfieres ${coinMeta.fiat} desde tu banco a tu CLABE LEN exclusiva`
+              : `Transfieres ${coinMeta.fiat} desde CUALQUIER banco a tu cuenta LEN en ${deposit.bank}`,
+            `El banco notifica a LEN automáticamente — sin referencias ni pasos extras`,
+            `Tu saldo fiat aparece en la app${country === 'MX' ? ' en segundos' : ' en 15–30 minutos'}`,
+            `Conviertes fiat → tokens ${coin} cuando quieras (1:1, sin comisión)`,
           ].map((step, i) => (
-            <div key={i} className="flex items-start gap-2">
+            <div key={i} className="flex items-start gap-2.5">
               <span className="w-5 h-5 bg-len-purple text-white text-[10px] font-black rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
                 {i + 1}
               </span>
@@ -166,96 +128,116 @@ export default function AdquirirPage() {
         </div>
       </div>
 
-      {/* Method tabs */}
-      {accountData.methods.length > 1 && (
-        <div className="flex gap-2 mb-4 overflow-x-auto scrollbar-hide pb-1">
-          {accountData.methods.map((m, i) => (
-            <button
-              key={i}
-              onClick={() => setSelectedMethod(i)}
-              className={`flex-shrink-0 flex items-center gap-2 px-4 py-2 rounded-2xl border-2 text-sm font-semibold transition-all
-                ${i === selectedMethod
-                  ? 'border-len-purple bg-len-light text-len-purple'
-                  : 'border-len-border bg-white text-gray-500 hover:border-len-violet'}`}
-            >
-              <span>{m.logo}</span>
-              <span>{m.bank}</span>
-            </button>
-          ))}
-        </div>
-      )}
+      {/* Main deposit card */}
+      <div className="bg-white rounded-3xl border-2 border-len-border overflow-hidden mb-4">
 
-      {/* Account details */}
-      <div className="bg-white rounded-3xl border-2 border-len-border p-5 space-y-4">
-
-        <div>
-          <p className="text-[10px] text-gray-400 uppercase tracking-widest font-bold mb-0.5">{method.type}</p>
-          <p className="text-base font-black text-len-dark">{method.logo} {method.bank}</p>
-        </div>
-
-        {/* Account number */}
-        <div className="bg-len-light rounded-2xl p-4">
-          <div className="flex items-center justify-between mb-1.5">
-            <p className="text-xs text-gray-500 font-medium">Número de cuenta / CLABE</p>
-            <button
-              onClick={() => copy(method.accountNumber, 'cuenta')}
-              className={`text-xs font-bold transition-colors ${copied === 'cuenta' ? 'text-emerald-600' : 'text-len-purple'}`}
-            >
-              {copied === 'cuenta' ? '✓ Copiado' : 'Copiar'}
-            </button>
+        {/* Bank header */}
+        <div className="bg-len-gradient px-5 py-4 flex items-center justify-between">
+          <div>
+            <p className="text-white/60 text-xs font-medium">Tu cuenta de depósito LEN</p>
+            <p className="text-white font-bold text-sm mt-0.5">{deposit.bank}</p>
           </div>
-          <p className="font-mono text-len-dark font-bold text-lg tracking-wider break-all">
-            {method.accountNumber}
-          </p>
+          <span className="text-2xl">{coinMeta.flag}</span>
         </div>
 
-        {/* Reference — critical */}
-        <div className="bg-amber-50 rounded-2xl p-4 border-2 border-amber-200">
-          <div className="flex items-center justify-between mb-1.5">
-            <p className="text-xs text-amber-700 font-bold">⚠ Referencia obligatoria</p>
-            <button
-              onClick={() => copy(method.reference, 'ref')}
-              className={`text-xs font-bold transition-colors ${copied === 'ref' ? 'text-emerald-600' : 'text-len-purple'}`}
-            >
-              {copied === 'ref' ? '✓ Copiado' : 'Copiar'}
-            </button>
-          </div>
-          <p className="font-mono text-amber-900 font-black text-2xl tracking-widest">
-            {method.reference}
-          </p>
-          <p className="text-xs text-amber-600 mt-2">
-            Escríbela en el concepto de tu transferencia. Sin referencia, el depósito no se procesa automáticamente.
-          </p>
-        </div>
+        <div className="p-5 space-y-4">
 
-        {/* Instructions */}
-        <p className="text-sm text-gray-600 leading-relaxed">{method.instructions}</p>
-
-        {/* Limits grid */}
-        <div className="grid grid-cols-3 gap-2 pt-3 border-t border-len-border">
-          {[
-            { label: 'Mínimo',      value: method.min },
-            { label: 'Máx. diario', value: method.max },
-            { label: 'Tiempo',      value: method.time },
-          ].map(item => (
-            <div key={item.label} className="text-center bg-len-light rounded-xl py-2">
-              <p className="text-[10px] text-gray-400 font-medium">{item.label}</p>
-              <p className="text-xs font-bold text-len-dark mt-0.5">{item.value}</p>
+          {/* Account number / CLABE */}
+          <div>
+            <div className="flex items-center justify-between mb-1.5">
+              <p className="text-xs font-bold text-gray-400 uppercase tracking-wide">{deposit.label}</p>
+              <button
+                onClick={() => copy(deposit.copyValue, 'account')}
+                className={`text-xs font-bold transition-colors ${copied === 'account' ? 'text-emerald-600' : 'text-len-purple'}`}
+              >
+                {copied === 'account' ? '✓ Copiado' : 'Copiar'}
+              </button>
             </div>
-          ))}
+            <div className="bg-len-light rounded-2xl p-4 border border-len-border">
+              <p className="font-mono text-len-dark font-bold text-xl tracking-wider break-all">
+                {deposit.displayAccount}
+              </p>
+              <p className="text-xs text-gray-400 mt-1">{deposit.subLabel}</p>
+            </div>
+          </div>
+
+          {/* MX: extra CLABE info */}
+          {country === 'MX' && (
+            <div className="bg-indigo-50 rounded-2xl px-4 py-3 border border-indigo-100">
+              <p className="text-xs font-bold text-indigo-700 mb-1">¿Cómo transferir con CLABE?</p>
+              <p className="text-xs text-indigo-600 leading-relaxed">
+                En tu app bancaria → "Transferir" → "A otro banco" → pega esta CLABE.
+                BBVA, Santander, Banamex, Nu, Mercado Pago — todos soportan SPEI.
+                El depósito llega en segundos, los 365 días del año.
+              </p>
+            </div>
+          )}
+
+          {/* GT/HN: from any bank note */}
+          {country !== 'MX' && (
+            <div className="bg-emerald-50 rounded-2xl px-4 py-3 border border-emerald-100">
+              <p className="text-xs font-bold text-emerald-700 mb-1">
+                ✓ Acepta depósitos de CUALQUIER banco de {country === 'GT' ? 'Guatemala' : 'Honduras'}
+              </p>
+              <p className="text-xs text-emerald-600 leading-relaxed">
+                {country === 'GT'
+                  ? 'Industrial, BAM, G&T, Promerica, Bantrab, Citibank, Ficohsa y más — todos pueden transferir a esta cuenta Banrural.'
+                  : 'Atlántida, Ficohsa, Banpaís, Occidente, Davivienda, Promerica HN — todos pueden transferir a esta cuenta BAC.'}
+              </p>
+            </div>
+          )}
+
+          {/* Note */}
+          <p className="text-xs text-gray-500 leading-relaxed">{deposit.note}</p>
+
+          {/* Limits grid */}
+          <div className="grid grid-cols-3 gap-2 pt-3 border-t border-len-border">
+            {[
+              { label: 'Mínimo',      value: deposit.min },
+              { label: 'Máx. diario', value: deposit.max },
+              { label: 'Tiempo',      value: deposit.time },
+            ].map(item => (
+              <div key={item.label} className="text-center bg-len-light rounded-xl py-2">
+                <p className="text-[10px] text-gray-400 font-medium">{item.label}</p>
+                <p className="text-xs font-bold text-len-dark mt-0.5">{item.value}</p>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 
-      {/* Receive from other LEN users */}
+      {/* Warning — same account always */}
+      <div className="bg-amber-50 rounded-2xl px-4 py-3 border border-amber-100 mb-4">
+        <p className="text-xs font-bold text-amber-700 mb-1">
+          {country === 'MX' ? '🔐 Tu CLABE es permanente' : '🔐 Tu cuenta LEN es permanente'}
+        </p>
+        <p className="text-xs text-amber-600 leading-relaxed">
+          {country === 'MX'
+            ? 'Esta CLABE siempre es tuya. Puedes guardarla en tus contactos bancarios como "Cuenta LEN" para futuros depósitos.'
+            : `Este número de cuenta siempre es tuyo. Guárdalo en tus contactos bancarios como "Mi cuenta LEN ${deposit.bank}" para futuros depósitos.`}
+        </p>
+      </div>
+
+      {/* CTA — convert tokens */}
+      {fiatBalance > 0 && (
+        <div className="bg-len-light rounded-2xl px-4 py-4 border border-len-border flex items-center justify-between">
+          <div>
+            <p className="text-sm font-bold text-len-dark">Tienes {fmt(fiatBalance)} {coinMeta.fiat} disponibles</p>
+            <p className="text-xs text-gray-400 mt-0.5">Conviértelos a tokens {coin} para enviar o intercambiar</p>
+          </div>
+          <button onClick={() => router.push('/buy-tokens')} className="btn-primary text-sm px-4 py-2.5 whitespace-nowrap ml-3">
+            Comprar →
+          </button>
+        </div>
+      )}
+
+      {/* Receive from LEN users */}
       <div className="mt-4 bg-len-light rounded-3xl border border-len-border px-4 py-4">
         <p className="text-sm font-bold text-len-dark mb-1">Recibir de otro usuario LEN</p>
         <p className="text-xs text-gray-500 mb-3">
-          Si otro usuario LEN te envía {coin}, aparece directo en tu wallet. Solo comparte tu número o QR.
+          Si otro usuario LEN te envía {coin}, aparece directo en tu wallet sin pasar por el banco.
         </p>
-        <button
-          onClick={() => router.push('/receive')}
-          className="btn-secondary w-full text-sm py-2.5"
-        >
+        <button onClick={() => router.push('/receive')} className="btn-secondary w-full text-sm py-2.5">
           Ver mi QR →
         </button>
       </div>

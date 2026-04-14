@@ -35,8 +35,8 @@ function AddAccountForm({
     if (country === 'MX' && accountNum.replace(/\s/g, '').length !== 18) {
       setError('La CLABE debe tener exactamente 18 dígitos'); return false;
     }
-    if (country === 'GT' && accountNum.replace(/\s/g, '').length < 22) {
-      setError('El IBAN GT debe tener al menos 22 caracteres'); return false;
+    if (country !== 'MX' && accountNum.replace(/\D/g, '').length < 8) {
+      setError('El número de cuenta debe tener al menos 8 dígitos'); return false;
     }
     setError('');
     return true;
@@ -76,7 +76,7 @@ function AddAccountForm({
           </select>
         </div>
 
-        {/* Account number / IBAN / CLABE */}
+        {/* Account number / CLABE */}
         <div>
           <label className="block text-xs font-bold text-gray-400 uppercase tracking-wide mb-1.5">
             {label.field}
@@ -84,15 +84,18 @@ function AddAccountForm({
           </label>
           <input
             type="text"
-            inputMode={country === 'MX' ? 'numeric' : 'text'}
+            inputMode="numeric"
             className="w-full rounded-2xl border-2 border-len-border bg-len-light px-4 py-3
                        text-sm font-mono font-semibold text-len-dark placeholder:text-gray-300
-                       focus:outline-none focus:border-len-purple uppercase tracking-wider"
+                       focus:outline-none focus:border-len-purple tracking-wider"
             placeholder={label.placeholder}
             value={accountNum}
-            onChange={e => { setAccountNum(e.target.value); setError(''); }}
-            maxLength={label.length ? label.length + 4 : 30}
+            onChange={e => { setAccountNum(e.target.value.replace(/\D/g, '')); setError(''); }}
+            maxLength={country === 'MX' ? 18 : 16}
           />
+          {label.hint && (
+            <p className="text-xs text-gray-400 mt-1.5 leading-relaxed">{label.hint}</p>
+          )}
         </div>
 
         {/* Holder name */}
@@ -377,12 +380,24 @@ export default function WithdrawPage() {
             Agregar cuenta bancaria
           </button>
 
-          {/* Info */}
-          <div className="bg-amber-50 rounded-2xl px-4 py-3 border border-amber-100 text-xs text-amber-700 space-y-1">
-            <p className="font-bold">Tiempos estimados de acreditación</p>
-            {country === 'GT' && <p>Transferencia Banrural / BAM / Industrial · Hasta 1 hora hábil (L-V)</p>}
-            {country === 'MX' && <p>SPEI a cualquier banco MX · Inmediato 24/7</p>}
-            {country === 'HN' && <p>Atlántida / BAC / Ficohsa · Hasta 1 hora hábil (L-V)</p>}
+          {/* Interbank coverage info */}
+          <div className="bg-emerald-50 rounded-2xl px-4 py-3 border border-emerald-100">
+            <p className="text-xs font-bold text-emerald-700 mb-1">
+              ✓ Retiro a CUALQUIER banco de {country === 'GT' ? 'Guatemala' : country === 'MX' ? 'México' : 'Honduras'}
+            </p>
+            <p className="text-xs text-emerald-600 leading-relaxed">
+              {country === 'GT' && 'El retiro sale de LEN via Banrural → sistema ACH BANGUAT → llega a Industrial, BAM, G&T, Bantrab, Promerica, Citi GT y más.'}
+              {country === 'MX' && 'El retiro sale de LEN via SPEI → llega a cualquier banco con CLABE en México. Inmediato, 24/7.'}
+              {country === 'HN' && 'El retiro sale de LEN via BAC → sistema SIEFOM → llega a Atlántida, Ficohsa, Banpaís, Occidente, Davivienda y más.'}
+            </p>
+          </div>
+
+          {/* Time estimate */}
+          <div className="bg-amber-50 rounded-2xl px-4 py-3 border border-amber-100 text-xs text-amber-700">
+            <p className="font-bold mb-1">Tiempo de acreditación</p>
+            {country === 'GT' && <p>15–60 min (L-V 8am–5pm hábil). Fines de semana: siguiente día hábil.</p>}
+            {country === 'MX' && <p>Inmediato vía SPEI — disponible 24 horas, 365 días al año.</p>}
+            {country === 'HN' && <p>30–60 min (L-V 8am–5pm hábil). Fines de semana: siguiente día hábil.</p>}
           </div>
 
           {error && <div className="bg-red-50 text-red-700 rounded-2xl p-3 text-sm text-center">{error}</div>}
