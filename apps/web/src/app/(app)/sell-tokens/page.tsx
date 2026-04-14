@@ -260,13 +260,13 @@ export default function SellTokensPage() {
 
           <TransactionVoucher
             txId={txId}
-            typeLabel="Venta de tokens"
+            typeLabel="Liquidación de tokens"
             createdAt={txDate}
             lines={[
-              { label: 'Vendiste', value: `${fmt(numAmount)} ${coin}` },
-              { label: `Comisión (${fee.label})`, value: `-${fmt(feeAmount)} ${coin}`, highlight: 'amber' },
-              { label: 'Tasa', value: `1 ${coin} = 1 ${meta.fiat}`, mono: true },
-              { label: 'Recibiste en fiat', value: `+${fmt(netFiat)} ${meta.fiat}`, highlight: 'green', bold: true },
+              { label: 'Tokens liquidados', value: `${fmt(numAmount)} ${coin}` },
+              { label: 'Saldo acreditado', value: `+${fmt(netFiat)} ${meta.fiat}`, highlight: 'green', large: true },
+              { label: 'Tipo', value: `1 ${coin} = 1 ${meta.fiat}` },
+              { label: 'Estado', value: 'Disponible para retiro', highlight: 'green' },
             ]}
           />
 

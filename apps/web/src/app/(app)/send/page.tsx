@@ -284,18 +284,18 @@ export default function SendPage() {
 
           <TransactionVoucher
             txId={txId}
-            typeLabel={isFX ? 'Envío internacional (FX)' : 'Envío de tokens'}
+            typeLabel={isFX ? 'Envío internacional' : 'Envío de tokens'}
             createdAt={txDate}
             lines={[
-              { label: 'Para', value: recipientInfo?.displayName ?? recipient, bold: true },
-              { label: 'Enviaste', value: `${quote.fromAmount.toLocaleString('en-US', { minimumFractionDigits: 2 })} ${fromCoin}` },
+              { label: 'Destinatario', value: recipientInfo?.displayName ?? recipient, bold: true },
+              { label: 'Monto enviado', value: `${quote.fromAmount.toLocaleString('en-US', { minimumFractionDigits: 2 })} ${fromCoin}` },
               ...(isFX ? [
-                { label: 'Recibirá', value: `${quote.toAmount.toLocaleString('en-US', { minimumFractionDigits: 2 })} ${toCoin}`, highlight: 'green' as const },
-                { label: 'Tipo de cambio', value: quote.rateDisplay, mono: true },
-                { label: `Comisión LEN (${(quote.feePercent * 100).toFixed(1)}%)`, value: `-${quote.feeAmount.toFixed(4)} ${fromCoin}`, highlight: 'amber' as const },
+                { label: 'Destinatario recibe', value: `${quote.toAmount.toLocaleString('en-US', { minimumFractionDigits: 2 })} ${toCoin}`, highlight: 'green' as const, large: true },
+                { label: 'Tipo de cambio', value: quote.rateDisplay },
               ] : [
-                { label: 'Comisión', value: 'Gratis (red interna)', highlight: 'green' as const },
+                { label: 'Monto recibido', value: `${quote.fromAmount.toLocaleString('en-US', { minimumFractionDigits: 2 })} ${toCoin}`, highlight: 'green' as const, large: true },
               ]),
+              { label: 'Estado', value: 'Acreditado', highlight: 'green' as const },
             ]}
           />
 

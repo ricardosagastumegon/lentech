@@ -266,13 +266,13 @@ export default function BuyTokensPage() {
 
           <TransactionVoucher
             txId={txId}
-            typeLabel="Compra de tokens"
+            typeLabel="Adquisición de tokens"
             createdAt={txDate}
             lines={[
-              { label: 'Pagaste', value: `${fmt(numAmount)} ${meta.fiat}` },
-              { label: 'Comisión', value: fee.percent === 0 ? 'Gratis (0%)' : `-${fmt(feeAmount)} ${meta.fiat}`, highlight: 'green' },
-              { label: 'Tasa', value: `1 ${coin} = 1 ${meta.fiat}`, mono: true },
-              { label: 'Recibiste', value: `+${fmt(netTokens)} ${coin}`, highlight: 'purple', bold: true },
+              { label: 'Monto depositado', value: `${fmt(numAmount)} ${meta.fiat}` },
+              { label: 'Tokens recibidos', value: `+${fmt(netTokens)} ${coin}`, highlight: 'purple', large: true },
+              { label: 'Tipo', value: `1 ${coin} = 1 ${meta.fiat}` },
+              { label: 'Estado', value: 'Acreditado', highlight: 'green' },
             ]}
           />
 
