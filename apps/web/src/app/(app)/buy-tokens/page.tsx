@@ -6,6 +6,7 @@ import { useWalletStore, COINS, COUNTRY_TO_COIN, TOKEN_FEES } from '@/store/wall
 import { useAuthStore } from '@/store/auth.store';
 import { PINConfirmModal } from '@/components/ui/pin-confirm-modal';
 import { TransactionVoucher } from '@/components/ui/TransactionVoucher';
+import { saveUserSnapshot } from '@/lib/user-db';
 
 type Step = 'amount' | 'confirm' | 'success';
 
@@ -45,17 +46,18 @@ export default function BuyTokensPage() {
 
   async function handleExecute(pin: string) {
     setPinLoading(true);
-    // Demo PIN validation
-    if (pin !== '111111') {
-      setPinLoading(false);
-      throw new Error('PIN incorrecto');
-    }
-    // Small delay for UX
-    await new Promise(r => setTimeout(r, 600));
+    if (pin.length < 6) { setPinLoading(false); throw new Error('PIN incorrecto'); }
+    await new Promise(r => setTimeout(r, 400));
     const id  = buyTokens(coin, numAmount);
     const now = new Date().toISOString();
     setTxId(id);
     setTxDate(now);
+    // Persist to Firestore so balance syncs cross-device
+    const userId = user?.id;
+    if (userId) {
+      const state = useWalletStore.getState();
+      saveUserSnapshot(userId, { wallets: state.wallets, transactions: state.transactions, updatedAt: now });
+    }
     setPinLoading(false);
     setStep('success');
   }

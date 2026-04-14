@@ -192,8 +192,7 @@ export default function TransactionsPage() {
   const { user } = useAuthStore();
   const storeTxs = useWalletStore(s => s.transactions);
 
-  // Merge store txs + demo fallback
-  const allTxs: Transaction[] = storeTxs.length > 0 ? storeTxs : DEMO_TX_BASE;
+  const allTxs: Transaction[] = storeTxs;
 
   const [search,     setSearch]     = useState('');
   const [typeFilter, setTypeFilter] = useState<FilterType>('all');

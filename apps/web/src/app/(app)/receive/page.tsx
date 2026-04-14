@@ -5,10 +5,20 @@ import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/auth.store';
 import { useWalletStore, COINS, CoinCode } from '@/store/wallet.store';
 
+// Deterministic hash so QR pattern is stable across renders
+function hashCell(seed: string, index: number): boolean {
+  let h = 0x811c9dc5;
+  const s = seed + String(index);
+  for (let i = 0; i < s.length; i++) {
+    h ^= s.charCodeAt(i);
+    h = Math.imul(h, 0x01000193) >>> 0;
+  }
+  return (h & 1) === 1;
+}
+
 export default function ReceivePage() {
   const router = useRouter();
   const { user } = useAuthStore();
-  const wallets = useWalletStore(s => s.wallets);
   const [copied, setCopied] = useState(false);
 
   const phone = user?.phoneNumber ?? '';
@@ -34,15 +44,15 @@ export default function ReceivePage() {
         </p>
       </div>
 
-      {/* QR placeholder */}
+      {/* QR card */}
       <div className="card flex flex-col items-center py-8 mb-4">
         <div className="w-48 h-48 bg-len-gradient rounded-3xl flex items-center justify-center mb-4 shadow-len-lg relative overflow-hidden">
-          {/* QR pattern simulation */}
+          {/* Deterministic QR pattern — stable per phone number */}
           <div className="absolute inset-3 grid grid-cols-7 gap-0.5 opacity-40">
             {Array.from({ length: 49 }).map((_, i) => (
               <div
                 key={i}
-                className={`rounded-sm ${Math.random() > 0.45 ? 'bg-white' : ''}`}
+                className={`rounded-sm ${hashCell(phone || 'len', i) ? 'bg-white' : ''}`}
               />
             ))}
           </div>
@@ -58,15 +68,30 @@ export default function ReceivePage() {
           en cualquier moneda de la red.
         </p>
 
-        <button
-          onClick={() => copy(phone)}
-          className={`mt-4 flex items-center gap-2 px-6 py-2.5 rounded-2xl font-semibold text-sm transition-all
-            ${copied
-              ? 'bg-emerald-100 text-emerald-700'
-              : 'bg-len-light text-len-purple hover:bg-len-border'}`}
-        >
-          {copied ? '✓ Copiado' : '📋 Copiar número'}
-        </button>
+        <div className="flex gap-2 mt-4">
+          <button
+            onClick={() => copy(phone)}
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-2xl font-semibold text-sm transition-all
+              ${copied
+                ? 'bg-emerald-100 text-emerald-700'
+                : 'bg-len-light text-len-purple hover:bg-len-border'}`}
+          >
+            {copied ? '✓ Copiado' : '📋 Copiar número'}
+          </button>
+          <button
+            onClick={() => {
+              if (navigator.share) {
+                navigator.share({ title: 'Mi LEN', text: `Envíame dinero por LEN: ${phone}` }).catch(() => {});
+              } else {
+                copy(phone);
+              }
+            }}
+            className="flex items-center gap-2 px-5 py-2.5 rounded-2xl font-semibold text-sm
+                       bg-len-light text-len-purple hover:bg-len-border transition-all"
+          >
+            📤 Compartir
+          </button>
+        </div>
       </div>
 
       {/* Accepted coins */}

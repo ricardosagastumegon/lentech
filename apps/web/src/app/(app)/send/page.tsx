@@ -13,6 +13,7 @@ import { CoinCode, COUNTRY_TO_COIN, COINS, genTxId } from '@/store/wallet.store'
 import { useAuthStore } from '@/store/auth.store';
 import { useWalletStore } from '@/store/wallet.store';
 import { TransactionVoucher } from '@/components/ui/TransactionVoucher';
+import { creditTransfer } from '@/lib/user-db';
 
 type Step = 'recipient' | 'amount' | 'quote' | 'success';
 
@@ -60,54 +61,57 @@ export default function SendPage() {
     if (!quote) return;
     setLoading(true);
     setError('');
-    const now = new Date().toISOString();
+    const now  = new Date().toISOString();
+    const txId = genTxId(fromCoin !== toCoin ? 'FXS' : 'TRF');
+    // Recipient tx gets a different ID so both sender+receiver have unique records
+    const rxId = genTxId(fromCoin !== toCoin ? 'FXS' : 'TRF');
+
     try {
-      const res = await apiClient.post('/wallet/transfer', {
-        toIdentifier: recipient,
-        fromCoin, toCoin,
-        fromAmount: quote.fromAmount,
-        quoteId: `local-${Date.now()}`,
-        pin, description,
+      await apiClient.post('/wallet/transfer', {
+        toIdentifier: recipient, fromCoin, toCoin,
+        fromAmount: quote.fromAmount, quoteId: `local-${Date.now()}`, pin, description,
       });
-      const id = res.data?.id ?? genTxId(fromCoin !== toCoin ? 'FXS' : 'TRF');
-      setTxId(id);
-      setTxDate(now);
-      recordTransfer({
-        id, type: fromCoin !== toCoin ? 'fx_swap' : 'transfer',
-        status: 'completed', direction: 'sent',
-        fromCoin, toCoin,
-        fromAmount: quote.fromAmount.toFixed(2),
-        toAmount: quote.toAmount.toFixed(2),
-        fee: quote.feeAmount.toFixed(4),
-        feePercent: quote.feePercent,
-        description: description || undefined,
-        recipientName: recipientInfo?.displayName ?? recipient,
-        createdAt: now, completedAt: now,
-      });
-      setStep('success');
-    } catch {
-      // Demo mode: backend not connected, still record locally
-      const id = genTxId(fromCoin !== toCoin ? 'FXS' : 'TRF');
-      setTxId(id);
-      setTxDate(now);
-      if (quote) {
-        recordTransfer({
-          id, type: fromCoin !== toCoin ? 'fx_swap' : 'transfer',
-          status: 'completed', direction: 'sent',
+    } catch { /* demo mode — backend offline, continue */ }
+
+    // ── Record sender's transaction (always) ─────────────────────────────────
+    recordTransfer({
+      id: txId, type: fromCoin !== toCoin ? 'fx_swap' : 'transfer',
+      status: 'completed', direction: 'sent',
+      fromCoin, toCoin,
+      fromAmount: quote.fromAmount.toFixed(2),
+      toAmount:   quote.toAmount.toFixed(2),
+      fee: quote.feeAmount.toFixed(4), feePercent: quote.feePercent,
+      description: description || undefined,
+      recipientName: recipientInfo?.displayName ?? recipient,
+      createdAt: now, completedAt: now,
+    });
+
+    // ── Credit recipient via Firestore (cross-user real-time) ─────────────────
+    if (recipientInfo?.userId) {
+      const toCoinMeta = COINS[toCoin];
+      await creditTransfer({
+        recipientId:  recipientInfo.userId,
+        coin:         toCoin,
+        fiatCurrency: toCoinMeta.fiat,
+        amount:       quote.toAmount,
+        transaction: {
+          id: rxId, type: fromCoin !== toCoin ? 'fx_swap' : 'transfer',
+          status: 'completed', direction: 'received',
           fromCoin, toCoin,
           fromAmount: quote.fromAmount.toFixed(2),
-          toAmount: quote.toAmount.toFixed(2),
-          fee: quote.feeAmount.toFixed(4),
-          feePercent: quote.feePercent,
-          description: description || undefined,
-          recipientName: recipientInfo?.displayName ?? recipient,
+          toAmount:   quote.toAmount.toFixed(2),
+          fee: quote.feeAmount.toFixed(4), feePercent: quote.feePercent,
+          description: description || `Recibido de ${user?.displayName ?? 'usuario LEN'}`,
+          senderName:  user?.displayName ?? undefined,
           createdAt: now, completedAt: now,
-        });
-      }
-      setStep('success');
-    } finally {
-      setLoading(false);
+        },
+      });
     }
+
+    setTxId(txId);
+    setTxDate(now);
+    setStep('success');
+    setLoading(false);
   }
 
   return (

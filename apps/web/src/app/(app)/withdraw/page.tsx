@@ -256,7 +256,7 @@ export default function WithdrawPage() {
 
   async function handleExecute(pin: string) {
     setPinLoading(true);
-    if (pin !== '111111') {
+    if (pin.length < 6) {
       setPinLoading(false);
       throw new Error('PIN incorrecto');
     }
