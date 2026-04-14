@@ -1,4 +1,5 @@
 import { initializeApp, getApps, type FirebaseApp } from 'firebase/app';
+import { getFirestore, type Firestore } from 'firebase/firestore';
 import { getMessaging, type Messaging } from 'firebase/messaging';
 
 // Project: lentech-216a0
@@ -13,6 +14,7 @@ const firebaseConfig = {
 };
 
 let firebaseApp: FirebaseApp;
+let firestoreDb: Firestore | null = null;
 let messaging: Messaging | null = null;
 
 export function getFirebaseApp(): FirebaseApp {
@@ -22,6 +24,13 @@ export function getFirebaseApp(): FirebaseApp {
       : getApps()[0];
   }
   return firebaseApp;
+}
+
+export function getDb(): Firestore {
+  if (!firestoreDb) {
+    firestoreDb = getFirestore(getFirebaseApp());
+  }
+  return firestoreDb;
 }
 
 export async function getFirebaseMessaging(): Promise<Messaging | null> {

@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/auth.store';
 import { useWalletStore, COINS, COUNTRY_TO_COIN } from '@/store/wallet.store';
+import { stopWalletSync } from '@/lib/wallet-sync';
 
 const KYC_LEVELS = [
   { level: 0, name: 'Anónimo',   limit: '$200/mes',    color: 'bg-gray-100 text-gray-600' },
@@ -116,7 +117,7 @@ export default function SettingsPage() {
 
       {/* Logout */}
       <button
-        onClick={() => { logout(); router.push('/login'); }}
+        onClick={() => { stopWalletSync(); logout(); router.push('/login'); }}
         className="w-full py-3 rounded-2xl border-2 border-red-200 text-red-500 font-semibold text-sm hover:bg-red-50 transition-colors"
       >
         Cerrar sesión
