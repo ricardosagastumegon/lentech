@@ -84,6 +84,16 @@ export interface Transaction {
   completedAt?: string;
 }
 
+// ─── TX ID generator ───────────────────────────────────────────────────────
+// Format: LEN-YYYYMMDD-TYPE-RAND5
+// Types: TRF=transfer, TKB=token buy, TKS=token sell, FXS=FX swap
+export function genTxId(type: 'TRF' | 'TKB' | 'TKS' | 'FXS' | 'FLD' | 'FWD'): string {
+  const d    = new Date();
+  const date = `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}`;
+  const rand = Math.random().toString(36).substring(2, 7).toUpperCase();
+  return `LEN-${date}-${type}-${rand}`;
+}
+
 interface WalletState {
   wallets: WalletBalance[];
   transactions: Transaction[];
@@ -92,8 +102,10 @@ interface WalletState {
   setTransactions: (txs: Transaction[]) => void;
   appendTransactions: (txs: Transaction[]) => void;
   // Token exchange actions (client-side demo — production hits wallet-service API)
-  buyTokens: (coinCode: CoinCode, fiatAmount: number) => void;
-  sellTokens: (coinCode: CoinCode, tokenAmount: number) => void;
+  // Returns the generated TX ID for use in receipt/voucher display
+  buyTokens: (coinCode: CoinCode, fiatAmount: number) => string;
+  sellTokens: (coinCode: CoinCode, tokenAmount: number) => string;
+  recordTransfer: (tx: Transaction) => void;
 }
 
 export const useWalletStore = create<WalletState>()(
@@ -117,10 +129,11 @@ export const useWalletStore = create<WalletState>()(
   // ── Buy tokens: convert fiat → tokens ──────────────────────────────────────
   // fee = TOKEN_FEES.BUY.percent (currently 0)
   // tokensReceived = fiatAmount × (1 - buyFee) — always 1:1 after fee
-  buyTokens: (coinCode: CoinCode, fiatAmount: number) => {
+  buyTokens: (coinCode: CoinCode, fiatAmount: number): string => {
     const fee        = fiatAmount * TOKEN_FEES.BUY.percent;
     const netTokens  = fiatAmount - fee;
     const now        = new Date().toISOString();
+    const txId       = genTxId('TKB');
 
     set(s => {
       const wallets = s.wallets.map(w => {
@@ -136,7 +149,7 @@ export const useWalletStore = create<WalletState>()(
       });
 
       const tx: Transaction = {
-        id:          `tx-buy-${Date.now()}`,
+        id:          txId,
         type:        'token_buy',
         status:      'completed',
         direction:   'internal',
@@ -153,15 +166,18 @@ export const useWalletStore = create<WalletState>()(
 
       return { wallets, transactions: [tx, ...s.transactions] };
     });
+
+    return txId;
   },
 
   // ── Sell tokens: convert tokens → fiat ─────────────────────────────────────
   // fee = TOKEN_FEES.SELL.percent (currently 0.5%)
   // fiatReceived = tokenAmount × (1 - sellFee) — 1:1 minus fee
-  sellTokens: (coinCode: CoinCode, tokenAmount: number) => {
+  sellTokens: (coinCode: CoinCode, tokenAmount: number): string => {
     const fee         = tokenAmount * TOKEN_FEES.SELL.percent;
     const netFiat     = tokenAmount - fee;
     const now         = new Date().toISOString();
+    const txId        = genTxId('TKS');
 
     set(s => {
       const wallets = s.wallets.map(w => {
@@ -177,7 +193,7 @@ export const useWalletStore = create<WalletState>()(
       });
 
       const tx: Transaction = {
-        id:          `tx-sell-${Date.now()}`,
+        id:          txId,
         type:        'token_sell',
         status:      'completed',
         direction:   'internal',
@@ -194,7 +210,13 @@ export const useWalletStore = create<WalletState>()(
 
       return { wallets, transactions: [tx, ...s.transactions] };
     });
+
+    return txId;
   },
+
+  recordTransfer: (tx: Transaction) => set(s => ({
+    transactions: [tx, ...s.transactions],
+  })),
   }),
   {
     name: 'mondega-wallet',

@@ -9,16 +9,19 @@ import { PINConfirmModal } from '@/components/ui/pin-confirm-modal';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { apiClient } from '@/lib/api-client';
 import { calculateFXQuote, FXQuoteResult } from '@/lib/fx-engine';
-import { CoinCode, COUNTRY_TO_COIN, COINS } from '@/store/wallet.store';
+import { CoinCode, COUNTRY_TO_COIN, COINS, genTxId } from '@/store/wallet.store';
 import { useAuthStore } from '@/store/auth.store';
 import { useWalletStore } from '@/store/wallet.store';
+import { TransactionVoucher } from '@/components/ui/TransactionVoucher';
 
 type Step = 'recipient' | 'amount' | 'quote' | 'success';
 
 export default function SendPage() {
   const router = useRouter();
   const { user } = useAuthStore();
-  const wallets = useWalletStore(s => s.wallets);
+  const wallets          = useWalletStore(s => s.wallets);
+  const recordTransfer   = useWalletStore(s => s.recordTransfer);
+  const [txDate, setTxDate] = useState('');
 
   const defaultCoin: CoinCode = (user?.country ? COUNTRY_TO_COIN[user.country] : 'QUETZA') ?? 'QUETZA';
 
@@ -57,6 +60,7 @@ export default function SendPage() {
     if (!quote) return;
     setLoading(true);
     setError('');
+    const now = new Date().toISOString();
     try {
       const res = await apiClient.post('/wallet/transfer', {
         toIdentifier: recipient,
@@ -65,11 +69,41 @@ export default function SendPage() {
         quoteId: `local-${Date.now()}`,
         pin, description,
       });
-      setTxId(res.data?.id ?? `demo-${Date.now()}`);
+      const id = res.data?.id ?? genTxId(fromCoin !== toCoin ? 'FXS' : 'TRF');
+      setTxId(id);
+      setTxDate(now);
+      recordTransfer({
+        id, type: fromCoin !== toCoin ? 'fx_swap' : 'transfer',
+        status: 'completed', direction: 'sent',
+        fromCoin, toCoin,
+        fromAmount: quote.fromAmount.toFixed(2),
+        toAmount: quote.toAmount.toFixed(2),
+        fee: quote.feeAmount.toFixed(4),
+        feePercent: quote.feePercent,
+        description: description || undefined,
+        recipientName: recipientInfo?.displayName ?? recipient,
+        createdAt: now, completedAt: now,
+      });
       setStep('success');
     } catch {
-      // Demo mode: backend not connected
-      setTxId(`demo-tx-${Date.now()}`);
+      // Demo mode: backend not connected, still record locally
+      const id = genTxId(fromCoin !== toCoin ? 'FXS' : 'TRF');
+      setTxId(id);
+      setTxDate(now);
+      if (quote) {
+        recordTransfer({
+          id, type: fromCoin !== toCoin ? 'fx_swap' : 'transfer',
+          status: 'completed', direction: 'sent',
+          fromCoin, toCoin,
+          fromAmount: quote.fromAmount.toFixed(2),
+          toAmount: quote.toAmount.toFixed(2),
+          fee: quote.feeAmount.toFixed(4),
+          feePercent: quote.feePercent,
+          description: description || undefined,
+          recipientName: recipientInfo?.displayName ?? recipient,
+          createdAt: now, completedAt: now,
+        });
+      }
       setStep('success');
     } finally {
       setLoading(false);
@@ -237,30 +271,33 @@ export default function SendPage() {
         </div>
       )}
 
-      {/* ── Success ── */}
+      {/* ── Success + Voucher ── */}
       {step === 'success' && quote && (
-        <div className="text-center py-8">
-          <div className="w-24 h-24 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-6">
-            <span className="text-5xl">✓</span>
-          </div>
-          <h2 className="text-2xl font-black text-len-dark mb-2">¡Enviado!</h2>
-          <p className="text-gray-500 mb-1">
-            {quote.fromAmount.toLocaleString()} {fromCoin}
-            {isFX && ` → ${quote.toAmount.toLocaleString('en-US', { minimumFractionDigits: 2 })} ${toCoin}`}
-          </p>
-          <p className="text-gray-400 text-sm mb-1">para {recipientInfo?.displayName ?? recipient}</p>
-          <p className="text-gray-300 text-xs mb-8 font-mono">ID: {txId}</p>
-
-          {isFX && (
-            <div className="bg-len-light rounded-2xl p-4 mb-6 border border-len-border">
-              <p className="text-len-purple text-sm font-bold">
-                Comisión LEN: {(quote.feePercent * 100).toFixed(1)}%
-              </p>
-              <p className="text-gray-400 text-xs mt-0.5">
-                Tipo de cambio: {quote.rateDisplay}
-              </p>
+        <div className="space-y-6 py-4">
+          <div className="text-center">
+            <div className="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4 border-2 border-emerald-200">
+              <span className="text-4xl">✓</span>
             </div>
-          )}
+            <h2 className="text-2xl font-black text-len-dark mb-1">¡Enviado!</h2>
+            <p className="text-gray-400 text-sm">Tu comprobante está listo para compartir</p>
+          </div>
+
+          <TransactionVoucher
+            txId={txId}
+            typeLabel={isFX ? 'Envío internacional (FX)' : 'Envío de tokens'}
+            createdAt={txDate}
+            lines={[
+              { label: 'Para', value: recipientInfo?.displayName ?? recipient, bold: true },
+              { label: 'Enviaste', value: `${quote.fromAmount.toLocaleString('en-US', { minimumFractionDigits: 2 })} ${fromCoin}` },
+              ...(isFX ? [
+                { label: 'Recibirá', value: `${quote.toAmount.toLocaleString('en-US', { minimumFractionDigits: 2 })} ${toCoin}`, highlight: 'green' as const },
+                { label: 'Tipo de cambio', value: quote.rateDisplay, mono: true },
+                { label: `Comisión LEN (${(quote.feePercent * 100).toFixed(1)}%)`, value: `-${quote.feeAmount.toFixed(4)} ${fromCoin}`, highlight: 'amber' as const },
+              ] : [
+                { label: 'Comisión', value: 'Gratis (red interna)', highlight: 'green' as const },
+              ]),
+            ]}
+          />
 
           <div className="space-y-3">
             <button className="btn-primary w-full" onClick={() => router.push('/dashboard')}>

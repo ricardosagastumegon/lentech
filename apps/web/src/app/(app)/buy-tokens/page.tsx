@@ -4,6 +4,8 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useWalletStore, COINS, COUNTRY_TO_COIN, TOKEN_FEES } from '@/store/wallet.store';
 import { useAuthStore } from '@/store/auth.store';
+import { PINConfirmModal } from '@/components/ui/pin-confirm-modal';
+import { TransactionVoucher } from '@/components/ui/TransactionVoucher';
 
 type Step = 'amount' | 'confirm' | 'success';
 
@@ -20,14 +22,20 @@ export default function BuyTokensPage() {
   const fiatAvailable = parseFloat(wallet?.fiatBalance ?? '0');
   const fee           = TOKEN_FEES.BUY;
 
-  const [step,   setStep]   = useState<Step>('amount');
-  const [amount, setAmount] = useState('');
-  const [error,  setError]  = useState('');
+  const [step,      setStep]    = useState<Step>('amount');
+  const [amount,    setAmount]  = useState('');
+  const [error,     setError]   = useState('');
+  const [txId,      setTxId]    = useState('');
+  const [txDate,    setTxDate]  = useState('');
+  const [pinLoading, setPinLoading] = useState(false);
 
   const numAmount  = parseFloat(amount) || 0;
   const feeAmount  = numAmount * fee.percent;
   const netTokens  = numAmount - feeAmount;
   const isValid    = numAmount > 0 && numAmount <= fiatAvailable;
+
+  const fmt = (n: number) =>
+    n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
   function handleConfirm() {
     if (!isValid) { setError('Monto inválido'); return; }
@@ -35,13 +43,22 @@ export default function BuyTokensPage() {
     setStep('confirm');
   }
 
-  function handleExecute() {
-    buyTokens(coin, numAmount);
+  async function handleExecute(pin: string) {
+    setPinLoading(true);
+    // Demo PIN validation
+    if (pin !== '111111') {
+      setPinLoading(false);
+      throw new Error('PIN incorrecto');
+    }
+    // Small delay for UX
+    await new Promise(r => setTimeout(r, 600));
+    const id  = buyTokens(coin, numAmount);
+    const now = new Date().toISOString();
+    setTxId(id);
+    setTxDate(now);
+    setPinLoading(false);
     setStep('success');
   }
-
-  const fmt = (n: number) =>
-    n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
   return (
     <div className="max-w-md mx-auto px-4 pb-6">
@@ -217,37 +234,47 @@ export default function BuyTokensPage() {
             </div>
           </div>
 
-          <button className="btn-primary w-full" onClick={handleExecute}>
-            Confirmar compra de {coin}
-          </button>
+          {/* PIN confirm */}
+          <PINConfirmModal
+            trigger={
+              <button className="btn-primary w-full">
+                🔒 Confirmar con PIN
+              </button>
+            }
+            onConfirm={handleExecute}
+            loading={pinLoading}
+            title="Confirmar compra"
+            description={`Autoriza la compra de ${fmt(netTokens)} ${coin} por ${fmt(numAmount)} ${meta.fiat}`}
+          />
+
           <button className="btn-secondary w-full" onClick={() => setStep('amount')}>
             Modificar monto
           </button>
         </div>
       )}
 
-      {/* ── Step: Success ── */}
+      {/* ── Step: Success + Voucher ── */}
       {step === 'success' && (
-        <div className="text-center py-8">
-          <div className="w-24 h-24 bg-len-light rounded-full flex items-center justify-center mx-auto mb-6 border-2 border-len-border">
-            <span className="text-5xl">{meta.flag}</span>
+        <div className="space-y-6 py-4">
+          <div className="text-center">
+            <div className="w-20 h-20 bg-len-light rounded-full flex items-center justify-center mx-auto mb-4 border-2 border-len-border">
+              <span className="text-4xl">{meta.flag}</span>
+            </div>
+            <h2 className="text-2xl font-black text-len-dark mb-1">¡Tokens adquiridos!</h2>
+            <p className="text-gray-400 text-sm">Tu comprobante está listo para compartir</p>
           </div>
-          <h2 className="text-2xl font-black text-len-dark mb-2">¡Tokens adquiridos!</h2>
-          <p className="text-gray-500 mb-1 text-lg font-bold">
-            +{fmt(netTokens)} <span className="text-len-purple">{coin}</span>
-          </p>
-          <p className="text-gray-400 text-sm mb-8">
-            Pagaste {fmt(numAmount)} {meta.fiat}
-            {fee.percent > 0 && ` · Comisión ${fmt(feeAmount)} ${meta.fiat}`}
-          </p>
 
-          <div className="bg-len-light rounded-2xl p-4 mb-6 border border-len-border text-left">
-            <p className="text-len-purple text-xs font-bold mb-1">Tus tokens están listos</p>
-            <p className="text-gray-500 text-xs leading-relaxed">
-              Puedes usar tus <strong>{coin}</strong> para enviar a cualquier usuario LEN en Mesoamérica,
-              recibir de otros, o intercambiarlos por otras monedas de la red.
-            </p>
-          </div>
+          <TransactionVoucher
+            txId={txId}
+            typeLabel="Compra de tokens"
+            createdAt={txDate}
+            lines={[
+              { label: 'Pagaste', value: `${fmt(numAmount)} ${meta.fiat}` },
+              { label: 'Comisión', value: fee.percent === 0 ? 'Gratis (0%)' : `-${fmt(feeAmount)} ${meta.fiat}`, highlight: 'green' },
+              { label: 'Tasa', value: `1 ${coin} = 1 ${meta.fiat}`, mono: true },
+              { label: 'Recibiste', value: `+${fmt(netTokens)} ${coin}`, highlight: 'purple', bold: true },
+            ]}
+          />
 
           <div className="space-y-3">
             <button className="btn-primary w-full" onClick={() => router.push('/dashboard')}>
