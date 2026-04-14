@@ -58,6 +58,28 @@ export interface FXRateOverride {
   updatedAt: string;
 }
 
+export type UserStatus = 'active' | 'suspended' | 'blocked';
+export type UserTag    = 'vip' | 'corporate' | 'test' | 'flagged' | 'staff';
+
+export interface UserOverride {
+  userId:      string;
+  displayName: string;
+  phone:       string;
+  country:     string;
+  kycLevel:    number;
+  status:      UserStatus;
+  tags:        UserTag[];
+  // Límites personalizados — null = usa el global
+  maxSendPerTxUSD:    number | null;
+  maxSendDailyUSD:    number | null;
+  maxWithdrawPerTxUSD: number | null;
+  monthlyLimitUSD:    number | null;
+  customFeePercent:   number | null;   // null = usa fee global
+  notes:       string;
+  createdAt:   string;
+  updatedAt:   string;
+}
+
 export interface AdminState {
   // ── Auth ────────────────────────────────
   isAuthenticated: boolean;
@@ -81,6 +103,9 @@ export interface AdminState {
   // ── FX rate overrides ───────────────────
   fxOverrides: FXRateOverride[];
 
+  // ── Per-user overrides ───────────────────
+  userOverrides: UserOverride[];
+
   // ── Actions ─────────────────────────────
   login:            (password: string) => boolean;
   logout:           () => void;
@@ -93,6 +118,9 @@ export interface AdminState {
   setTxLimits:      (limits: Partial<TxLimits>) => void;
   setFXOverride:    (coin: string, rate: number, enabled: boolean) => void;
   pingAllBanks:     () => void;
+  upsertUserOverride: (override: Omit<UserOverride, 'createdAt' | 'updatedAt'> & { createdAt?: string }) => void;
+  setUserStatus:    (userId: string, status: UserStatus) => void;
+  removeUserOverride: (userId: string) => void;
 }
 
 // ── Default bank list ─────────────────────────────────────────────────────────
@@ -164,6 +192,33 @@ const DEFAULT_FX: FXRateOverride[] = [
   { coin: 'DOLAR',   usdRate: 1.00000, enabled: false, updatedAt: new Date().toISOString() },
 ];
 
+const DEFAULT_USER_OVERRIDES: UserOverride[] = [
+  {
+    userId: 'demo-gt', displayName: 'Carlos Mendoza', phone: '+50211111', country: 'GT', kycLevel: 2,
+    status: 'active', tags: ['test'],
+    maxSendPerTxUSD: null, maxSendDailyUSD: null, maxWithdrawPerTxUSD: null,
+    monthlyLimitUSD: null, customFeePercent: null,
+    notes: 'Usuario demo Guatemala',
+    createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
+  },
+  {
+    userId: 'demo-mx', displayName: 'Sofía Hernández', phone: '+52122222', country: 'MX', kycLevel: 2,
+    status: 'active', tags: ['test'],
+    maxSendPerTxUSD: null, maxSendDailyUSD: null, maxWithdrawPerTxUSD: null,
+    monthlyLimitUSD: null, customFeePercent: null,
+    notes: 'Usuario demo México',
+    createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
+  },
+  {
+    userId: 'demo-hn', displayName: 'José Reyes', phone: '+50433333', country: 'HN', kycLevel: 2,
+    status: 'active', tags: ['test'],
+    maxSendPerTxUSD: null, maxSendDailyUSD: null, maxWithdrawPerTxUSD: null,
+    monthlyLimitUSD: null, customFeePercent: null,
+    notes: 'Usuario demo Honduras',
+    createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
+  },
+];
+
 const ADMIN_PASSWORD = 'len2025';
 
 export const useAdminStore = create<AdminState>()(
@@ -177,6 +232,7 @@ export const useAdminStore = create<AdminState>()(
       kycLimits:       DEFAULT_KYC,
       txLimits:        DEFAULT_TX,
       fxOverrides:     DEFAULT_FX,
+      userOverrides:   DEFAULT_USER_OVERRIDES,
 
       login: (password) => {
         if (password === ADMIN_PASSWORD) {
@@ -231,6 +287,36 @@ export const useAdminStore = create<AdminState>()(
           ? { ...fx, usdRate: rate, enabled, updatedAt: new Date().toISOString() }
           : fx
         ),
+      })),
+
+      upsertUserOverride: (override) => set(s => {
+        const now = new Date().toISOString();
+        const existing = s.userOverrides.find(u => u.userId === override.userId);
+        if (existing) {
+          return {
+            userOverrides: s.userOverrides.map(u =>
+              u.userId === override.userId
+                ? { ...override, createdAt: u.createdAt, updatedAt: now }
+                : u
+            ),
+          };
+        }
+        return {
+          userOverrides: [
+            { ...override, createdAt: override.createdAt ?? now, updatedAt: now },
+            ...s.userOverrides,
+          ],
+        };
+      }),
+
+      setUserStatus: (userId, status) => set(s => ({
+        userOverrides: s.userOverrides.map(u =>
+          u.userId === userId ? { ...u, status, updatedAt: new Date().toISOString() } : u
+        ),
+      })),
+
+      removeUserOverride: (userId) => set(s => ({
+        userOverrides: s.userOverrides.filter(u => u.userId !== userId),
       })),
     }),
     { name: 'len-admin-config' }

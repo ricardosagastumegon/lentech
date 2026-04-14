@@ -8,6 +8,9 @@ import {
   SystemFees,
   KYCLimits,
   TxLimits,
+  UserOverride,
+  UserStatus,
+  UserTag,
 } from '@/store/admin.store';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -31,7 +34,216 @@ const COUNTRY_NAME: Record<string, string>  = { GT: 'Guatemala', MX: 'México', 
 const PCT = (n: number) => `${(n * 100).toFixed(2)}%`;
 const USD = (n: number) => n === 0 ? 'Sin límite' : `$${n.toLocaleString()} USD`;
 
-type Tab = 'connectivity' | 'params' | 'fx' | 'system';
+type Tab = 'connectivity' | 'params' | 'fx' | 'users' | 'system';
+
+const USER_STATUS_COLORS: Record<UserStatus, string> = {
+  active:    'bg-emerald-100 text-emerald-700',
+  suspended: 'bg-amber-100   text-amber-700',
+  blocked:   'bg-red-100     text-red-700',
+};
+const USER_STATUS_LABEL: Record<UserStatus, string> = {
+  active: 'Activo', suspended: 'Suspendido', blocked: 'Bloqueado',
+};
+const TAG_COLORS: Record<UserTag, string> = {
+  vip:       'bg-yellow-100 text-yellow-700',
+  corporate: 'bg-blue-100   text-blue-700',
+  test:      'bg-gray-100   text-gray-500',
+  flagged:   'bg-red-100    text-red-600',
+  staff:     'bg-purple-100 text-purple-700',
+};
+const COUNTRY_FLAG2: Record<string, string> = { GT: '🇬🇹', MX: '🇲🇽', HN: '🇭🇳' };
+const KYC_LABEL = ['Anónimo', 'Básico', 'Verificado', 'Corporativo'];
+const USD2 = (n: number | null) => n === null ? '—' : n === 0 ? 'Sin límite' : `$${n.toLocaleString()}`;
+
+// ─── User override modal ──────────────────────────────────────────────────────
+function UserModal({
+  initial, globalTx, onSave, onClose,
+}: {
+  initial: UserOverride | null;
+  globalTx: TxLimits;
+  onSave: (u: Omit<UserOverride, 'createdAt' | 'updatedAt'>) => void;
+  onClose: () => void;
+}) {
+  const isNew = !initial;
+  const [userId,      setUserId]      = useState(initial?.userId      ?? '');
+  const [displayName, setDisplayName] = useState(initial?.displayName ?? '');
+  const [phone,       setPhone]       = useState(initial?.phone       ?? '');
+  const [country,     setCountry]     = useState(initial?.country     ?? 'GT');
+  const [kycLevel,    setKycLevel]    = useState(initial?.kycLevel    ?? 1);
+  const [status,      setStatus]      = useState<UserStatus>(initial?.status ?? 'active');
+  const [tags,        setTags]        = useState<UserTag[]>(initial?.tags ?? []);
+  const [maxSend,     setMaxSend]     = useState<string>(initial?.maxSendPerTxUSD?.toString()    ?? '');
+  const [maxDaily,    setMaxDaily]    = useState<string>(initial?.maxSendDailyUSD?.toString()    ?? '');
+  const [maxWith,     setMaxWith]     = useState<string>(initial?.maxWithdrawPerTxUSD?.toString() ?? '');
+  const [monthly,     setMonthly]     = useState<string>(initial?.monthlyLimitUSD?.toString()    ?? '');
+  const [customFee,   setCustomFee]   = useState<string>(
+    initial?.customFeePercent != null ? (initial.customFeePercent * 100).toFixed(2) : ''
+  );
+  const [notes, setNotes] = useState(initial?.notes ?? '');
+
+  function toggleTag(t: UserTag) {
+    setTags(prev => prev.includes(t) ? prev.filter(x => x !== t) : [...prev, t]);
+  }
+  function nullOrNum(s: string) { const n = parseFloat(s); return isNaN(n) ? null : n; }
+
+  function handleSave() {
+    if (!userId.trim() || !displayName.trim()) return;
+    const feeRaw = parseFloat(customFee);
+    onSave({
+      userId: userId.trim(),
+      displayName: displayName.trim(),
+      phone: phone.trim(),
+      country,
+      kycLevel,
+      status,
+      tags,
+      maxSendPerTxUSD:     nullOrNum(maxSend),
+      maxSendDailyUSD:     nullOrNum(maxDaily),
+      maxWithdrawPerTxUSD: nullOrNum(maxWith),
+      monthlyLimitUSD:     nullOrNum(monthly),
+      customFeePercent:    isNaN(feeRaw) ? null : feeRaw / 100,
+      notes,
+    });
+  }
+
+  const inputCls = 'w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 text-sm text-gray-800 focus:outline-none focus:border-len-purple transition-colors';
+  const labelCls = 'block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1';
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+      <div className="bg-white rounded-3xl w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl">
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100">
+          <div>
+            <p className="font-black text-gray-900 text-lg">{isNew ? 'Agregar usuario' : 'Editar usuario'}</p>
+            <p className="text-xs text-gray-400 mt-0.5">Los campos de límite vacíos usan el parámetro global</p>
+          </div>
+          <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-xl hover:bg-gray-100 text-gray-400 transition-colors">✕</button>
+        </div>
+
+        <div className="px-6 py-5 space-y-5">
+          {/* Identity */}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className={labelCls}>ID de usuario</label>
+              <input className={inputCls} value={userId} onChange={e => setUserId(e.target.value)}
+                placeholder="uid-001 o demo-gt" disabled={!isNew} />
+            </div>
+            <div>
+              <label className={labelCls}>Nombre</label>
+              <input className={inputCls} value={displayName} onChange={e => setDisplayName(e.target.value)}
+                placeholder="Carlos Mendoza" />
+            </div>
+            <div>
+              <label className={labelCls}>Teléfono</label>
+              <input className={inputCls} value={phone} onChange={e => setPhone(e.target.value)}
+                placeholder="+50211111111" />
+            </div>
+            <div>
+              <label className={labelCls}>País</label>
+              <select className={inputCls} value={country} onChange={e => setCountry(e.target.value)}>
+                <option value="GT">🇬🇹 Guatemala</option>
+                <option value="MX">🇲🇽 México</option>
+                <option value="HN">🇭🇳 Honduras</option>
+              </select>
+            </div>
+          </div>
+
+          {/* KYC + Status */}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className={labelCls}>Nivel KYC</label>
+              <select className={inputCls} value={kycLevel} onChange={e => setKycLevel(Number(e.target.value))}>
+                {[0, 1, 2, 3].map(l => <option key={l} value={l}>Nivel {l} — {KYC_LABEL[l]}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className={labelCls}>Estado</label>
+              <select className={inputCls} value={status} onChange={e => setStatus(e.target.value as UserStatus)}>
+                <option value="active">Activo</option>
+                <option value="suspended">Suspendido</option>
+                <option value="blocked">Bloqueado</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Tags */}
+          <div>
+            <label className={labelCls}>Etiquetas</label>
+            <div className="flex flex-wrap gap-2">
+              {(['vip', 'corporate', 'test', 'flagged', 'staff'] as UserTag[]).map(t => (
+                <button key={t} onClick={() => toggleTag(t)}
+                  className={`px-3 py-1 rounded-full text-xs font-bold border-2 transition-all
+                    ${tags.includes(t) ? `${TAG_COLORS[t]} border-current` : 'bg-gray-50 text-gray-400 border-gray-200'}`}>
+                  {t.toUpperCase()}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Limits override */}
+          <div>
+            <label className={labelCls}>Límites personalizados (USD) — vacío = usa global</label>
+            <div className="bg-gray-50 rounded-2xl p-4 grid grid-cols-2 gap-3">
+              <div>
+                <p className="text-[10px] text-gray-400 mb-1">Máx. por envío</p>
+                <p className="text-[10px] text-gray-300 mb-1.5">Global: ${globalTx.maxSendPerTxUSD.toLocaleString()}</p>
+                <input className={inputCls} type="number" value={maxSend}
+                  onChange={e => setMaxSend(e.target.value)} placeholder="ej. 25000" />
+              </div>
+              <div>
+                <p className="text-[10px] text-gray-400 mb-1">Límite diario envíos</p>
+                <p className="text-[10px] text-gray-300 mb-1.5">Global: ${globalTx.maxSendDailyUSD.toLocaleString()}</p>
+                <input className={inputCls} type="number" value={maxDaily}
+                  onChange={e => setMaxDaily(e.target.value)} placeholder="ej. 50000" />
+              </div>
+              <div>
+                <p className="text-[10px] text-gray-400 mb-1">Máx. por retiro</p>
+                <p className="text-[10px] text-gray-300 mb-1.5">Global: ${globalTx.maxWithdrawPerTxUSD.toLocaleString()}</p>
+                <input className={inputCls} type="number" value={maxWith}
+                  onChange={e => setMaxWith(e.target.value)} placeholder="ej. 15000" />
+              </div>
+              <div>
+                <p className="text-[10px] text-gray-400 mb-1">Límite mensual</p>
+                <p className="text-[10px] text-gray-300 mb-1.5">Global: por KYC level</p>
+                <input className={inputCls} type="number" value={monthly}
+                  onChange={e => setMonthly(e.target.value)} placeholder="ej. 100000" />
+              </div>
+              <div className="col-span-2">
+                <p className="text-[10px] text-gray-400 mb-1">Fee personalizado (%)</p>
+                <p className="text-[10px] text-gray-300 mb-1.5">Global: usa fee estándar por tipo de tx</p>
+                <input className={inputCls} type="number" step="0.01" value={customFee}
+                  onChange={e => setCustomFee(e.target.value)} placeholder="ej. 0.20 para 0.20%" />
+              </div>
+            </div>
+          </div>
+
+          {/* Notes */}
+          <div>
+            <label className={labelCls}>Notas internas</label>
+            <textarea className={`${inputCls} resize-none`} rows={3} value={notes}
+              onChange={e => setNotes(e.target.value)}
+              placeholder="Contexto, motivo del override, ticket de soporte..." />
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="px-6 py-4 border-t border-gray-100 flex gap-3">
+          <button onClick={onClose} className="flex-1 py-3 rounded-2xl border-2 border-gray-200 text-gray-500 font-bold text-sm hover:bg-gray-50 transition-colors">
+            Cancelar
+          </button>
+          <button
+            onClick={handleSave}
+            disabled={!userId.trim() || !displayName.trim()}
+            className="flex-1 py-3 rounded-2xl bg-len-gradient text-white font-bold text-sm hover:opacity-90 disabled:opacity-40 transition-opacity"
+          >
+            {isNew ? 'Agregar usuario' : 'Guardar cambios'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 // ─── Login gate ───────────────────────────────────────────────────────────────
 function LoginGate() {
@@ -203,13 +415,18 @@ export default function AdminPage() {
     kycLimits, setKYCLimits,
     txLimits, setTxLimits,
     fxOverrides, setFXOverride,
+    userOverrides, upsertUserOverride, setUserStatus, removeUserOverride,
   } = useAdminStore();
 
-  const [tab, setTab] = useState<Tab>('connectivity');
+  const [tab,        setTab]        = useState<Tab>('connectivity');
   const [pingingAll, setPingingAll] = useState(false);
+  const [userSearch, setUserSearch] = useState('');
+  const [editingUser, setEditingUser] = useState<UserOverride | null | 'new'>('new' as unknown as null);
+  const [showUserModal, setShowUserModal] = useState(false);
 
   if (!isAuthenticated) return <LoginGate />;
 
+  // ── Helpers ────────────────────────────────────────────────────────────────
   const countryBanks = (country: 'GT' | 'MX' | 'HN') =>
     banks.filter(b => b.country === country);
 
@@ -227,10 +444,17 @@ export default function AdminPage() {
     { key: 'connectivity', label: 'Conectividad', icon: '🔗' },
     { key: 'params',       label: 'Parámetros',   icon: '⚙️' },
     { key: 'fx',           label: 'Tipos FX',     icon: '💱' },
+    { key: 'users',        label: 'Usuarios',     icon: '👤' },
     { key: 'system',       label: 'Sistema',      icon: '🖥' },
   ];
 
+  const filteredUsers = userOverrides.filter(u => {
+    const q = userSearch.toLowerCase();
+    return !q || u.displayName.toLowerCase().includes(q) || u.phone.includes(q) || u.userId.includes(q);
+  });
+
   return (
+    <>
     <div className="min-h-screen bg-gray-950 text-white">
 
       {/* ── Top bar ── */}
@@ -538,6 +762,176 @@ export default function AdminPage() {
           </div>
         )}
 
+        {/* ══ TAB: Usuarios ══ */}
+        {tab === 'users' && (
+          <div className="space-y-5">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-lg font-black text-white">Gestión de usuarios</h2>
+                <p className="text-gray-500 text-sm">{userOverrides.length} usuarios · overrides y soporte</p>
+              </div>
+              <button
+                onClick={() => { setEditingUser(null); setShowUserModal(true); }}
+                className="flex items-center gap-2 px-4 py-2 bg-len-purple text-white rounded-2xl text-xs font-bold hover:opacity-90 transition-opacity"
+              >
+                + Agregar usuario
+              </button>
+            </div>
+
+            {/* Search */}
+            <div className="relative">
+              <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500 text-sm">🔍</span>
+              <input
+                value={userSearch}
+                onChange={e => setUserSearch(e.target.value)}
+                placeholder="Buscar por nombre, teléfono o ID..."
+                className="w-full bg-gray-900 border border-gray-700 rounded-2xl pl-9 pr-4 py-3 text-sm text-white placeholder:text-gray-600 focus:outline-none focus:border-len-purple transition-colors"
+              />
+            </div>
+
+            {/* User cards */}
+            <div className="space-y-3">
+              {filteredUsers.length === 0 && (
+                <div className="text-center py-12 text-gray-600">
+                  <p className="text-4xl mb-3">👤</p>
+                  <p className="font-bold">Sin usuarios</p>
+                  <p className="text-sm mt-1">Agrega el primero con el botón de arriba</p>
+                </div>
+              )}
+              {filteredUsers.map(u => (
+                <div key={u.userId} className="bg-gray-900 rounded-3xl border border-gray-800 overflow-hidden">
+                  {/* User header */}
+                  <div className="px-5 py-4 flex items-start gap-4">
+                    {/* Avatar */}
+                    <div className="w-10 h-10 bg-len-gradient rounded-2xl flex items-center justify-center text-white font-black text-base flex-shrink-0">
+                      {u.displayName[0]}
+                    </div>
+                    {/* Info */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <p className="font-black text-white text-sm">{u.displayName}</p>
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${USER_STATUS_COLORS[u.status]}`}>
+                          {USER_STATUS_LABEL[u.status]}
+                        </span>
+                        {u.tags.map(t => (
+                          <span key={t} className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${TAG_COLORS[t]}`}>
+                            {t.toUpperCase()}
+                          </span>
+                        ))}
+                      </div>
+                      <p className="text-xs text-gray-500 mt-0.5 font-mono">{u.phone} · {COUNTRY_FLAG2[u.country] ?? u.country} · KYC {u.kycLevel} {KYC_LABEL[u.kycLevel]}</p>
+                      <p className="text-[11px] text-gray-600 font-mono mt-0.5">{u.userId}</p>
+                    </div>
+                    {/* Actions */}
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      <button
+                        onClick={() => { setEditingUser(u); setShowUserModal(true); }}
+                        className="px-3 py-1.5 bg-gray-800 hover:bg-gray-700 text-gray-300 text-xs font-bold rounded-xl transition-colors"
+                      >
+                        Editar
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Overrides summary */}
+                  <div className="border-t border-gray-800 px-5 py-3 grid grid-cols-2 gap-x-6 gap-y-1.5 text-xs">
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Máx. envío/tx</span>
+                      <span className={`font-mono font-bold ${u.maxSendPerTxUSD !== null ? 'text-amber-400' : 'text-gray-600'}`}>
+                        {u.maxSendPerTxUSD !== null ? `$${u.maxSendPerTxUSD.toLocaleString()}` : `global ($${txLimits.maxSendPerTxUSD.toLocaleString()})`}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Límite diario</span>
+                      <span className={`font-mono font-bold ${u.maxSendDailyUSD !== null ? 'text-amber-400' : 'text-gray-600'}`}>
+                        {u.maxSendDailyUSD !== null ? `$${u.maxSendDailyUSD.toLocaleString()}` : `global ($${txLimits.maxSendDailyUSD.toLocaleString()})`}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Máx. retiro/tx</span>
+                      <span className={`font-mono font-bold ${u.maxWithdrawPerTxUSD !== null ? 'text-amber-400' : 'text-gray-600'}`}>
+                        {u.maxWithdrawPerTxUSD !== null ? `$${u.maxWithdrawPerTxUSD.toLocaleString()}` : `global ($${txLimits.maxWithdrawPerTxUSD.toLocaleString()})`}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Mensual</span>
+                      <span className={`font-mono font-bold ${u.monthlyLimitUSD !== null ? 'text-amber-400' : 'text-gray-600'}`}>
+                        {USD2(u.monthlyLimitUSD) !== '—' ? USD2(u.monthlyLimitUSD) : 'global'}
+                      </span>
+                    </div>
+                    {u.customFeePercent !== null && (
+                      <div className="flex justify-between col-span-2">
+                        <span className="text-gray-600">Fee personalizado</span>
+                        <span className="font-mono font-bold text-amber-400">{(u.customFeePercent * 100).toFixed(2)}%</span>
+                      </div>
+                    )}
+                    {u.notes && (
+                      <div className="col-span-2 mt-1 pt-2 border-t border-gray-800">
+                        <p className="text-gray-500 text-[11px]">📝 {u.notes}</p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Quick action bar */}
+                  <div className="border-t border-gray-800 px-5 py-3 flex items-center gap-2">
+                    <p className="text-[11px] text-gray-600 flex-1">
+                      Actualizado {new Date(u.updatedAt).toLocaleDateString('es-GT')}
+                    </p>
+                    {u.status === 'active' && (
+                      <button
+                        onClick={() => setUserStatus(u.userId, 'suspended')}
+                        className="px-3 py-1 bg-amber-900/40 text-amber-400 border border-amber-800 text-[11px] font-bold rounded-xl hover:bg-amber-900/60 transition-colors"
+                      >
+                        Suspender
+                      </button>
+                    )}
+                    {u.status === 'suspended' && (
+                      <>
+                        <button
+                          onClick={() => setUserStatus(u.userId, 'active')}
+                          className="px-3 py-1 bg-emerald-900/40 text-emerald-400 border border-emerald-800 text-[11px] font-bold rounded-xl hover:bg-emerald-900/60 transition-colors"
+                        >
+                          Reactivar
+                        </button>
+                        <button
+                          onClick={() => setUserStatus(u.userId, 'blocked')}
+                          className="px-3 py-1 bg-red-900/40 text-red-400 border border-red-800 text-[11px] font-bold rounded-xl hover:bg-red-900/60 transition-colors"
+                        >
+                          Bloquear
+                        </button>
+                      </>
+                    )}
+                    {u.status === 'blocked' && (
+                      <button
+                        onClick={() => setUserStatus(u.userId, 'active')}
+                        className="px-3 py-1 bg-emerald-900/40 text-emerald-400 border border-emerald-800 text-[11px] font-bold rounded-xl hover:bg-emerald-900/60 transition-colors"
+                      >
+                        Desbloquear
+                      </button>
+                    )}
+                    <button
+                      onClick={() => { if (confirm('¿Eliminar override de este usuario?')) removeUserOverride(u.userId); }}
+                      className="px-3 py-1 text-gray-600 text-[11px] font-bold rounded-xl hover:text-red-400 hover:bg-red-900/20 transition-colors"
+                    >
+                      Eliminar
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Info box */}
+            <div className="bg-gray-900 rounded-2xl border border-gray-800 px-5 py-4 text-xs text-gray-500 space-y-1.5">
+              <p className="font-bold text-gray-400">¿Cómo funcionan los overrides?</p>
+              <p>• Los valores en <span className="text-amber-400 font-bold">amarillo</span> son overrides activos — reemplazan el parámetro global para ese usuario</p>
+              <p>• Los valores en gris dicen "global" — el usuario usa el mismo límite que todos</p>
+              <p>• Puedes subir límites (clientes VIP, corporativos) o bajarlos (usuarios en revisión)</p>
+              <p>• El fee personalizado aplica a TODAS las transacciones de ese usuario si está configurado</p>
+              <p>• Suspender bloquea operaciones temporalmente. Bloquear es permanente hasta reactivación manual.</p>
+            </div>
+          </div>
+        )}
+
         {/* ══ TAB: System ══ */}
         {tab === 'system' && (
           <div className="space-y-6">
@@ -674,5 +1068,19 @@ export default function AdminPage() {
         )}
       </div>
     </div>
+
+    {/* ── User modal ── */}
+    {showUserModal && (
+      <UserModal
+        initial={editingUser as UserOverride | null}
+        globalTx={txLimits}
+        onSave={(data) => {
+          upsertUserOverride(data);
+          setShowUserModal(false);
+        }}
+        onClose={() => setShowUserModal(false)}
+      />
+    )}
+  </>
   );
 }
