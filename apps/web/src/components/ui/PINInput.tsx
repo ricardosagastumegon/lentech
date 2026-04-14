@@ -80,9 +80,9 @@ export function PINInput({
             onKeyDown={e => handleKeyDown(i, e)}
             onPaste={handlePaste}
             className={`w-12 h-12 text-center text-xl font-bold border-2 rounded-xl
-              focus:outline-none focus:ring-2 focus:ring-mondega-green focus:border-mondega-green
+              focus:outline-none focus:ring-2 focus:ring-len-purple focus:border-len-purple
               transition-colors
-              ${d ? 'border-mondega-green bg-green-50' : 'border-gray-200 bg-white'}
+              ${d ? 'border-len-purple bg-len-light' : 'border-gray-200 bg-white'}
               ${error ? 'border-red-400 bg-red-50' : ''}
               ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
           />

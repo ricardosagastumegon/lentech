@@ -71,22 +71,99 @@ export default function LoginPage() {
         fiatCurrency: coinMeta.fiat,
         balanceUSD:   p.usd,
       }]);
+      // Pre-populate rich demo history so any device gets a realistic dataset on login
+      const now    = Date.now();
+      const ago    = (ms: number) => new Date(now - ms).toISOString();
+      const peer1  = (p.country === 'MX' ? 'QUETZA' : 'MEXCOIN') as import('@/store/wallet.store').CoinCode;
+      const peer2  = (p.country === 'HN' ? 'MEXCOIN' : 'LEMPI')  as import('@/store/wallet.store').CoinCode;
+
       setTransactions([
+        // 1 — Depósito bancario inicial (fiat_load)
         {
-          id: 'tx-1', type: 'fiat_load', status: 'completed', direction: 'received',
+          id: 'LEN-20260410-FLD-DEMO1', type: 'fiat_load', status: 'completed', direction: 'received',
           fromCoin: coin, toCoin: coin,
-          fromAmount: p.fiatBalance, toAmount: p.balance, fee: '0',
-          description: `Carga inicial ${p.coin}`,
-          createdAt: new Date(Date.now() - 172800000).toISOString(),
+          fromAmount: p.fiatBalance, toAmount: p.fiatBalance, fee: '0',
+          description: `Depósito bancario — ${coinMeta.fiat}`,
+          createdAt: ago(8 * 86400000), completedAt: ago(8 * 86400000),
         },
+        // 2 — Compra de tokens desde fiat
         {
-          id: 'tx-2', type: 'transfer', status: 'completed', direction: 'received',
-          fromCoin: (p.country === 'MX' ? 'QUETZA' : 'MEXCOIN') as import('@/store/wallet.store').CoinCode,
-          toCoin: coin,
-          fromAmount: '500.00', toAmount: p.country === 'MX' ? '9450.00' : p.country === 'HN' ? '6800.00' : '65.00',
-          fxRate: p.country === 'MX' ? 18.9 : p.country === 'HN' ? 13.6 : 0.13,
-          fee: '1.50', description: 'Pago internacional recibido',
-          createdAt: new Date(Date.now() - 86400000).toISOString(),
+          id: 'LEN-20260411-TKB-DEMO2', type: 'token_buy', status: 'completed', direction: 'internal',
+          fromCoin: coin, toCoin: coin,
+          fromAmount: (parseFloat(p.fiatBalance) * 0.6).toFixed(2),
+          toAmount:   (parseFloat(p.balance) * 0.6).toFixed(2),
+          fee: '0.0000', feePercent: 0,
+          description: `Compra de tokens ${coin} · 0%`,
+          createdAt: ago(7 * 86400000), completedAt: ago(7 * 86400000),
+        },
+        // 3 — Recibir transferencia FX (de otro país)
+        {
+          id: 'LEN-20260411-FXS-DEMO3', type: 'fx_swap', status: 'completed', direction: 'received',
+          fromCoin: peer1, toCoin: coin,
+          fromAmount: '2000.00',
+          toAmount: p.country === 'MX' ? '9760.00' : p.country === 'HN' ? '6200.00' : '260.00',
+          fee: '6.00', feePercent: 0.003,
+          description: 'Pago recibido de Guatemala',
+          senderName: 'María López',
+          createdAt: ago(6 * 86400000), completedAt: ago(6 * 86400000),
+        },
+        // 4 — Envío mismo coin
+        {
+          id: 'LEN-20260412-TRF-DEMO4', type: 'transfer', status: 'completed', direction: 'sent',
+          fromCoin: coin, toCoin: coin,
+          fromAmount: '5000.00', toAmount: '5000.00',
+          fee: '0', description: 'Pago a familia',
+          recipientName: 'Ana Martínez',
+          createdAt: ago(5 * 86400000), completedAt: ago(5 * 86400000),
+        },
+        // 5 — Compra de tokens (segunda)
+        {
+          id: 'LEN-20260412-TKB-DEMO5', type: 'token_buy', status: 'completed', direction: 'internal',
+          fromCoin: coin, toCoin: coin,
+          fromAmount: (parseFloat(p.fiatBalance) * 0.3).toFixed(2),
+          toAmount:   (parseFloat(p.balance) * 0.3).toFixed(2),
+          fee: '0.0000', feePercent: 0,
+          description: `Compra de tokens ${coin} · 0%`,
+          createdAt: ago(4 * 86400000), completedAt: ago(4 * 86400000),
+        },
+        // 6 — Envío FX (a otro país)
+        {
+          id: 'LEN-20260412-FXS-DEMO6', type: 'fx_swap', status: 'completed', direction: 'sent',
+          fromCoin: coin, toCoin: peer2,
+          fromAmount: '8000.00',
+          toAmount: p.country === 'GT' ? '323440.00' : p.country === 'MX' ? '78320.00' : '197600.00',
+          fee: '40.00', feePercent: 0.005,
+          description: 'Envío a Honduras',
+          recipientName: 'Pedro Reyes',
+          createdAt: ago(3 * 86400000), completedAt: ago(3 * 86400000),
+        },
+        // 7 — Recibir mismo coin
+        {
+          id: 'LEN-20260413-TRF-DEMO7', type: 'transfer', status: 'completed', direction: 'received',
+          fromCoin: coin, toCoin: coin,
+          fromAmount: '12500.00', toAmount: '12500.00',
+          fee: '0', description: 'Remesa recibida',
+          senderName: 'Carlos Ruiz',
+          createdAt: ago(2 * 86400000), completedAt: ago(2 * 86400000),
+        },
+        // 8 — Venta de tokens (tokens → fiat)
+        {
+          id: 'LEN-20260413-TKS-DEMO8', type: 'token_sell', status: 'completed', direction: 'internal',
+          fromCoin: coin, toCoin: coin,
+          fromAmount: '3000.00', toAmount: '2985.00',
+          fee: '15.0000', feePercent: 0.005,
+          description: `Venta de tokens ${coin} · 0.5%`,
+          createdAt: ago(86400000), completedAt: ago(86400000),
+        },
+        // 9 — Pendiente (para mostrar estado)
+        {
+          id: 'LEN-20260413-TRF-DEMO9', type: 'transfer', status: 'pending', direction: 'sent',
+          fromCoin: coin, toCoin: peer1,
+          fromAmount: '1500.00', toAmount: '3870.00',
+          fee: '7.50', feePercent: 0.005,
+          description: 'Envío a México — en proceso',
+          recipientName: 'Sofía Hernández',
+          createdAt: ago(1800000), // 30 min ago
         },
       ]);
 

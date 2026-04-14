@@ -24,7 +24,7 @@ export function TopBar() {
               · {coinMeta.flag} {primaryCoin}
             </span>
           )}
-          <span className="text-[9px] font-bold text-len-violet/60 hidden sm:block tracking-tight">v0.4.1</span>
+          <span className="text-[9px] font-bold text-len-violet/60 hidden sm:block tracking-tight">v0.5.0</span>
         </Link>
 
         {/* Right */}
