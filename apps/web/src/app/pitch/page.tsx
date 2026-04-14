@@ -1,6 +1,11 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, createContext, useContext } from 'react';
+
+// ─── Language ─────────────────────────────────────────────────────────────────
+type Lang = 'es' | 'en';
+const LangCtx = createContext<Lang>('es');
+const useLang = () => useContext(LangCtx);
 
 // ─── Slide registry ───────────────────────────────────────────────────────────
 const SLIDES = [
@@ -10,22 +15,22 @@ const SLIDES = [
 ] as const;
 type SlideId = typeof SLIDES[number];
 
-const SLIDE_LABELS: Record<SlideId, string> = {
-  hero:     'Intro',
-  problem:  'Problema',
-  solution: 'Solución',
-  network:  'Red',
-  legal:    'Legal',
-  model:    'Modelo',
-  wallet:   'Wallet',
-  security: 'Seguridad',
-  banks:    'Bancos',
-  mexico:   'México',
-  flow:     'Flujo',
-  tech:     'Tecnología',
-  roadmap:  'Roadmap',
-  traction: 'Mercado',
-  ask:      'Pitch',
+const SLIDE_LABELS: Record<SlideId, { es: string; en: string }> = {
+  hero:     { es: 'Intro',       en: 'Intro' },
+  problem:  { es: 'Problema',    en: 'Problem' },
+  solution: { es: 'Solución',    en: 'Solution' },
+  network:  { es: 'Red',         en: 'Network' },
+  legal:    { es: 'Legal',       en: 'Legal' },
+  model:    { es: 'Modelo',      en: 'Model' },
+  wallet:   { es: 'Wallet',      en: 'Wallet' },
+  security: { es: 'Seguridad',   en: 'Security' },
+  banks:    { es: 'Bancos',      en: 'Banks' },
+  mexico:   { es: 'México',      en: 'Mexico' },
+  flow:     { es: 'Flujo',       en: 'Flow' },
+  tech:     { es: 'Tecnología',  en: 'Tech' },
+  roadmap:  { es: 'Roadmap',     en: 'Roadmap' },
+  traction: { es: 'Mercado',     en: 'Market' },
+  ask:      { es: 'Pitch',       en: 'Ask' },
 };
 
 // ─── Shared atoms ─────────────────────────────────────────────────────────────
@@ -50,6 +55,20 @@ function Stat({ value, label, sub }: { value: string; label: string; sub?: strin
 // ─── Slides ───────────────────────────────────────────────────────────────────
 
 function SlideHero() {
+  const lang = useLang();
+  const t = lang === 'en' ? {
+    tag: 'Mesoamerican TokenCoin Network',
+    title1: 'The native', hi: 'TokenCoin network', title2: 'of Mesoamerica',
+    sub: 'Instant transfers between Guatemala, Mexico and Honduras. One token per currency, backed 1:1. No intermediary banks.',
+    soon: 'soon', countries: 'Active countries', fee: 'Min. fee', tam: 'TAM remittances',
+    phase: 'Phase 1',
+  } : {
+    tag: 'Red TokenCoin de Mesoamérica',
+    title1: 'La red de', hi: 'TokenCoins', title2: 'nativa de Mesoamérica',
+    sub: 'Transferencias instantáneas entre Guatemala, México y Honduras. Un token por moneda, respaldado 1:1. Sin bancos intermediarios.',
+    soon: 'pronto', countries: 'Países activos', fee: 'Comisión mínima', tam: 'TAM remesas',
+    phase: 'Fase 1',
+  };
   return (
     <div className="flex flex-col items-center justify-center text-center h-full px-8 space-y-8">
       <div className="flex items-center gap-4">
@@ -60,12 +79,9 @@ function SlideHero() {
       </div>
       <div className="space-y-4 max-w-3xl">
         <h1 className="text-5xl lg:text-6xl font-black text-white leading-[1.05]">
-          La red de <span className="text-[#A29BFE]">TokenCoins</span><br />nativa de Mesoamérica
+          {t.title1} <span className="text-[#A29BFE]">{t.hi}</span><br />{t.title2}
         </h1>
-        <p className="text-xl text-white/60 max-w-2xl mx-auto leading-relaxed">
-          Transferencias instantáneas entre Guatemala, México y Honduras.
-          Un token por moneda, respaldado 1:1. Sin bancos intermediarios.
-        </p>
+        <p className="text-xl text-white/60 max-w-2xl mx-auto leading-relaxed">{t.sub}</p>
       </div>
       <div className="flex flex-wrap gap-3 justify-center">
         {[
@@ -80,35 +96,52 @@ function SlideHero() {
             <span className="text-lg">{c.flag}</span>
             <span className="font-bold text-sm">{c.code}</span>
             <span className={`text-xs ${c.soon ? 'text-white/30' : 'text-white/50'}`}>
-              {c.soon ? 'pronto' : `= 1 ${c.fiat}`}
+              {c.soon ? t.soon : `= 1 ${c.fiat}`}
             </span>
           </div>
         ))}
       </div>
       <div className="grid grid-cols-3 gap-6 pt-2">
-        <Stat value="3"    label="Países activos"   sub="Fase 1" />
-        <Stat value="0.3%" label="Comisión mínima"  sub="vs 5–8% WU" />
-        <Stat value="$800B" label="TAM remesas"     sub="Mesoamérica 2024" />
+        <Stat value="3"     label={t.countries}  sub={t.phase} />
+        <Stat value="0.3%"  label={t.fee}        sub="vs 5–8% WU" />
+        <Stat value="$800B" label={t.tam}        sub="Mesoamérica 2024" />
       </div>
     </div>
   );
 }
 
 function SlideProblem() {
+  const lang = useLang();
+  const t = lang === 'en' ? {
+    tag: '01 — The Problem',
+    title: 'Moving money in', hi: 'Mesoamerica is broken',
+    sub: '12% of Guatemala\'s GDP is remittances. The cost of sending them is unacceptable.',
+    problems: [
+      { icon: '💸', title: '5–8% in fees', desc: 'Western Union, Remitly and MoneyGram charge $5–$40 per transfer. On a $300 remittance that\'s 13%.', stat: '$48B lost in fees per year in Mesoamerica alone' },
+      { icon: '⏳', title: '1–5 day delays', desc: 'International bank transfers between GT, MX and HN take business days.', stat: '47% of recipients need the money same-day' },
+      { icon: '🏦', title: '65% unbanked', desc: 'Most of the population in CA has no access to formal financial services.', stat: '38M unbanked people in the region' },
+      { icon: '📱', title: 'No common infrastructure', desc: 'Each country has its own system. There is no "Mesoamerican SPEI". Banks don\'t talk to each other.', stat: 'Each remittance crosses 3–4 intermediaries' },
+    ],
+  } : {
+    tag: '01 — El Problema',
+    title: 'Mover dinero en', hi: 'Mesoamérica está roto',
+    sub: 'El 12% del PIB de Guatemala son remesas. El costo de enviarlas es inaceptable.',
+    problems: [
+      { icon: '💸', title: '5–8% de comisión', desc: 'Western Union, Remitly y MoneyGram cobran entre $5 y $40 por envío. En remesas de $300 eso es el 13%.', stat: '$48B perdidos en fees al año solo en Mesoamérica' },
+      { icon: '⏳', title: '1–5 días de espera', desc: 'Las transferencias bancarias internacionales entre GT, MX y HN tardan días hábiles.', stat: '47% de receptores necesitan el dinero el mismo día' },
+      { icon: '🏦', title: '65% sin cuenta bancaria', desc: 'La mayoría de la población en CA no tiene acceso a servicios financieros formales.', stat: '38M personas desbancarizadas en la región' },
+      { icon: '📱', title: 'Sin infraestructura común', desc: 'Cada país tiene su sistema. No hay una "SPEI mesoamericana". Los bancos no se comunican.', stat: 'Cada remesa cruza 3–4 intermediarios' },
+    ],
+  };
   return (
     <div className="flex flex-col h-full px-8 py-6">
-      <Tag>01 — El Problema</Tag>
+      <Tag>{t.tag}</Tag>
       <h2 className="text-4xl lg:text-5xl font-black text-white mb-3">
-        Mover dinero en<br /><span className="text-red-400">Mesoamérica está roto</span>
+        {t.title}<br /><span className="text-red-400">{t.hi}</span>
       </h2>
-      <p className="text-white/50 text-lg mb-8">El 12% del PIB de Guatemala son remesas. El costo de enviarlas es inaceptable.</p>
+      <p className="text-white/50 text-lg mb-8">{t.sub}</p>
       <div className="grid grid-cols-2 gap-5 flex-1">
-        {[
-          { icon: '💸', title: '5–8% de comisión', desc: 'Western Union, Remitly y MoneyGram cobran entre $5 y $40 por envío. En remesas de $300 eso es el 13%.', stat: '$48B perdidos en fees al año solo en Mesoamérica' },
-          { icon: '⏳', title: '1–5 días de espera', desc: 'Las transferencias bancarias internacionales entre GT, MX y HN tardan días hábiles.', stat: '47% de receptores necesitan el dinero el mismo día' },
-          { icon: '🏦', title: '65% sin cuenta bancaria', desc: 'La mayoría de la población en CA no tiene acceso a servicios financieros formales.', stat: '38M personas desbancarizadas en la región' },
-          { icon: '📱', title: 'Sin infraestructura común', desc: 'Cada país tiene su sistema. No hay una "SPEI mesoamericana". Los bancos no se comunican.', stat: 'Cada remesa cruza 3–4 intermediarios' },
-        ].map(p => (
+        {t.problems.map(p => (
           <div key={p.icon} className="bg-white/5 border border-white/10 rounded-2xl p-6 flex flex-col gap-3">
             <span className="text-4xl">{p.icon}</span>
             <div>
@@ -126,39 +159,70 @@ function SlideProblem() {
 }
 
 function SlideSolution() {
+  const lang = useLang();
+  const t = lang === 'en' ? {
+    tag: '02 — The Solution',
+    title: 'One token per country.', hi: 'One system.',
+    sub: 'LEN issues digital tokens backed 1:1. Transferring QUETZA to LEMPI is instant and costs 0.3%.',
+    labels: [
+      { label: 'Carlos GT', sub: 'deposits Q 500' },
+      { label: 'QUETZA', sub: '500 tokens' },
+      { label: 'FX 0.3%', sub: 'automatic' },
+      { label: 'LEMPI', sub: '1,280 tokens' },
+      { label: 'María HN', sub: 'receives L 1,280' },
+    ],
+    features: [
+      { icon: '⚡', title: 'Instant', desc: 'Confirmed in seconds. No banking wait times.' },
+      { icon: '🔒', title: 'Backed 1:1', desc: 'Every token has 1 unit of local currency in reserve.' },
+      { icon: '🌎', title: 'Borderless', desc: 'Automatic FX between all LEN countries.' },
+    ],
+  } : {
+    tag: '02 — La Solución',
+    title: 'Un token por país.', hi: 'Un solo sistema.',
+    sub: 'LEN emite tokens digitales respaldados 1:1. Transferir QUETZA a LEMPI es instantáneo y cuesta 0.3%.',
+    labels: [
+      { label: 'Carlos GT', sub: 'deposita Q 500' },
+      { label: 'QUETZA', sub: '500 tokens' },
+      { label: 'FX 0.3%', sub: 'automático' },
+      { label: 'LEMPI', sub: '1,280 tokens' },
+      { label: 'María HN', sub: 'recibe L 1,280' },
+    ],
+    features: [
+      { icon: '⚡', title: 'Instantáneo', desc: 'Confirmado en segundos. Sin días de espera bancaria.' },
+      { icon: '🔒', title: 'Respaldado 1:1', desc: 'Cada token tiene 1 unidad de moneda local en reserva.' },
+      { icon: '🌎', title: 'Sin fronteras', desc: 'FX automático entre todos los países LEN.' },
+    ],
+  };
+  const flow = [
+    { ...t.labels[0], bg: 'bg-indigo-500/20 border-indigo-500/40', tc: 'text-indigo-300' },
+    { label: '→', sub: '', bg: '', tc: 'text-white/30 text-3xl font-black' },
+    { ...t.labels[1], bg: 'bg-[#6C5CE7]/25 border-[#6C5CE7]/50', tc: 'text-[#A29BFE]' },
+    { label: '→', sub: '', bg: '', tc: 'text-white/30 text-3xl font-black' },
+    { ...t.labels[2], bg: 'bg-emerald-500/15 border-emerald-500/30', tc: 'text-emerald-400' },
+    { label: '→', sub: '', bg: '', tc: 'text-white/30 text-3xl font-black' },
+    { ...t.labels[3], bg: 'bg-[#6C5CE7]/25 border-[#6C5CE7]/50', tc: 'text-[#A29BFE]' },
+    { label: '→', sub: '', bg: '', tc: 'text-white/30 text-3xl font-black' },
+    { ...t.labels[4], bg: 'bg-indigo-500/20 border-indigo-500/40', tc: 'text-indigo-300' },
+  ];
   return (
     <div className="flex flex-col h-full px-8 py-6">
-      <Tag>02 — La Solución</Tag>
+      <Tag>{t.tag}</Tag>
       <h2 className="text-4xl lg:text-5xl font-black text-white mb-3">
-        Un token por país.<br /><span className="text-[#A29BFE]">Un solo sistema.</span>
+        {t.title}<br /><span className="text-[#A29BFE]">{t.hi}</span>
       </h2>
-      <p className="text-white/50 text-lg mb-8">LEN emite tokens digitales respaldados 1:1. Transferir QUETZA a LEMPI es instantáneo y cuesta 0.3%.</p>
+      <p className="text-white/50 text-lg mb-8">{t.sub}</p>
       <div className="flex items-center justify-center gap-2 mb-8 flex-wrap">
-        {[
-          { label: 'Carlos GT', sub: 'deposita Q 500', bg: 'bg-indigo-500/20 border-indigo-500/40', t: 'text-indigo-300' },
-          { label: '→', sub: '', bg: '', t: 'text-white/20 text-3xl font-black' },
-          { label: 'QUETZA', sub: '500 tokens', bg: 'bg-[#6C5CE7]/25 border-[#6C5CE7]/50', t: 'text-[#A29BFE]' },
-          { label: '→', sub: '', bg: '', t: 'text-white/20 text-3xl font-black' },
-          { label: 'FX 0.3%', sub: 'automático', bg: 'bg-emerald-500/15 border-emerald-500/30', t: 'text-emerald-400' },
-          { label: '→', sub: '', bg: '', t: 'text-white/20 text-3xl font-black' },
-          { label: 'LEMPI', sub: '1,280 tokens', bg: 'bg-[#6C5CE7]/25 border-[#6C5CE7]/50', t: 'text-[#A29BFE]' },
-          { label: '→', sub: '', bg: '', t: 'text-white/20 text-3xl font-black' },
-          { label: 'María HN', sub: 'recibe L 1,280', bg: 'bg-indigo-500/20 border-indigo-500/40', t: 'text-indigo-300' },
-        ].map((item, i) =>
+        {flow.map((item, i) =>
           item.label === '→'
             ? <div key={i} className="text-white/30 text-3xl font-black">→</div>
             : <div key={i} className={`border rounded-2xl px-5 py-3 text-center ${item.bg}`}>
-                <p className={`font-black text-sm ${item.t}`}>{item.label}</p>
+                <p className={`font-black text-sm ${item.tc}`}>{item.label}</p>
                 {item.sub && <p className="text-white/40 text-xs mt-0.5">{item.sub}</p>}
               </div>
         )}
       </div>
       <div className="grid grid-cols-3 gap-5">
-        {[
-          { icon: '⚡', title: 'Instantáneo', desc: 'Confirmado en segundos. Sin días de espera bancaria.' },
-          { icon: '🔒', title: 'Respaldado 1:1', desc: 'Cada token tiene 1 unidad de moneda local en reserva.' },
-          { icon: '🌎', title: 'Sin fronteras', desc: 'FX automático entre todos los países LEN.' },
-        ].map(f => (
+        {t.features.map(f => (
           <div key={f.icon} className="bg-white/5 border border-white/10 rounded-2xl p-5">
             <span className="text-3xl">{f.icon}</span>
             <p className="text-white font-black mt-2">{f.title}</p>
@@ -171,21 +235,33 @@ function SlideSolution() {
 }
 
 function SlideNetwork() {
+  const lang = useLang();
+  const t = lang === 'en' ? {
+    tag: '03 — TokenCoin Network',
+    title: 'One token per currency,', hi: 'the whole region',
+    sub: '8 countries · 8 currencies · 1 network · Modular expansion by phases',
+    phase: 'Phase',
+  } : {
+    tag: '03 — Red TokenCoin',
+    title: 'Un token por moneda,', hi: 'toda la región',
+    sub: '8 países · 8 monedas · 1 red · Expansión modular por fases',
+    phase: 'Fase',
+  };
   const coins = [
-    { flag: '🇬🇹', code: 'QUETZA',  fiat: 'GTQ', country: 'Guatemala',  phase: 1, status: 'Activo' },
-    { flag: '🇲🇽', code: 'MEXCOIN', fiat: 'MXN', country: 'México',      phase: 1, status: 'Activo' },
-    { flag: '🇭🇳', code: 'LEMPI',   fiat: 'HNL', country: 'Honduras',    phase: 1, status: 'Activo' },
-    { flag: '🇸🇻', code: 'COLÓN',   fiat: 'USD', country: 'El Salvador', phase: 2, status: 'Q3 2025' },
+    { flag: '🇬🇹', code: 'QUETZA',  fiat: 'GTQ', country: lang === 'en' ? 'Guatemala'   : 'Guatemala',  phase: 1, status: lang === 'en' ? 'Live' : 'Activo' },
+    { flag: '🇲🇽', code: 'MEXCOIN', fiat: 'MXN', country: lang === 'en' ? 'Mexico'       : 'México',     phase: 1, status: lang === 'en' ? 'Live' : 'Activo' },
+    { flag: '🇭🇳', code: 'LEMPI',   fiat: 'HNL', country: lang === 'en' ? 'Honduras'     : 'Honduras',   phase: 1, status: lang === 'en' ? 'Live' : 'Activo' },
+    { flag: '🇸🇻', code: 'COLÓN',   fiat: 'USD', country: lang === 'en' ? 'El Salvador'  : 'El Salvador',phase: 2, status: 'Q3 2025' },
     { flag: '🇧🇿', code: 'TIKAL',   fiat: 'BZD', country: 'Belize',      phase: 3, status: 'Q1 2026' },
     { flag: '🇳🇮', code: 'NICORD',  fiat: 'NIO', country: 'Nicaragua',   phase: 3, status: 'Q1 2026' },
-    { flag: '🇨🇷', code: 'CORI',    fiat: 'CRC', country: 'Costa Rica',  phase: 3, status: 'Q2 2026' },
-    { flag: '🇵🇦', code: 'BALBÓA',  fiat: 'USD', country: 'Panamá',      phase: 3, status: 'Q3 2026' },
+    { flag: '🇨🇷', code: 'CORI',    fiat: 'CRC', country: lang === 'en' ? 'Costa Rica'   : 'Costa Rica', phase: 3, status: 'Q2 2026' },
+    { flag: '🇵🇦', code: 'BALBÓA',  fiat: 'USD', country: lang === 'en' ? 'Panama'       : 'Panamá',     phase: 3, status: 'Q3 2026' },
   ];
   return (
     <div className="flex flex-col h-full px-8 py-6">
-      <Tag>03 — Red TokenCoin</Tag>
-      <h2 className="text-4xl font-black text-white mb-2">Un token por moneda,<br /><span className="text-[#A29BFE]">toda la región</span></h2>
-      <p className="text-white/50 mb-8">8 países · 8 monedas · 1 red · Expansión modular por fases</p>
+      <Tag>{t.tag}</Tag>
+      <h2 className="text-4xl font-black text-white mb-2">{t.title}<br /><span className="text-[#A29BFE]">{t.hi}</span></h2>
+      <p className="text-white/50 mb-8">{t.sub}</p>
       <div className="grid grid-cols-4 gap-4 flex-1">
         {coins.map(c => (
           <div key={c.code} className={`rounded-2xl border p-5 flex flex-col gap-3
@@ -207,7 +283,7 @@ function SlideNetwork() {
             </div>
             <div className={`text-xs font-bold px-2 py-1 rounded-lg text-center
               ${c.phase === 1 ? 'bg-white/5 text-white/50' : 'bg-white/3 text-white/20'}`}>
-              Fase {c.phase}
+              {t.phase} {c.phase}
             </div>
           </div>
         ))}
@@ -217,65 +293,88 @@ function SlideNetwork() {
 }
 
 function SlideLegal() {
+  const lang = useLang();
+  const t = lang === 'en' ? {
+    tag: '04 — Legal Structure',
+    title: 'American software.', hi: 'Guatemalan tokens.',
+    sub: 'The structure used by the world\'s top fintechs to scale fast and protect IP.',
+    corp: {
+      name: 'LEN Technologies Inc.', sub: 'Delaware C-Corp',
+      items: ['Owns the LEN software and brand','Receives licensing royalties','Raises capital from US investors','Does NOT operate directly in GT/MX/HN','Protected from local banking regulation'],
+      badge: 'Receives: royalties + equity gains',
+    },
+    arrow: { title: 'License Agreement', p1: 'Software licensed to GT S.A.', p2: 'Royalty: X% of revenue', title2: 'Token Instruction', p3: 'GT S.A. instructs the trustee', p4: 'to issue / burn tokens' },
+    sa: {
+      name: 'LEN Red Digital S.A.', sub: 'Guatemala Operator',
+      items: ['Issues QUETZA/MEXCOIN/LEMPI tokens','Operates the platform (US license)','Local AML/KYC compliance','Signs agreements with local banks'],
+    },
+    trust: {
+      name: 'Reserve Trust', sub: 'Banrural / BAC (trustee)',
+      items: ['Holds user GTQ/HNL','GT S.A. = settlor','Users = beneficiaries','Funds NEVER belong to LEN','Regulated under GT banking law'],
+    },
+  } : {
+    tag: '04 — Estructura Legal',
+    title: 'Software americano.', hi: 'Tokens guatemaltecos.',
+    sub: 'La estructura que usan las mejores fintechs del mundo para escalar rápido y proteger el IP.',
+    corp: {
+      name: 'LEN Technologies Inc.', sub: 'Delaware C-Corp',
+      items: ['Dueña del software y la marca LEN','Recibe royalties de licencia','Levanta capital de inversionistas US','NO opera directamente en GT/MX/HN','Protegida de regulación bancaria local'],
+      badge: 'Recibe: royalties + equity gains',
+    },
+    arrow: { title: 'Acuerdo de licencia', p1: 'Software licenciado a GT S.A.', p2: 'Royalty: X% de revenue', title2: 'Instrucción de tokens', p3: 'GT S.A. instruye al fiduciario', p4: 'Emitir / quemar tokens' },
+    sa: {
+      name: 'LEN Red Digital S.A.', sub: 'Operadora Guatemala',
+      items: ['Emite tokens QUETZA/MEXCOIN/LEMPI','Opera la plataforma (licencia US)','Cumple AML/KYC local','Firma acuerdos con bancos locales'],
+    },
+    trust: {
+      name: 'Fideicomiso de Reserva', sub: 'Banrural / BAC (fiduciario)',
+      items: ['Custodia el GTQ/HNL de usuarios','GT S.A. = fideicomitente','Usuarios = fideicomisarios','Fondos NUNCA son de LEN','Regulado bajo ley bancaria GT'],
+    },
+  };
   return (
     <div className="flex flex-col h-full px-8 py-6">
-      <Tag>04 — Estructura Legal</Tag>
-      <h2 className="text-4xl font-black text-white mb-2">
-        Software americano.<br /><span className="text-[#A29BFE]">Tokens guatemaltecos.</span>
-      </h2>
-      <p className="text-white/50 mb-8">La estructura que usan las mejores fintechs del mundo para escalar rápido y proteger el IP.</p>
+      <Tag>{t.tag}</Tag>
+      <h2 className="text-4xl font-black text-white mb-2">{t.title}<br /><span className="text-[#A29BFE]">{t.hi}</span></h2>
+      <p className="text-white/50 mb-8">{t.sub}</p>
       <div className="grid grid-cols-3 gap-5 flex-1">
-        {/* US Corp */}
         <div className="bg-blue-500/10 border border-blue-500/30 rounded-2xl p-6 flex flex-col gap-4">
           <div className="flex items-center gap-3">
             <span className="text-3xl">🇺🇸</span>
-            <div>
-              <p className="text-blue-300 font-black">LEN Technologies Inc.</p>
-              <p className="text-white/40 text-xs">Delaware C-Corp</p>
-            </div>
+            <div><p className="text-blue-300 font-black">{t.corp.name}</p><p className="text-white/40 text-xs">{t.corp.sub}</p></div>
           </div>
           <ul className="space-y-2 flex-1">
-            {['Dueña del software y la marca LEN','Recibe royalties de licencia','Levanta capital de inversionistas US','NO opera directamente en GT/MX/HN','Protegida de regulación bancaria local'].map(i => (
+            {t.corp.items.map(i => (
               <li key={i} className="flex items-start gap-2 text-xs text-white/60">
                 <span className="text-blue-400 mt-0.5 flex-shrink-0">▸</span>{i}
               </li>
             ))}
           </ul>
           <div className="bg-blue-500/15 rounded-xl px-3 py-2">
-            <p className="text-blue-300 text-xs font-bold">Recibe: royalties + equity gains</p>
+            <p className="text-blue-300 text-xs font-bold">{t.corp.badge}</p>
           </div>
         </div>
-
-        {/* Arrow */}
         <div className="flex flex-col items-center justify-center gap-4">
           <div className="text-white/20 text-center space-y-2">
             <p className="text-3xl">↓</p>
             <div className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-xs text-white/50 text-center">
-              <p className="font-bold text-white/70 mb-1">Acuerdo de licencia</p>
-              <p>Software licenciado a GT S.A.</p>
-              <p className="mt-1">Royalty: X% de revenue</p>
+              <p className="font-bold text-white/70 mb-1">{t.arrow.title}</p>
+              <p>{t.arrow.p1}</p><p className="mt-1">{t.arrow.p2}</p>
             </div>
             <p className="text-3xl">↓</p>
           </div>
           <div className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-xs text-white/50 text-center">
-            <p className="font-bold text-white/70 mb-1">Instrucción de tokens</p>
-            <p>GT S.A. instruye al fiduciario</p>
-            <p className="mt-1">Emitir / quemar tokens</p>
+            <p className="font-bold text-white/70 mb-1">{t.arrow.title2}</p>
+            <p>{t.arrow.p3}</p><p className="mt-1">{t.arrow.p4}</p>
           </div>
         </div>
-
-        {/* GT S.A. + Fideicomiso */}
         <div className="flex flex-col gap-4">
           <div className="bg-[#6C5CE7]/15 border border-[#6C5CE7]/40 rounded-2xl p-5 flex flex-col gap-3">
             <div className="flex items-center gap-3">
               <span className="text-3xl">🇬🇹</span>
-              <div>
-                <p className="text-[#A29BFE] font-black">LEN Red Digital S.A.</p>
-                <p className="text-white/40 text-xs">Operadora Guatemala</p>
-              </div>
+              <div><p className="text-[#A29BFE] font-black">{t.sa.name}</p><p className="text-white/40 text-xs">{t.sa.sub}</p></div>
             </div>
             <ul className="space-y-1.5">
-              {['Emite tokens QUETZA/MEXCOIN/LEMPI','Opera la plataforma (licencia US)','Cumple AML/KYC local','Firma acuerdos con bancos locales'].map(i => (
+              {t.sa.items.map(i => (
                 <li key={i} className="flex items-start gap-2 text-xs text-white/60">
                   <span className="text-[#A29BFE] mt-0.5 flex-shrink-0">▸</span>{i}
                 </li>
@@ -285,13 +384,10 @@ function SlideLegal() {
           <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-2xl p-5 flex flex-col gap-3">
             <div className="flex items-center gap-2">
               <span className="text-2xl">🏛</span>
-              <div>
-                <p className="text-emerald-400 font-black text-sm">Fideicomiso de Reserva</p>
-                <p className="text-white/40 text-xs">Banrural / BAC (fiduciario)</p>
-              </div>
+              <div><p className="text-emerald-400 font-black text-sm">{t.trust.name}</p><p className="text-white/40 text-xs">{t.trust.sub}</p></div>
             </div>
             <ul className="space-y-1.5">
-              {['Custodia el GTQ/HNL de usuarios','GT S.A. = fideicomitente','Usuarios = fideicomisarios','Fondos NUNCA son de LEN','Regulado bajo ley bancaria GT'].map(i => (
+              {t.trust.items.map(i => (
                 <li key={i} className="flex items-start gap-2 text-xs text-white/60">
                   <span className="text-emerald-400 mt-0.5 flex-shrink-0">▸</span>{i}
                 </li>
@@ -305,76 +401,82 @@ function SlideLegal() {
 }
 
 function SlideModel() {
-  const rows = [
-    { model: 'Pool account (banco)', inter: true,  launch: 'Inmediato', cost: '$0', risk: 'Legal alto — captación', highlight: false },
-    { model: 'Fideicomiso + emisión token GT/HN', inter: false, launch: '3–6 sem', cost: '$5–15K', risk: 'Mínimo — no es depósito', highlight: true },
-    { model: 'STP sub-CLABE por usuario (MX)', inter: false, launch: '2–4 sem', cost: 'API costs', risk: 'Mínimo — fondos del usuario', highlight: true },
-    { model: 'BaaS partner (Bitso/BAC)', inter: false, launch: '4–8 sem', cost: 'Rev share', risk: 'Bajo — dependencia partner', highlight: false },
-    { model: 'IFPE/IDE licencia propia', inter: false, launch: '6–18 meses', cost: '$50–200K', risk: 'Bajo — largo plazo', highlight: false },
-  ];
-
+  const lang = useLang();
+  const t = lang === 'en' ? {
+    tag: '05 — Operating Model',
+    title: "We're not a bank.", hi: "We're token issuers.",
+    sub: 'The legal distinction that defines everything. Same model as Circle (USDC), Tether and Bitso.',
+    not: '❌ What we are NOT',
+    notItems: ['A bank that takes deposits','An institution that lends user funds','A regulated financial intermediary','Custodians of user fiat'],
+    yes: '✅ What we ARE',
+    yesItems: ['A software company (IP in USA)','Issuer of 1:1 backed tokens','Fiat is in regulated bank trust (GT/HN) or user sub-CLABE (MX)','Same as Tether, Circle, Bitso at launch'],
+    cols: ['Model','Intermediation','Launch','Initial Cost','Legal Risk'],
+    note: '★ = Selected model for LEN Phase 1',
+    rows: [
+      { model: 'Pool account (bank)', inter: true,  launch: 'Immediate', cost: '$0',         risk: 'High legal — deposit-taking', highlight: false },
+      { model: 'Trust + token issuance GT/HN', inter: false, launch: '3–6 wks', cost: '$5–15K', risk: 'Minimal — not a deposit', highlight: true },
+      { model: 'STP sub-CLABE per user (MX)', inter: false, launch: '2–4 wks', cost: 'API costs', risk: 'Minimal — user\'s own funds', highlight: true },
+      { model: 'BaaS partner (Bitso/BAC)', inter: false, launch: '4–8 wks', cost: 'Rev share', risk: 'Low — partner dependency', highlight: false },
+      { model: 'IFPE/IDE own license', inter: false, launch: '6–18 mo', cost: '$50–200K', risk: 'Low — long term', highlight: false },
+    ],
+    yes_label: '✓ No', no_label: '⚠ Yes',
+  } : {
+    tag: '05 — Modelo de Gestión',
+    title: 'No somos un banco.', hi: 'Somos emisores de tokens.',
+    sub: 'La distinción legal que define todo. Mismo modelo que Circle (USDC), Tether y Bitso.',
+    not: '❌ Lo que NO somos',
+    notItems: ['Un banco que capta depósitos','Una institución que presta el dinero de los usuarios','Un intermediario financiero regulado','Custodios del fiat de los usuarios'],
+    yes: '✅ Lo que SÍ somos',
+    yesItems: ['Empresa de software (IP en USA)','Emisor de tokens respaldados 1:1','El fiat está en fideicomiso bancario regulado (GT/HN) o en sub-CLABE del usuario (MX)','Igual que Tether, Circle, Bitso en su inicio'],
+    cols: ['Modelo','Intermediación','Lanzamiento','Costo inicial','Riesgo legal'],
+    note: '★ = Modelo seleccionado para Fase 1 LEN',
+    rows: [
+      { model: 'Pool account (banco)', inter: true,  launch: 'Inmediato', cost: '$0',         risk: 'Legal alto — captación', highlight: false },
+      { model: 'Fideicomiso + emisión token GT/HN', inter: false, launch: '3–6 sem', cost: '$5–15K', risk: 'Mínimo — no es depósito', highlight: true },
+      { model: 'STP sub-CLABE por usuario (MX)', inter: false, launch: '2–4 sem', cost: 'API costs', risk: 'Mínimo — fondos del usuario', highlight: true },
+      { model: 'BaaS partner (Bitso/BAC)', inter: false, launch: '4–8 sem', cost: 'Rev share', risk: 'Bajo — dependencia partner', highlight: false },
+      { model: 'IFPE/IDE licencia propia', inter: false, launch: '6–18 meses', cost: '$50–200K', risk: 'Bajo — largo plazo', highlight: false },
+    ],
+    yes_label: '✓ No', no_label: '⚠ Sí',
+  };
   return (
     <div className="flex flex-col h-full px-8 py-6">
-      <Tag>05 — Modelo de Gestión</Tag>
+      <Tag>{t.tag}</Tag>
       <h2 className="text-4xl font-black text-white mb-2">
-        No somos un banco.<br /><span className="text-[#A29BFE]">Somos emisores de tokens.</span>
+        {t.title}<br /><span className="text-[#A29BFE]">{t.hi}</span>
       </h2>
-      <p className="text-white/50 mb-6">La distinción legal que define todo. Mismo modelo que Circle (USDC), Tether y Bitso.</p>
-
-      {/* Key distinction */}
+      <p className="text-white/50 mb-6">{t.sub}</p>
       <div className="grid grid-cols-2 gap-4 mb-6">
         <div className="bg-red-500/10 border border-red-500/25 rounded-2xl p-5">
-          <p className="text-red-400 font-black mb-3">❌ Lo que NO somos</p>
+          <p className="text-red-400 font-black mb-3">{t.not}</p>
           <ul className="space-y-2 text-sm text-white/60">
-            {['Un banco que capta depósitos','Una institución que presta el dinero de los usuarios','Un intermediario financiero regulado','Custodios del fiat de los usuarios'].map(i => (
+            {t.notItems.map(i => (
               <li key={i} className="flex items-start gap-2"><span className="text-red-500 flex-shrink-0">✗</span>{i}</li>
             ))}
           </ul>
         </div>
         <div className="bg-emerald-500/10 border border-emerald-500/25 rounded-2xl p-5">
-          <p className="text-emerald-400 font-black mb-3">✅ Lo que SÍ somos</p>
+          <p className="text-emerald-400 font-black mb-3">{t.yes}</p>
           <ul className="space-y-2 text-sm text-white/60">
-            {['Empresa de software (IP en USA)','Emisor de tokens respaldados 1:1','El fiat está en fideicomiso bancario regulado (GT/HN) o en sub-CLABE del usuario (MX)','Igual que Tether, Circle, Bitso en su inicio'].map(i => (
+            {t.yesItems.map(i => (
               <li key={i} className="flex items-start gap-2"><span className="text-emerald-400 flex-shrink-0">✓</span>{i}</li>
             ))}
           </ul>
         </div>
       </div>
-
-      {/* Comparison table */}
       <div className="bg-white/3 border border-white/10 rounded-2xl overflow-hidden flex-1">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-white/10 bg-white/5">
-              <th className="text-left px-4 py-3 text-white/40 text-xs uppercase tracking-wide font-bold">Modelo</th>
-              <th className="text-center px-3 py-3 text-white/40 text-xs uppercase tracking-wide font-bold">Intermediación</th>
-              <th className="text-center px-3 py-3 text-white/40 text-xs uppercase tracking-wide font-bold">Lanzamiento</th>
-              <th className="text-center px-3 py-3 text-white/40 text-xs uppercase tracking-wide font-bold">Costo inicial</th>
-              <th className="text-left px-4 py-3 text-white/40 text-xs uppercase tracking-wide font-bold">Riesgo legal</th>
+              {t.cols.map(c => <th key={c} className="text-left px-4 py-3 text-white/40 text-xs uppercase tracking-wide font-bold">{c}</th>)}
             </tr>
           </thead>
           <tbody>
-            {rows.map((r, i) => (
-              <tr key={i}
-                className={`border-b border-white/5 transition-colors
-                  ${r.highlight ? 'bg-[#6C5CE7]/15 border-[#6C5CE7]/20' : ''}`}>
-                <td className="px-4 py-3">
-                  <span className={`font-semibold ${r.highlight ? 'text-white' : 'text-white/60'}`}>
-                    {r.highlight && <span className="text-[#A29BFE] mr-1">★</span>}
-                    {r.model}
-                  </span>
-                </td>
-                <td className="px-3 py-3 text-center">
-                  {r.inter
-                    ? <span className="text-red-400 font-bold">⚠ Sí</span>
-                    : <span className="text-emerald-400 font-bold">✓ No</span>}
-                </td>
-                <td className="px-3 py-3 text-center">
-                  <span className={`text-xs font-bold px-2 py-1 rounded-lg
-                    ${r.highlight ? 'bg-emerald-500/20 text-emerald-400' : 'text-white/50'}`}>
-                    {r.launch}
-                  </span>
-                </td>
+            {t.rows.map((r, i) => (
+              <tr key={i} className={`border-b border-white/5 ${r.highlight ? 'bg-[#6C5CE7]/15 border-[#6C5CE7]/20' : ''}`}>
+                <td className="px-4 py-3"><span className={`font-semibold ${r.highlight ? 'text-white' : 'text-white/60'}`}>{r.highlight && <span className="text-[#A29BFE] mr-1">★</span>}{r.model}</span></td>
+                <td className="px-3 py-3 text-center">{r.inter ? <span className="text-red-400 font-bold">{t.no_label}</span> : <span className="text-emerald-400 font-bold">{t.yes_label}</span>}</td>
+                <td className="px-3 py-3 text-center"><span className={`text-xs font-bold px-2 py-1 rounded-lg ${r.highlight ? 'bg-emerald-500/20 text-emerald-400' : 'text-white/50'}`}>{r.launch}</span></td>
                 <td className="px-3 py-3 text-center text-white/50 text-xs">{r.cost}</td>
                 <td className="px-4 py-3 text-white/50 text-xs">{r.risk}</td>
               </tr>
@@ -382,7 +484,7 @@ function SlideModel() {
           </tbody>
         </table>
         <div className="px-4 py-3 border-t border-white/5 bg-white/3">
-          <p className="text-xs text-white/30">★ = Modelo seleccionado para Fase 1 LEN</p>
+          <p className="text-xs text-white/30">{t.note}</p>
         </div>
       </div>
     </div>
@@ -390,21 +492,39 @@ function SlideModel() {
 }
 
 function SlideWallet() {
-  const features = [
-    { icon: '💰', title: 'Balance dual', desc: 'Saldo fiat (sin convertir) y tokens separados. El usuario controla cuándo convierte.', chips: ['fiatBalance', 'tokenBalance'] },
-    { icon: '🔄', title: 'Compra / Venta tokens', desc: 'Conversión 1:1 entre fiat y tokens. Sin comisión al comprar. 0.5% al vender.', chips: ['1:1 peg', '0.5% sell'] },
-    { icon: '📤', title: 'Envío P2P', desc: 'Instantáneo a cualquier wallet LEN. Mismo país: 0%. Internacional: 0.3%.', chips: ['Instant', '0.3% FX'] },
-    { icon: '🏦', title: 'Retiro bancario', desc: 'Del saldo fiat a cualquier banco del país. SPEI inmediato MX, 30–60 min GT/HN.', chips: ['ACH GT', 'SPEI MX', 'SIEFOM HN'] },
-    { icon: '🧾', title: 'Voucher PNG', desc: 'Comprobante digital compartible. Canvas 2D puro, funciona en todos los móviles.', chips: ['PNG', 'Web Share API'] },
-    { icon: '📊', title: 'Historial completo', desc: 'Cada centavo rastreado: tipo, estado, ID único, fecha, fee. Auditable.', chips: ['TX ID', 'Auditoría'] },
-  ];
+  const lang = useLang();
+  const t = lang === 'en' ? {
+    tag: '06 — The Wallet',
+    title: 'A bank in your pocket —', hi: 'without being a bank',
+    sub: 'iOS · Android · Web. No bank account required.',
+    features: [
+      { icon: '💰', title: 'Dual balance', desc: 'Fiat balance (unconverted) and tokens separated. User controls when to convert.', chips: ['fiatBalance', 'tokenBalance'] },
+      { icon: '🔄', title: 'Buy / Sell tokens', desc: '1:1 conversion between fiat and tokens. No fee to buy. 0.5% to sell.', chips: ['1:1 peg', '0.5% sell'] },
+      { icon: '📤', title: 'P2P Transfers', desc: 'Instant to any LEN wallet. Same country: 0%. International: 0.3%.', chips: ['Instant', '0.3% FX'] },
+      { icon: '🏦', title: 'Bank withdrawal', desc: 'From fiat balance to any bank in the country. Instant SPEI MX, 30–60 min GT/HN.', chips: ['ACH GT', 'SPEI MX', 'SIEFOM HN'] },
+      { icon: '🧾', title: 'PNG Voucher', desc: 'Shareable digital receipt. Pure Canvas 2D, works on all mobile devices.', chips: ['PNG', 'Web Share API'] },
+      { icon: '📊', title: 'Full history', desc: 'Every cent tracked: type, status, unique ID, date, fee. Auditable.', chips: ['TX ID', 'Audit'] },
+    ],
+  } : {
+    tag: '06 — La Wallet',
+    title: 'Un banco en el bolsillo —', hi: 'sin ser un banco',
+    sub: 'iOS · Android · Web. Sin cuenta bancaria requerida.',
+    features: [
+      { icon: '💰', title: 'Balance dual', desc: 'Saldo fiat (sin convertir) y tokens separados. El usuario controla cuándo convierte.', chips: ['fiatBalance', 'tokenBalance'] },
+      { icon: '🔄', title: 'Compra / Venta tokens', desc: 'Conversión 1:1 entre fiat y tokens. Sin comisión al comprar. 0.5% al vender.', chips: ['1:1 peg', '0.5% sell'] },
+      { icon: '📤', title: 'Envío P2P', desc: 'Instantáneo a cualquier wallet LEN. Mismo país: 0%. Internacional: 0.3%.', chips: ['Instant', '0.3% FX'] },
+      { icon: '🏦', title: 'Retiro bancario', desc: 'Del saldo fiat a cualquier banco del país. SPEI inmediato MX, 30–60 min GT/HN.', chips: ['ACH GT', 'SPEI MX', 'SIEFOM HN'] },
+      { icon: '🧾', title: 'Voucher PNG', desc: 'Comprobante digital compartible. Canvas 2D puro, funciona en todos los móviles.', chips: ['PNG', 'Web Share API'] },
+      { icon: '📊', title: 'Historial completo', desc: 'Cada centavo rastreado: tipo, estado, ID único, fecha, fee. Auditable.', chips: ['TX ID', 'Auditoría'] },
+    ],
+  };
   return (
     <div className="flex flex-col h-full px-8 py-6">
-      <Tag>06 — La Wallet</Tag>
-      <h2 className="text-4xl font-black text-white mb-2">Un banco en el bolsillo —<br /><span className="text-[#A29BFE]">sin ser un banco</span></h2>
-      <p className="text-white/50 mb-8">iOS · Android · Web. Sin cuenta bancaria requerida.</p>
+      <Tag>{t.tag}</Tag>
+      <h2 className="text-4xl font-black text-white mb-2">{t.title}<br /><span className="text-[#A29BFE]">{t.hi}</span></h2>
+      <p className="text-white/50 mb-8">{t.sub}</p>
       <div className="grid grid-cols-3 gap-4 flex-1">
-        {features.map(f => (
+        {t.features.map(f => (
           <div key={f.icon} className="bg-white/5 border border-white/10 rounded-2xl p-5 flex flex-col gap-3">
             <span className="text-3xl">{f.icon}</span>
             <div className="flex-1">
@@ -424,21 +544,62 @@ function SlideWallet() {
 }
 
 function SlideSecurity() {
+  const lang = useLang();
+  const t = lang === 'en' ? {
+    tag: '07 — Security',
+    title: 'Institutional-grade', hi: 'financial security',
+    sub: 'Each layer protects a different attack vector.',
+    layers: [
+      { n: '01', t: '6-digit PIN + bcrypt',          d: 'Never in plain text. Salt rounds 12. Rate limiting anti-brute force.',   c: 'text-[#A29BFE]' },
+      { n: '02', t: 'JWT + Rotating Refresh',         d: 'Access token 15 min. Refresh 30 days with rotation. Blacklist in Redis.', c: 'text-emerald-400' },
+      { n: '03', t: 'HMAC-SHA256 on webhooks',        d: 'Every bank notification verified. Rejected if signature doesn\'t match.', c: 'text-amber-400' },
+      { n: '04', t: 'Banking idempotency',             d: 'externalReference UNIQUE in DB. Same deposit never credited twice.',      c: 'text-blue-400' },
+      { n: '05', t: 'Replay prevention',               d: 'Webhooks with timestamp. Rejected if >5 minutes old.',                   c: 'text-rose-400' },
+      { n: '06', t: 'Segregated funds (trust)',        d: 'Reserves in bank trust — never mixed with LEN capital.',                 c: 'text-purple-400' },
+    ],
+    kycTitle: 'KYC / Limits',
+    kyc: [
+      { level: 'KYC 0', limit: 'View only', c: 'bg-gray-500/20 text-gray-400 border-gray-500/30' },
+      { level: 'KYC 1', limit: 'Q 5,000/day', c: 'bg-amber-500/20 text-amber-400 border-amber-500/30' },
+      { level: 'KYC 2', limit: 'Q 25,000/day', c: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' },
+      { level: 'KYC 3', limit: 'Unlimited (institutional)', c: 'bg-[#6C5CE7]/20 text-[#A29BFE] border-[#6C5CE7]/30' },
+    ],
+    complianceTitle: 'Compliance',
+    compliance: ['✓ AML — Real-time monitoring','✓ LAFT — Guatemala anti-laundering law','✓ FATF — International standards','✓ Auditable logs 5 years','✓ Automatic suspicious activity reporting'],
+    reg: '🏛 Regulatory framework',
+    regNote: 'LEN operates under the token regulatory vacuum in GT/HN (same as Tigo Money at launch). GT IDE license in progress. MX IFPE via partner (Bitso/Conekta).',
+  } : {
+    tag: '07 — Seguridad',
+    title: 'Seguridad de grado', hi: 'institucional financiero',
+    sub: 'Cada capa protege un vector de ataque distinto.',
+    layers: [
+      { n: '01', t: 'PIN 6 dígitos + bcrypt',         d: 'Nunca en texto plano. Salt rounds 12. Rate limiting anti-fuerza bruta.', c: 'text-[#A29BFE]' },
+      { n: '02', t: 'JWT + Refresh rotativo',          d: 'Access token 15 min. Refresh 30 días con rotación. Blacklist en Redis.',  c: 'text-emerald-400' },
+      { n: '03', t: 'HMAC-SHA256 en webhooks',         d: 'Cada notificación bancaria verificada. Rechazada si firma no coincide.', c: 'text-amber-400' },
+      { n: '04', t: 'Idempotencia bancaria',            d: 'externalReference UNIQUE en DB. El mismo depósito no se acredita dos veces.', c: 'text-blue-400' },
+      { n: '05', t: 'Replay prevention',                d: 'Webhooks con timestamp. Rechazo si >5 minutos de antigüedad.',           c: 'text-rose-400' },
+      { n: '06', t: 'Fondos segregados (fideicomiso)', d: 'Reservas en fideicomiso bancario — nunca mezcladas con capital de LEN.', c: 'text-purple-400' },
+    ],
+    kycTitle: 'KYC / Límites',
+    kyc: [
+      { level: 'KYC 0', limit: 'Solo visualización', c: 'bg-gray-500/20 text-gray-400 border-gray-500/30' },
+      { level: 'KYC 1', limit: 'Q 5,000/día', c: 'bg-amber-500/20 text-amber-400 border-amber-500/30' },
+      { level: 'KYC 2', limit: 'Q 25,000/día', c: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' },
+      { level: 'KYC 3', limit: 'Sin límite (institucional)', c: 'bg-[#6C5CE7]/20 text-[#A29BFE] border-[#6C5CE7]/30' },
+    ],
+    complianceTitle: 'Compliance',
+    compliance: ['✓ AML — Monitoreo en tiempo real','✓ LAFT — Ley contra lavado GT','✓ FATF — Estándares internacionales','✓ Logs auditables 5 años','✓ Reporte automático operaciones sospechosas'],
+    reg: '🏛 Marco regulatorio',
+    regNote: 'LEN opera bajo vacío regulatorio de tokens en GT/HN (igual que Tigo Money en sus inicios). Licencia IDE GT en proceso. IFPE MX vía partner (Bitso/Conekta).',
+  };
   return (
     <div className="flex flex-col h-full px-8 py-6">
-      <Tag>07 — Seguridad</Tag>
-      <h2 className="text-4xl font-black text-white mb-2">Seguridad de grado<br /><span className="text-[#A29BFE]">institucional financiero</span></h2>
-      <p className="text-white/50 mb-8">Cada capa protege un vector de ataque distinto.</p>
+      <Tag>{t.tag}</Tag>
+      <h2 className="text-4xl font-black text-white mb-2">{t.title}<br /><span className="text-[#A29BFE]">{t.hi}</span></h2>
+      <p className="text-white/50 mb-8">{t.sub}</p>
       <div className="grid grid-cols-2 gap-6 flex-1">
         <div className="space-y-3">
-          {[
-            { n: '01', t: 'PIN 6 dígitos + bcrypt',       d: 'Nunca en texto plano. Salt rounds 12. Rate limiting anti-fuerza bruta.', c: 'text-[#A29BFE]' },
-            { n: '02', t: 'JWT + Refresh rotativo',        d: 'Access token 15 min. Refresh 30 días con rotación. Blacklist en Redis.', c: 'text-emerald-400' },
-            { n: '03', t: 'HMAC-SHA256 en webhooks',       d: 'Cada notificación bancaria verificada. Rechazada si firma no coincide.', c: 'text-amber-400' },
-            { n: '04', t: 'Idempotencia bancaria',         d: 'externalReference UNIQUE en DB. El mismo depósito no se acredita dos veces.', c: 'text-blue-400' },
-            { n: '05', t: 'Replay prevention',             d: 'Webhooks con timestamp. Rechazo si >5 minutos de antigüedad.', c: 'text-rose-400' },
-            { n: '06', t: 'Fondos segregados (fideicomiso)', d: 'Reservas en fideicomiso bancario — nunca mezcladas con capital de LEN.', c: 'text-purple-400' },
-          ].map(l => (
+          {t.layers.map(l => (
             <div key={l.n} className="flex items-start gap-4 bg-white/4 border border-white/8 rounded-xl p-4">
               <span className={`font-black text-lg ${l.c} flex-shrink-0 w-8`}>{l.n}</span>
               <div><p className="text-white font-bold text-sm">{l.t}</p><p className="text-white/40 text-xs mt-0.5 leading-relaxed">{l.d}</p></div>
@@ -447,13 +608,8 @@ function SlideSecurity() {
         </div>
         <div className="space-y-4">
           <div className="bg-white/4 border border-white/10 rounded-2xl p-5">
-            <p className="text-white/40 text-xs font-bold uppercase tracking-widest mb-4">KYC / Límites</p>
-            {[
-              { level: 'KYC 0', limit: 'Solo visualización', c: 'bg-gray-500/20 text-gray-400 border-gray-500/30' },
-              { level: 'KYC 1', limit: 'Q 5,000/día', c: 'bg-amber-500/20 text-amber-400 border-amber-500/30' },
-              { level: 'KYC 2', limit: 'Q 25,000/día', c: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' },
-              { level: 'KYC 3', limit: 'Sin límite (institucional)', c: 'bg-[#6C5CE7]/20 text-[#A29BFE] border-[#6C5CE7]/30' },
-            ].map(k => (
+            <p className="text-white/40 text-xs font-bold uppercase tracking-widest mb-4">{t.kycTitle}</p>
+            {t.kyc.map(k => (
               <div key={k.level} className="flex items-center justify-between mb-2 last:mb-0">
                 <span className={`text-xs font-bold px-3 py-1 rounded-full border ${k.c}`}>{k.level}</span>
                 <span className="text-white/50 text-sm">{k.limit}</span>
@@ -461,14 +617,12 @@ function SlideSecurity() {
             ))}
           </div>
           <div className="bg-white/4 border border-white/10 rounded-2xl p-5">
-            <p className="text-white/40 text-xs font-bold uppercase tracking-widest mb-3">Compliance</p>
-            {['✓ AML — Monitoreo en tiempo real','✓ LAFT — Ley contra lavado GT','✓ FATF — Estándares internacionales','✓ Logs auditables 5 años','✓ Reporte automático operaciones sospechosas'].map(i => (
-              <p key={i} className="text-white/60 text-sm mb-1">{i}</p>
-            ))}
+            <p className="text-white/40 text-xs font-bold uppercase tracking-widest mb-3">{t.complianceTitle}</p>
+            {t.compliance.map(i => <p key={i} className="text-white/60 text-sm mb-1">{i}</p>)}
           </div>
           <div className="bg-amber-500/10 border border-amber-500/25 rounded-2xl p-4">
-            <p className="text-amber-400 font-bold text-sm mb-1">🏛 Marco regulatorio</p>
-            <p className="text-amber-300/70 text-xs leading-relaxed">LEN opera bajo vacío regulatorio de tokens en GT/HN (igual que Tigo Money en sus inicios). Licencia IDE GT en proceso. IFPE MX vía partner (Bitso/Conekta).</p>
+            <p className="text-amber-400 font-bold text-sm mb-1">{t.reg}</p>
+            <p className="text-amber-300/70 text-xs leading-relaxed">{t.regNote}</p>
           </div>
         </div>
       </div>
@@ -477,41 +631,57 @@ function SlideSecurity() {
 }
 
 function SlideBanks() {
+  const lang = useLang();
+  const t = lang === 'en' ? {
+    tag: '08 — Banking Connectivity',
+    title: 'Trust GT/HN.', hi: 'Sub-CLABE MX.',
+    sub: 'Fiat is NEVER LEN\'s. It belongs to the user in regulated bank custody.',
+    custodian: 'Custodian', deposit_in: 'Deposit (inbound)', withdraw_out: 'Withdrawal (outbound)',
+    inbound: 'Inbound', outbound: 'Outbound', security: 'Security',
+    countries: [
+      { flag: '🇬🇹', country: 'Guatemala', currency: 'GTQ', model: 'Trust', bank: 'Banrural (trustee)',
+        deposit: 'Sub-account 1832-2383738-XXXX\n(last 4 = user wallet ID)',
+        withdraw: 'ACH BANGUAT → Industrial, BAM,\nG&T, Bantrab, Promerica, Citi GT...',
+        eta_in: '15–30 min', eta_out: '15–60 min M-F', color: 'border-blue-500/30 bg-blue-500/8' },
+      { flag: '🇲🇽', country: 'Mexico', currency: 'MXN', model: 'STP sub-CLABE',bank: 'STP / Conekta',
+        deposit: 'Unique 18-digit virtual CLABE\nper user — NOT a LEN account',
+        withdraw: 'SPEI → any MX bank\nBBVA, Nu, Santander, Mercado Pago...',
+        eta_in: 'Instant 24/7', eta_out: 'Instant 24/7', color: 'border-emerald-500/30 bg-emerald-500/8' },
+      { flag: '🇭🇳', country: 'Honduras', currency: 'HNL', model: 'Trust', bank: 'BAC Credomatic (trustee)',
+        deposit: 'Sub-account 3090-2847561-XXXX\n(last 4 = user wallet ID)',
+        withdraw: 'SIEFOM → Atlántida, Ficohsa,\nBanpaís, Occidente, Davivienda...',
+        eta_in: '15–30 min', eta_out: '30–60 min M-F', color: 'border-[#6C5CE7]/30 bg-[#6C5CE7]/8' },
+    ],
+    badges: ['🔐 HMAC-SHA256 per webhook','⏱ Replay prevention 5min','🔁 Guaranteed idempotency','🏛 Trust regulated by law','📋 Full audit trail'],
+  } : {
+    tag: '08 — Conectividad Bancaria',
+    title: 'Fideicomiso GT/HN.', hi: 'Sub-CLABE MX.',
+    sub: 'El fiat NUNCA es de LEN. Es del usuario en custodia bancaria regulada.',
+    custodian: 'Institución custodio', deposit_in: 'Depósito (entrada)', withdraw_out: 'Retiro (salida)',
+    inbound: 'Entrada', outbound: 'Salida', security: 'Seguridad',
+    countries: [
+      { flag: '🇬🇹', country: 'Guatemala', currency: 'GTQ', model: 'Fideicomiso', bank: 'Banrural (fiduciario)',
+        deposit: 'Sub-cuenta 1832-2383738-XXXX\n(últimos 4 = wallet ID del usuario)',
+        withdraw: 'ACH BANGUAT → Industrial, BAM,\nG&T, Bantrab, Promerica, Citi GT...',
+        eta_in: '15–30 min', eta_out: '15–60 min L-V', color: 'border-blue-500/30 bg-blue-500/8' },
+      { flag: '🇲🇽', country: 'México', currency: 'MXN', model: 'STP sub-CLABE', bank: 'STP / Conekta',
+        deposit: 'CLABE virtual 18 dígitos exclusiva\npor usuario — NO es cuenta de LEN',
+        withdraw: 'SPEI → cualquier banco MX\nBBVA, Nu, Santander, Mercado Pago...',
+        eta_in: 'Inmediato 24/7', eta_out: 'Inmediato 24/7', color: 'border-emerald-500/30 bg-emerald-500/8' },
+      { flag: '🇭🇳', country: 'Honduras', currency: 'HNL', model: 'Fideicomiso', bank: 'BAC Credomatic (fiduciario)',
+        deposit: 'Sub-cuenta 3090-2847561-XXXX\n(últimos 4 = wallet ID del usuario)',
+        withdraw: 'SIEFOM → Atlántida, Ficohsa,\nBanpaís, Occidente, Davivienda...',
+        eta_in: '15–30 min', eta_out: '30–60 min L-V', color: 'border-[#6C5CE7]/30 bg-[#6C5CE7]/8' },
+    ],
+    badges: ['🔐 HMAC-SHA256 por webhook','⏱ Replay prevention 5min','🔁 Idempotencia garantizada','🏛 Fideicomiso regulado por ley','📋 Auditoría completa'],
+  };
   return (
     <div className="flex flex-col h-full px-8 py-6">
-      <Tag>08 — Conectividad Bancaria</Tag>
-      <h2 className="text-4xl font-black text-white mb-2">Fideicomiso GT/HN.<br /><span className="text-[#A29BFE]">Sub-CLABE MX.</span></h2>
-      <p className="text-white/50 mb-6">El fiat NUNCA es de LEN. Es del usuario en custodia bancaria regulada.</p>
+      <Tag>{t.tag}</Tag>
+      <h2 className="text-4xl font-black text-white mb-2">{t.title}<br /><span className="text-[#A29BFE]">{t.hi}</span></h2>
+      <p className="text-white/50 mb-6">{t.sub}</p>
       <div className="grid grid-cols-3 gap-4 mb-5">
-        {[
-          {
-            flag: '🇬🇹', country: 'Guatemala', currency: 'GTQ',
-            model: 'Fideicomiso',
-            bank: 'Banrural (fiduciario)',
-            deposit: 'Sub-cuenta 1832-2383738-XXXX\n(últimos 4 = wallet ID del usuario)',
-            withdraw: 'ACH BANGUAT → Industrial, BAM,\nG&T, Bantrab, Promerica, Citi GT...',
-            eta_in: '15–30 min', eta_out: '15–60 min L-V',
-            color: 'border-blue-500/30 bg-blue-500/8',
-          },
-          {
-            flag: '🇲🇽', country: 'México', currency: 'MXN',
-            model: 'STP sub-CLABE',
-            bank: 'STP / Conekta',
-            deposit: 'CLABE virtual 18 dígitos exclusiva\npor usuario — NO es cuenta de LEN',
-            withdraw: 'SPEI → cualquier banco MX\nBBVA, Nu, Santander, Mercado Pago...',
-            eta_in: 'Inmediato 24/7', eta_out: 'Inmediato 24/7',
-            color: 'border-emerald-500/30 bg-emerald-500/8',
-          },
-          {
-            flag: '🇭🇳', country: 'Honduras', currency: 'HNL',
-            model: 'Fideicomiso',
-            bank: 'BAC Credomatic (fiduciario)',
-            deposit: 'Sub-cuenta 3090-2847561-XXXX\n(últimos 4 = wallet ID del usuario)',
-            withdraw: 'SIEFOM → Atlántida, Ficohsa,\nBanpaís, Occidente, Davivienda...',
-            eta_in: '15–30 min', eta_out: '30–60 min L-V',
-            color: 'border-[#6C5CE7]/30 bg-[#6C5CE7]/8',
-          },
-        ].map(c => (
+        {t.countries.map(c => (
           <div key={c.country} className={`border rounded-2xl p-5 flex flex-col gap-3 ${c.color}`}>
             <div className="flex items-center gap-2">
               <span className="text-3xl">{c.flag}</span>
@@ -521,28 +691,28 @@ function SlideBanks() {
               </div>
             </div>
             <div className="bg-black/20 rounded-xl p-3">
-              <p className="text-white/30 text-[10px] font-bold uppercase mb-1">Institución custodio</p>
+              <p className="text-white/30 text-[10px] font-bold uppercase mb-1">{t.custodian}</p>
               <p className="text-white/80 text-xs font-semibold">{c.bank}</p>
             </div>
             <div>
-              <p className="text-white/30 text-[10px] font-bold uppercase mb-1">Depósito (entrada)</p>
+              <p className="text-white/30 text-[10px] font-bold uppercase mb-1">{t.deposit_in}</p>
               <p className="text-white/70 text-xs leading-relaxed whitespace-pre-line">{c.deposit}</p>
             </div>
             <div>
-              <p className="text-white/30 text-[10px] font-bold uppercase mb-1">Retiro (salida)</p>
+              <p className="text-white/30 text-[10px] font-bold uppercase mb-1">{t.withdraw_out}</p>
               <p className="text-white/70 text-xs leading-relaxed whitespace-pre-line">{c.withdraw}</p>
             </div>
             <div className="grid grid-cols-2 gap-2 pt-2 border-t border-white/10">
-              <div className="text-center"><p className="text-[10px] text-white/30">Entrada</p><p className="text-xs font-bold text-emerald-400">{c.eta_in}</p></div>
-              <div className="text-center"><p className="text-[10px] text-white/30">Salida</p><p className="text-xs font-bold text-emerald-400">{c.eta_out}</p></div>
+              <div className="text-center"><p className="text-[10px] text-white/30">{t.inbound}</p><p className="text-xs font-bold text-emerald-400">{c.eta_in}</p></div>
+              <div className="text-center"><p className="text-[10px] text-white/30">{t.outbound}</p><p className="text-xs font-bold text-emerald-400">{c.eta_out}</p></div>
             </div>
           </div>
         ))}
       </div>
       <div className="bg-white/4 border border-white/10 rounded-2xl p-4 flex items-center gap-6">
-        <p className="text-white/30 text-xs font-bold uppercase tracking-widest flex-shrink-0">Seguridad</p>
+        <p className="text-white/30 text-xs font-bold uppercase tracking-widest flex-shrink-0">{t.security}</p>
         <div className="flex flex-wrap gap-2">
-          {['🔐 HMAC-SHA256 por webhook','⏱ Replay prevention 5min','🔁 Idempotencia garantizada','🏛 Fideicomiso regulado por ley','📋 Auditoría completa'].map(i => (
+          {t.badges.map(i => (
             <span key={i} className="text-white/50 text-xs bg-white/3 border border-white/8 px-3 py-1.5 rounded-xl">{i}</span>
           ))}
         </div>
@@ -552,24 +722,73 @@ function SlideBanks() {
 }
 
 function SlideMexico() {
+  const lang = useLang();
+  const t = lang === 'en' ? {
+    tag: '09 — Mexico in Detail',
+    title: 'The most advanced', hi: 'infrastructure in LATAM',
+    sub: 'SPEI settles in seconds, 365 days. Each user has their own CLABE. Zero pool account.',
+    modelTitle: 'STP sub-CLABE model',
+    master: 'LEN master at STP:', masterVal: '646180 000000000000',
+    clabe1: 'Carlos CLABE:', clabe2: 'Sofía CLABE:', clabe3: 'Pedro CLABE:',
+    clabeNote: 'Each CLABE is legally the user\'s account within STP. The MXN Carlos deposits ', bold: 'is NOT LEN\'s', clabeNote2: ' — it\'s Carlos\'s in his sub-CLABE. LEN only issues MEXCOIN as digital representation.',
+    ecosysTitle: 'MX ecosystem layers',
+    layers: [
+      { layer: 'Banxico / SPEI', role: 'Real-time interbank settlement', color: 'text-white/70' },
+      { layer: 'STP (Banxico-licensed)', role: 'SPEI participant. Issues virtual CLABEs per user', color: 'text-[#A29BFE]' },
+      { layer: 'Conekta / Arcus', role: 'API on top of STP. Fast integration without own license', color: 'text-emerald-400' },
+      { layer: 'IFPE (CNBV license)', role: 'Own route. 6–12 months. Examples: Clip, Cuenca, Klar', color: 'text-amber-400' },
+    ],
+    othersTitle: 'How others operate (reference)',
+    others: [
+      { name: 'Tether (USDT)', model: 'Issues tokens backed in USD. No banking license. Operates from BVI/El Salvador.', status: 'bg-emerald-500/20 text-emerald-400', s: 'Global reference' },
+      { name: 'Circle (USDC)', model: 'Money transmitter license USA. Reserves in treasuries + bank. Issues USDC 1:1.', status: 'bg-blue-500/20 text-blue-400', s: 'Mature model' },
+      { name: 'Bitso (MX)', model: 'IFPE + exchange. CLABEs via STP. Operates crypto and fiat. CNBV regulated.', status: 'bg-[#6C5CE7]/20 text-[#A29BFE]', s: 'Regional comparable' },
+      { name: 'Cuenca (MX)', model: 'IFPE. Account + virtual CLABE + card. No full banking license.', status: 'bg-amber-500/20 text-amber-400', s: 'Fast-launch model' },
+    ],
+    routeTitle: '🎯 LEN route for MX (Phase 1)',
+    routeNote: 'Integration with ', routeBold: 'Conekta or Arcus', routeNote2: ' as a layer over STP. They provide virtual CLABEs via API — LEN assigns them 1:1 per user. No own license needed to launch. Then: IFPE CNBV application (6–12 months).',
+    badge1: 'Launch: 2–4 weeks', badge2: 'Zero intermediation',
+  } : {
+    tag: '09 — México en detalle',
+    title: 'La infraestructura más', hi: 'avanzada de LATAM',
+    sub: 'SPEI liquida en segundos, 365 días. Cada usuario tiene su propia CLABE. Zero pool account.',
+    modelTitle: 'Modelo STP sub-CLABE',
+    master: 'Master LEN en STP:', masterVal: '646180 000000000000',
+    clabe1: 'CLABE Carlos:', clabe2: 'CLABE Sofía:', clabe3: 'CLABE Pedro:',
+    clabeNote: 'Cada CLABE es legalmente la cuenta del usuario dentro de STP. El MXN que deposita Carlos ', bold: 'NO es de LEN', clabeNote2: ' — es de Carlos en su sub-CLABE. LEN solo emite MEXCOIN como representación digital.',
+    ecosysTitle: 'Capas del ecosistema MX',
+    layers: [
+      { layer: 'Banxico / SPEI', role: 'Liquidación interbancaria en tiempo real', color: 'text-white/70' },
+      { layer: 'STP (Banxico-licensed)', role: 'Participante SPEI. Emite CLABEs virtuales por usuario', color: 'text-[#A29BFE]' },
+      { layer: 'Conekta / Arcus', role: 'API sobre STP. Integración rápida sin licencia directa', color: 'text-emerald-400' },
+      { layer: 'IFPE (licencia CNBV)', role: 'Ruta propia. 6–12 meses. Ejemplos: Clip, Cuenca, Klar', color: 'text-amber-400' },
+    ],
+    othersTitle: 'Así operan otros (referencia)',
+    others: [
+      { name: 'Tether (USDT)', model: 'Emite tokens respaldados en USD. Sin licencia bancaria. Opera desde BVI/El Salvador.', status: 'bg-emerald-500/20 text-emerald-400', s: 'Referencia global' },
+      { name: 'Circle (USDC)', model: 'Money transmitter license USA. Reservas en treasuries + banco. Emite USDC 1:1.', status: 'bg-blue-500/20 text-blue-400', s: 'Modelo maduro' },
+      { name: 'Bitso (MX)', model: 'IFPE + exchange. CLABEs via STP. Opera cripto y fiat. Regulado CNBV.', status: 'bg-[#6C5CE7]/20 text-[#A29BFE]', s: 'Comparable regional' },
+      { name: 'Cuenca (MX)', model: 'IFPE. Cuenta + CLABE virtual + tarjeta. Sin licencia bancaria completa.', status: 'bg-amber-500/20 text-amber-400', s: 'Modelo fast-launch' },
+    ],
+    routeTitle: '🎯 Ruta LEN para MX (Fase 1)',
+    routeNote: 'Integración con ', routeBold: 'Conekta o Arcus', routeNote2: ' como capa sobre STP. Ellos proveen CLABEs virtuales vía API — LEN las asigna 1:1 por usuario. Sin licencia propia necesaria para lanzar. Después: solicitud IFPE CNBV (6–12 meses).',
+    badge1: 'Launch: 2–4 semanas', badge2: 'Zero intermediación',
+  };
   return (
     <div className="flex flex-col h-full px-8 py-6">
-      <Tag>09 — México en detalle</Tag>
-      <h2 className="text-4xl font-black text-white mb-2">
-        La infraestructura más<br /><span className="text-[#A29BFE]">avanzada de LATAM</span>
-      </h2>
-      <p className="text-white/50 mb-6">SPEI liquida en segundos, 365 días. Cada usuario tiene su propia CLABE. Zero pool account.</p>
+      <Tag>{t.tag}</Tag>
+      <h2 className="text-4xl font-black text-white mb-2">{t.title}<br /><span className="text-[#A29BFE]">{t.hi}</span></h2>
+      <p className="text-white/50 mb-6">{t.sub}</p>
       <div className="grid grid-cols-2 gap-5 flex-1">
-        {/* Left: CLABE model */}
         <div className="space-y-4">
           <div className="bg-white/4 border border-white/10 rounded-2xl p-5">
-            <p className="text-white/40 text-xs font-bold uppercase tracking-widest mb-3">Modelo STP sub-CLABE</p>
+            <p className="text-white/40 text-xs font-bold uppercase tracking-widest mb-3">{t.modelTitle}</p>
             <div className="space-y-2 font-mono text-sm">
               {[
-                { label: 'Master LEN en STP:', value: '646180 000000000000', color: 'text-white/40' },
-                { label: 'CLABE Carlos:', value: '646180 234567890001', color: 'text-[#A29BFE]' },
-                { label: 'CLABE Sofía:', value: '646180 234567890002', color: 'text-[#A29BFE]' },
-                { label: 'CLABE Pedro:', value: '646180 234567890003', color: 'text-[#A29BFE]' },
+                { label: t.master, value: t.masterVal, color: 'text-white/40' },
+                { label: t.clabe1, value: '646180 234567890001', color: 'text-[#A29BFE]' },
+                { label: t.clabe2, value: '646180 234567890002', color: 'text-[#A29BFE]' },
+                { label: t.clabe3, value: '646180 234567890003', color: 'text-[#A29BFE]' },
               ].map(r => (
                 <div key={r.label} className="flex items-center justify-between gap-4">
                   <span className="text-white/30 text-xs">{r.label}</span>
@@ -579,20 +798,13 @@ function SlideMexico() {
             </div>
             <div className="mt-3 pt-3 border-t border-white/10">
               <p className="text-xs text-white/40 leading-relaxed">
-                Cada CLABE es legalmente la cuenta del usuario dentro de STP.
-                El MXN que deposita Carlos <span className="text-emerald-400 font-bold">NO es de LEN</span> — es de Carlos en su sub-CLABE.
-                LEN solo emite MEXCOIN como representación digital.
+                {t.clabeNote}<span className="text-emerald-400 font-bold">{t.bold}</span>{t.clabeNote2}
               </p>
             </div>
           </div>
           <div className="bg-white/4 border border-white/10 rounded-2xl p-5">
-            <p className="text-white/40 text-xs font-bold uppercase tracking-widest mb-3">Capas del ecosistema MX</p>
-            {[
-              { layer: 'Banxico / SPEI', role: 'Liquidación interbancaria en tiempo real', color: 'text-white/70' },
-              { layer: 'STP (Banxico-licensed)', role: 'Participante SPEI. Emite CLABEs virtuales por usuario', color: 'text-[#A29BFE]' },
-              { layer: 'Conekta / Arcus', role: 'API sobre STP. Integración rápida sin licencia directa', color: 'text-emerald-400' },
-              { layer: 'IFPE (licencia CNBV)', role: 'Ruta propia. 6–12 meses. Exemplos: Clip, Cuenca, Klar', color: 'text-amber-400' },
-            ].map(l => (
+            <p className="text-white/40 text-xs font-bold uppercase tracking-widest mb-3">{t.ecosysTitle}</p>
+            {t.layers.map(l => (
               <div key={l.layer} className="flex items-start gap-3 mb-3 last:mb-0">
                 <div className="w-2 h-2 rounded-full bg-white/20 mt-1.5 flex-shrink-0" />
                 <div>
@@ -603,16 +815,10 @@ function SlideMexico() {
             ))}
           </div>
         </div>
-        {/* Right: Comparison + path */}
         <div className="space-y-4">
           <div className="bg-white/4 border border-white/10 rounded-2xl p-5">
-            <p className="text-white/40 text-xs font-bold uppercase tracking-widest mb-3">Así operan otros (referencia)</p>
-            {[
-              { name: 'Tether (USDT)', model: 'Emite tokens respaldados en USD. Sin licencia bancaria. Opera desde BVI/El Salvador.', status: 'bg-emerald-500/20 text-emerald-400', s: 'Referencia global' },
-              { name: 'Circle (USDC)', model: 'Money transmitter license USA. Reservas en treasuries + banco. Emite USDC 1:1.', status: 'bg-blue-500/20 text-blue-400', s: 'Modelo maduro' },
-              { name: 'Bitso (MX)', model: 'IFPE + exchange. CLABEs via STP. Opera cripto y fiat. Regulado CNBV.', status: 'bg-[#6C5CE7]/20 text-[#A29BFE]', s: 'Comparable regional' },
-              { name: 'Cuenca (MX)', model: 'IFPE. Cuenta + CLABE virtual + tarjeta. Sin licencia bancaria completa.', status: 'bg-amber-500/20 text-amber-400', s: 'Modelo fast-launch' },
-            ].map(c => (
+            <p className="text-white/40 text-xs font-bold uppercase tracking-widest mb-3">{t.othersTitle}</p>
+            {t.others.map(c => (
               <div key={c.name} className="flex items-start gap-3 mb-3 last:mb-0 pb-3 last:pb-0 border-b border-white/5 last:border-0">
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-1">
@@ -625,15 +831,13 @@ function SlideMexico() {
             ))}
           </div>
           <div className="bg-[#6C5CE7]/15 border border-[#6C5CE7]/30 rounded-2xl p-5">
-            <p className="text-[#A29BFE] font-bold text-sm mb-2">🎯 Ruta LEN para MX (Fase 1)</p>
+            <p className="text-[#A29BFE] font-bold text-sm mb-2">{t.routeTitle}</p>
             <p className="text-white/60 text-xs leading-relaxed">
-              Integración con <strong className="text-white">Conekta o Arcus</strong> como capa sobre STP.
-              Ellos proveen CLABEs virtuales vía API — LEN las asigna 1:1 por usuario.
-              Sin licencia propia necesaria para lanzar. Después: solicitud IFPE CNBV (6–12 meses).
+              {t.routeNote}<strong className="text-white">{t.routeBold}</strong>{t.routeNote2}
             </p>
             <div className="flex gap-2 mt-3">
-              <span className="text-[10px] bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-2 py-1 rounded-full font-bold">Launch: 2–4 semanas</span>
-              <span className="text-[10px] bg-white/10 text-white/50 border border-white/15 px-2 py-1 rounded-full font-bold">Zero intermediación</span>
+              <span className="text-[10px] bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-2 py-1 rounded-full font-bold">{t.badge1}</span>
+              <span className="text-[10px] bg-white/10 text-white/50 border border-white/15 px-2 py-1 rounded-full font-bold">{t.badge2}</span>
             </div>
           </div>
         </div>
@@ -643,25 +847,45 @@ function SlideMexico() {
 }
 
 function SlideFlow() {
-  const steps = [
-    { n: '1', title: 'Registro + KYC', detail: 'DPI/INE/DNI básico. Wallet + cuenta virtual generada automáticamente.', icon: '👤', color: 'bg-indigo-500/20 border-indigo-500/40' },
-    { n: '2', title: 'Cuenta dedicada', detail: 'GT/HN: sub-cuenta fideicomiso. MX: CLABE virtual STP. Exclusiva del usuario.', icon: '🏦', color: 'bg-blue-500/20 border-blue-500/40' },
-    { n: '3', title: 'Depósito bancario', detail: 'Desde cualquier banco → su cuenta LEN (fideicomiso o CLABE). Sin referencia necesaria.', icon: '💳', color: 'bg-[#6C5CE7]/20 border-[#6C5CE7]/40' },
-    { n: '4', title: 'Webhook bancario', detail: 'Banco notifica LEN. HMAC verificado. Idempotencia garantizada.', icon: '📡', color: 'bg-purple-500/20 border-purple-500/40' },
-    { n: '5', title: 'Token emitido', detail: 'LEN emite tokens 1:1. fiatBalance acreditado. Usuario ve saldo en segundos.', icon: '🪙', color: 'bg-amber-500/20 border-amber-500/40' },
-    { n: '6', title: 'Envío / FX', detail: 'P2P instantáneo. FX automático si diferente moneda. Fee 0.3%.', icon: '📤', color: 'bg-[#6C5CE7]/20 border-[#6C5CE7]/40' },
-    { n: '7', title: 'Retiro bancario', detail: 'Tokens → fiat → retiro a cualquier banco del país vía ACH/SPEI/SIEFOM.', icon: '🏧', color: 'bg-emerald-500/20 border-emerald-500/40' },
-    { n: '8', title: 'Token quemado', detail: 'Al retirar, el token es "quemado". El fiat sale del fideicomiso al banco del usuario.', icon: '🔥', color: 'bg-rose-500/20 border-rose-500/40' },
-  ];
+  const lang = useLang();
+  const t = lang === 'en' ? {
+    tag: '10 — Full Flow',
+    title: 'From bank to bank —', hi: 'no intermediaries',
+    sub: 'Fiat enters the trust, exits the trust. LEN only moves digital tokens in between.',
+    steps: [
+      { n: '1', title: 'Registration + KYC', detail: 'Passport/ID basic. Wallet + virtual account auto-generated.', icon: '👤', color: 'bg-indigo-500/20 border-indigo-500/40' },
+      { n: '2', title: 'Dedicated account', detail: 'GT/HN: trust sub-account. MX: STP virtual CLABE. Exclusive to the user.', icon: '🏦', color: 'bg-blue-500/20 border-blue-500/40' },
+      { n: '3', title: 'Bank deposit', detail: 'From any bank → their LEN account (trust or CLABE). No reference needed.', icon: '💳', color: 'bg-[#6C5CE7]/20 border-[#6C5CE7]/40' },
+      { n: '4', title: 'Bank webhook', detail: 'Bank notifies LEN. HMAC verified. Idempotency guaranteed.', icon: '📡', color: 'bg-purple-500/20 border-purple-500/40' },
+      { n: '5', title: 'Token issued', detail: 'LEN issues tokens 1:1. fiatBalance credited. User sees balance in seconds.', icon: '🪙', color: 'bg-amber-500/20 border-amber-500/40' },
+      { n: '6', title: 'Send / FX', detail: 'Instant P2P. Automatic FX if different currency. 0.3% fee.', icon: '📤', color: 'bg-[#6C5CE7]/20 border-[#6C5CE7]/40' },
+      { n: '7', title: 'Bank withdrawal', detail: 'Tokens → fiat → withdrawal to any bank in-country via ACH/SPEI/SIEFOM.', icon: '🏧', color: 'bg-emerald-500/20 border-emerald-500/40' },
+      { n: '8', title: 'Token burned', detail: 'On withdrawal, token is "burned". Fiat exits the trust to user\'s bank.', icon: '🔥', color: 'bg-rose-500/20 border-rose-500/40' },
+    ],
+  } : {
+    tag: '10 — Flujo Completo',
+    title: 'Del banco al banco —', hi: 'sin intermediarios',
+    sub: 'El fiat entra al fideicomiso, sale del fideicomiso. LEN solo mueve tokens digitales entre medias.',
+    steps: [
+      { n: '1', title: 'Registro + KYC', detail: 'DPI/INE/DNI básico. Wallet + cuenta virtual generada automáticamente.', icon: '👤', color: 'bg-indigo-500/20 border-indigo-500/40' },
+      { n: '2', title: 'Cuenta dedicada', detail: 'GT/HN: sub-cuenta fideicomiso. MX: CLABE virtual STP. Exclusiva del usuario.', icon: '🏦', color: 'bg-blue-500/20 border-blue-500/40' },
+      { n: '3', title: 'Depósito bancario', detail: 'Desde cualquier banco → su cuenta LEN (fideicomiso o CLABE). Sin referencia necesaria.', icon: '💳', color: 'bg-[#6C5CE7]/20 border-[#6C5CE7]/40' },
+      { n: '4', title: 'Webhook bancario', detail: 'Banco notifica LEN. HMAC verificado. Idempotencia garantizada.', icon: '📡', color: 'bg-purple-500/20 border-purple-500/40' },
+      { n: '5', title: 'Token emitido', detail: 'LEN emite tokens 1:1. fiatBalance acreditado. Usuario ve saldo en segundos.', icon: '🪙', color: 'bg-amber-500/20 border-amber-500/40' },
+      { n: '6', title: 'Envío / FX', detail: 'P2P instantáneo. FX automático si diferente moneda. Fee 0.3%.', icon: '📤', color: 'bg-[#6C5CE7]/20 border-[#6C5CE7]/40' },
+      { n: '7', title: 'Retiro bancario', detail: 'Tokens → fiat → retiro a cualquier banco del país vía ACH/SPEI/SIEFOM.', icon: '🏧', color: 'bg-emerald-500/20 border-emerald-500/40' },
+      { n: '8', title: 'Token quemado', detail: 'Al retirar, el token es "quemado". El fiat sale del fideicomiso al banco del usuario.', icon: '🔥', color: 'bg-rose-500/20 border-rose-500/40' },
+    ],
+  };
   return (
     <div className="flex flex-col h-full px-8 py-6">
-      <Tag>10 — Flujo Completo</Tag>
-      <h2 className="text-4xl font-black text-white mb-2">Del banco al banco —<br /><span className="text-[#A29BFE]">sin intermediarios</span></h2>
-      <p className="text-white/50 mb-8">El fiat entra al fideicomiso, sale del fideicomiso. LEN solo mueve tokens digitales entre medias.</p>
+      <Tag>{t.tag}</Tag>
+      <h2 className="text-4xl font-black text-white mb-2">{t.title}<br /><span className="text-[#A29BFE]">{t.hi}</span></h2>
+      <p className="text-white/50 mb-8">{t.sub}</p>
       <div className="grid grid-cols-4 gap-4 flex-1">
-        {steps.map((s, i) => (
+        {t.steps.map((s, i) => (
           <div key={s.n} className={`border rounded-2xl p-5 flex flex-col gap-3 ${s.color} relative`}>
-            {i < steps.length - 1 && <div className="absolute -right-2.5 top-1/2 -translate-y-1/2 text-white/20 text-lg z-10">→</div>}
+            {i < t.steps.length - 1 && <div className="absolute -right-2.5 top-1/2 -translate-y-1/2 text-white/20 text-lg z-10">→</div>}
             <div className="flex items-center justify-between">
               <span className="text-2xl">{s.icon}</span>
               <span className="text-xs font-black text-white/30 bg-white/5 w-7 h-7 rounded-full flex items-center justify-center">{s.n}</span>
@@ -675,60 +899,107 @@ function SlideFlow() {
 }
 
 function SlideTech() {
+  const lang = useLang();
+  const t = lang === 'en' ? {
+    tag: '11 — Tech Stack',
+    title: 'Production-ready', hi: 'microservices',
+    sub: 'Turborepo monorepo · Railway · NestJS · Next.js 14 · Firebase',
+    cols: [
+      { icon: '📱', title: 'Frontend / App', items: [
+        { name: 'Next.js 14', role: 'Web app (App Router)' },
+        { name: 'React Native', role: 'iOS + Android (Expo)' },
+        { name: 'Zustand + persist', role: 'Global state + offline' },
+        { name: 'TailwindCSS', role: 'LEN UI system' },
+        { name: 'Canvas 2D API', role: 'PNG vouchers (no deps)' },
+        { name: 'Firebase Firestore', role: 'Cross-device sync' },
+      ]},
+      { icon: '⚙️', title: 'Microservices', items: [
+        { name: 'auth-service', role: 'JWT, PIN, KYC' },
+        { name: 'wallet-service', role: 'Balances, TX, tokens' },
+        { name: 'fiat-bridge', role: 'Trust + STP webhooks' },
+        { name: 'fx-engine', role: 'Real-time exchange rates' },
+        { name: 'tx-engine', role: 'Transaction engine' },
+        { name: 'notification', role: 'Push / SMS / Email' },
+      ]},
+      { icon: '🏗️', title: 'Infrastructure', items: [
+        { name: 'Railway', role: 'Auto-deploy (Nixpacks)' },
+        { name: 'PostgreSQL', role: 'Main database' },
+        { name: 'Redis', role: 'Cache + Bull queues' },
+        { name: 'NestJS', role: 'TS backend framework' },
+        { name: 'TypeORM', role: 'ORM + migrations' },
+        { name: 'BullMQ', role: 'Async webhooks' },
+      ]},
+    ],
+    secTitle: 'Stack Security',
+    secItems: [
+      { k: 'Language', v: 'TypeScript strict — no implicit any' },
+      { k: 'Secrets', v: 'Railway env vars — never in code' },
+      { k: 'Communication', v: 'HTTPS + mTLS for SPEI (Banxico)' },
+      { k: 'Audit', v: 'Structured logs, 5-year retention' },
+      { k: 'CI/CD', v: 'Deploy from main via GitHub Actions' },
+    ],
+  } : {
+    tag: '11 — Stack Tecnológico',
+    title: 'Microservicios listos', hi: 'para producción',
+    sub: 'Monorepo Turborepo · Railway · NestJS · Next.js 14 · Firebase',
+    cols: [
+      { icon: '📱', title: 'Frontend / App', items: [
+        { name: 'Next.js 14', role: 'Web app (App Router)' },
+        { name: 'React Native', role: 'iOS + Android (Expo)' },
+        { name: 'Zustand + persist', role: 'Estado global + offline' },
+        { name: 'TailwindCSS', role: 'UI system LEN' },
+        { name: 'Canvas 2D API', role: 'Vouchers PNG sin deps' },
+        { name: 'Firebase Firestore', role: 'Sync cross-device' },
+      ]},
+      { icon: '⚙️', title: 'Microservicios', items: [
+        { name: 'auth-service', role: 'JWT, PIN, KYC' },
+        { name: 'wallet-service', role: 'Balances, TX, tokens' },
+        { name: 'fiat-bridge', role: 'Fideicomiso + STP webhooks' },
+        { name: 'fx-engine', role: 'Tipos de cambio RT' },
+        { name: 'tx-engine', role: 'Motor transacciones' },
+        { name: 'notification', role: 'Push / SMS / Email' },
+      ]},
+      { icon: '🏗️', title: 'Infraestructura', items: [
+        { name: 'Railway', role: 'Deploy auto (Nixpacks)' },
+        { name: 'PostgreSQL', role: 'DB principal' },
+        { name: 'Redis', role: 'Cache + colas Bull' },
+        { name: 'NestJS', role: 'Framework backend TS' },
+        { name: 'TypeORM', role: 'ORM + migraciones' },
+        { name: 'BullMQ', role: 'Webhooks async' },
+      ]},
+    ],
+    secTitle: 'Seguridad del stack',
+    secItems: [
+      { k: 'Lenguaje', v: 'TypeScript strict — sin any implícitos' },
+      { k: 'Secrets', v: 'Railway env vars — nunca en código' },
+      { k: 'Comunicación', v: 'HTTPS + mTLS para SPEI (Banxico)' },
+      { k: 'Auditoría', v: 'Logs estructurados, retención 5 años' },
+      { k: 'CI/CD', v: 'Deploy desde main via GitHub Actions' },
+    ],
+  };
   return (
     <div className="flex flex-col h-full px-8 py-6">
-      <Tag>11 — Stack Tecnológico</Tag>
-      <h2 className="text-4xl font-black text-white mb-2">Microservicios listos<br /><span className="text-[#A29BFE]">para producción</span></h2>
-      <p className="text-white/50 mb-8">Monorepo Turborepo · Railway · NestJS · Next.js 14 · Firebase</p>
+      <Tag>{t.tag}</Tag>
+      <h2 className="text-4xl font-black text-white mb-2">{t.title}<br /><span className="text-[#A29BFE]">{t.hi}</span></h2>
+      <p className="text-white/50 mb-8">{t.sub}</p>
       <div className="grid grid-cols-3 gap-5 flex-1">
-        {[
-          { icon: '📱', title: 'Frontend / App', items: [
-            { name: 'Next.js 14', role: 'Web app (App Router)' },
-            { name: 'React Native', role: 'iOS + Android (Expo)' },
-            { name: 'Zustand + persist', role: 'Estado global + offline' },
-            { name: 'TailwindCSS', role: 'UI system LEN' },
-            { name: 'Canvas 2D API', role: 'Vouchers PNG sin deps' },
-            { name: 'Firebase Firestore', role: 'Sync cross-device' },
-          ]},
-          { icon: '⚙️', title: 'Microservicios', items: [
-            { name: 'auth-service', role: 'JWT, PIN, KYC' },
-            { name: 'wallet-service', role: 'Balances, TX, tokens' },
-            { name: 'fiat-bridge', role: 'Fideicomiso + STP webhooks' },
-            { name: 'fx-engine', role: 'Tipos de cambio RT' },
-            { name: 'tx-engine', role: 'Motor transacciones' },
-            { name: 'notification', role: 'Push / SMS / Email' },
-          ]},
-          { icon: '🏗️', title: 'Infraestructura', items: [
-            { name: 'Railway', role: 'Deploy auto (Nixpacks)' },
-            { name: 'PostgreSQL', role: 'DB principal' },
-            { name: 'Redis', role: 'Cache + colas Bull' },
-            { name: 'NestJS', role: 'Framework backend TS' },
-            { name: 'TypeORM', role: 'ORM + migraciones' },
-            { name: 'BullMQ', role: 'Webhooks async' },
-          ]},
-        ].map(col => (
+        {t.cols.map(col => (
           <div key={col.icon} className="bg-white/4 border border-white/10 rounded-2xl p-5 flex flex-col gap-3">
             <div className="flex items-center gap-2"><span className="text-2xl">{col.icon}</span><p className="text-white font-black">{col.title}</p></div>
             <div className="space-y-2 flex-1">
-              {col.items.map(t => (
-                <div key={t.name} className="flex items-center justify-between py-1.5 border-b border-white/5 last:border-0">
-                  <span className="text-white/80 text-sm font-semibold">{t.name}</span>
-                  <span className="text-white/30 text-xs">{t.role}</span>
+              {col.items.map(item => (
+                <div key={item.name} className="flex items-center justify-between py-1.5 border-b border-white/5 last:border-0">
+                  <span className="text-white/80 text-sm font-semibold">{item.name}</span>
+                  <span className="text-white/30 text-xs">{item.role}</span>
                 </div>
               ))}
             </div>
           </div>
         ))}
         <div className="col-span-3 bg-[#6C5CE7]/10 border border-[#6C5CE7]/30 rounded-2xl p-5">
-          <p className="text-[#A29BFE] font-bold mb-3 text-sm uppercase tracking-widest">Seguridad del stack</p>
+          <p className="text-[#A29BFE] font-bold mb-3 text-sm uppercase tracking-widest">{t.secTitle}</p>
           <div className="grid grid-cols-5 gap-4">
-            {[
-              { k: 'Lenguaje', v: 'TypeScript strict — sin any implícitos' },
-              { k: 'Secrets', v: 'Railway env vars — nunca en código' },
-              { k: 'Comunicación', v: 'HTTPS + mTLS para SPEI (Banxico)' },
-              { k: 'Auditoría', v: 'Logs estructurados, retención 5 años' },
-              { k: 'CI/CD', v: 'Deploy desde main via GitHub Actions' },
-            ].map(i => (
+            {t.secItems.map(i => (
               <div key={i.k}><p className="text-white/30 text-[10px] uppercase tracking-widest">{i.k}</p><p className="text-white/70 text-xs mt-1">{i.v}</p></div>
             ))}
           </div>
@@ -739,21 +1010,39 @@ function SlideTech() {
 }
 
 function SlideRoadmap() {
-  const phases = [
-    { phase: 'Fase 1', period: 'Activo — Q2 2025', color: 'border-emerald-500/40 bg-emerald-500/8', badge: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
-      items: ['QUETZA (GT), MEXCOIN (MX), LEMPI (HN)','Fideicomiso Banrural + STP sub-CLABEs','Wallet web + app móvil iOS/Android','KYC 1 y 2 — documentos locales','Envío P2P + FX + retiro bancario','Acuerdo Conekta/Arcus para MX'] },
-    { phase: 'Fase 2', period: 'Q3–Q4 2025', color: 'border-[#6C5CE7]/40 bg-[#6C5CE7]/8', badge: 'bg-[#6C5CE7]/20 text-[#A29BFE] border-[#6C5CE7]/30',
-      items: ['COLÓN Digital (El Salvador)','Tarjeta LEN Mastercard virtual','API pública para comercios','Pagos QR en punto de venta','Remesas programadas (recurrentes)','Solicitud IFPE CNBV en proceso'] },
-    { phase: 'Fase 3', period: 'Q1–Q3 2026', color: 'border-amber-500/30 bg-amber-500/5', badge: 'bg-amber-500/15 text-amber-400 border-amber-500/25',
-      items: ['TIKAL, NICORD, CORI, BALBÓA','Red LEN 8 países completa','Licencias IDE GT / IFPE MX propias','DeFi: staking y yield en tokens LEN','KYC 3 institucional','Expansión Caribe + Sudamérica'] },
-  ];
+  const lang = useLang();
+  const t = lang === 'en' ? {
+    tag: '12 — Roadmap',
+    title: 'From 3 countries to all of', hi: 'Central America and beyond',
+    sub: 'The same infrastructure scales to each new country. Adding a country = adding a provider.',
+    phases: [
+      { phase: 'Phase 1', period: 'Live — Q2 2025', color: 'border-emerald-500/40 bg-emerald-500/8', badge: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
+        items: ['QUETZA (GT), MEXCOIN (MX), LEMPI (HN)','Banrural trust + STP sub-CLABEs','Web wallet + iOS/Android mobile app','KYC 1 & 2 — local documents','P2P transfers + FX + bank withdrawal','Conekta/Arcus agreement for MX'] },
+      { phase: 'Phase 2', period: 'Q3–Q4 2025', color: 'border-[#6C5CE7]/40 bg-[#6C5CE7]/8', badge: 'bg-[#6C5CE7]/20 text-[#A29BFE] border-[#6C5CE7]/30',
+        items: ['COLÓN Digital (El Salvador)','LEN Mastercard virtual card','Public API for merchants','QR payments at point of sale','Scheduled (recurring) remittances','IFPE CNBV application in progress'] },
+      { phase: 'Phase 3', period: 'Q1–Q3 2026', color: 'border-amber-500/30 bg-amber-500/5', badge: 'bg-amber-500/15 text-amber-400 border-amber-500/25',
+        items: ['TIKAL, NICORD, CORI, BALBÓA','LEN 8-country network complete','Own GT IDE / MX IFPE licenses','DeFi: staking and yield on LEN tokens','KYC 3 institutional','Caribbean + South America expansion'] },
+    ],
+  } : {
+    tag: '12 — Roadmap',
+    title: 'De 3 países a toda', hi: 'Centroamérica y más',
+    sub: 'La misma infraestructura escala a cada país nuevo. Agregar un país = agregar un provider.',
+    phases: [
+      { phase: 'Fase 1', period: 'Activo — Q2 2025', color: 'border-emerald-500/40 bg-emerald-500/8', badge: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
+        items: ['QUETZA (GT), MEXCOIN (MX), LEMPI (HN)','Fideicomiso Banrural + STP sub-CLABEs','Wallet web + app móvil iOS/Android','KYC 1 y 2 — documentos locales','Envío P2P + FX + retiro bancario','Acuerdo Conekta/Arcus para MX'] },
+      { phase: 'Fase 2', period: 'Q3–Q4 2025', color: 'border-[#6C5CE7]/40 bg-[#6C5CE7]/8', badge: 'bg-[#6C5CE7]/20 text-[#A29BFE] border-[#6C5CE7]/30',
+        items: ['COLÓN Digital (El Salvador)','Tarjeta LEN Mastercard virtual','API pública para comercios','Pagos QR en punto de venta','Remesas programadas (recurrentes)','Solicitud IFPE CNBV en proceso'] },
+      { phase: 'Fase 3', period: 'Q1–Q3 2026', color: 'border-amber-500/30 bg-amber-500/5', badge: 'bg-amber-500/15 text-amber-400 border-amber-500/25',
+        items: ['TIKAL, NICORD, CORI, BALBÓA','Red LEN 8 países completa','Licencias IDE GT / IFPE MX propias','DeFi: staking y yield en tokens LEN','KYC 3 institucional','Expansión Caribe + Sudamérica'] },
+    ],
+  };
   return (
     <div className="flex flex-col h-full px-8 py-6">
-      <Tag>12 — Roadmap</Tag>
-      <h2 className="text-4xl font-black text-white mb-2">De 3 países a toda<br /><span className="text-[#A29BFE]">Centroamérica y más</span></h2>
-      <p className="text-white/50 mb-8">La misma infraestructura escala a cada país nuevo. Agregar un país = agregar un provider.</p>
+      <Tag>{t.tag}</Tag>
+      <h2 className="text-4xl font-black text-white mb-2">{t.title}<br /><span className="text-[#A29BFE]">{t.hi}</span></h2>
+      <p className="text-white/50 mb-8">{t.sub}</p>
       <div className="grid grid-cols-3 gap-6 flex-1">
-        {phases.map(p => (
+        {t.phases.map(p => (
           <div key={p.phase} className={`border rounded-2xl p-6 flex flex-col gap-4 ${p.color}`}>
             <div><span className={`text-xs font-bold px-3 py-1 rounded-full border ${p.badge}`}>{p.phase}</span><p className="text-white font-black text-xl mt-3">{p.period}</p></div>
             <ul className="space-y-2.5 flex-1">
@@ -772,21 +1061,57 @@ function SlideRoadmap() {
 }
 
 function SlideTraction() {
+  const lang = useLang();
+  const t = lang === 'en' ? {
+    tag: '13 — Market & Timing',
+    title: 'The market is ready —', hi: 'so is LEN',
+    sub: 'Convergence of regulatory vacuum, mobile adoption and unmet demand.',
+    marketTitle: 'The market',
+    market: [
+      { stat: '$54B', label: 'Remittances Guatemala → USA 2024', growth: '+8% YoY' },
+      { stat: '$63B', label: 'Remittances to Mexico received 2024', growth: '+10% YoY' },
+      { stat: '$8.4B', label: 'Honduras remittances 2024', growth: '+12% YoY' },
+      { stat: '65%', label: 'Unbanked population in CA', growth: 'Untapped market' },
+      { stat: '92%', label: 'Smartphone penetration GT/MX', growth: 'Direct channel' },
+    ],
+    edgeTitle: 'Competitive advantages',
+    edges: [
+      { icon: '🎯', title: 'Regional first mover', desc: 'No native Mesoamerican TokenCoin network exists. LEN does it first.' },
+      { icon: '🏗️', title: 'Infrastructure ready', desc: '6 microservices in production. fiat-bridge, wallet, fx-engine, auth all working.' },
+      { icon: '⚖️', title: 'Solid legal model', desc: 'US Corp + GT S.A. + trust = same structure as Tether/Circle at launch.' },
+      { icon: '📱', title: 'Finished product', desc: 'Live demo: 3 countries, 3 wallets, transfers, FX, voucher. All working.' },
+      { icon: '🔗', title: 'Bank-agnostic', desc: 'Same architecture connects to any bank via webhook. Scale = add provider.' },
+    ],
+  } : {
+    tag: '13 — Mercado y Timing',
+    title: 'El mercado ya está listo —', hi: 'LEN también',
+    sub: 'Convergencia de vacío regulatorio, adopción móvil y demanda insatisfecha.',
+    marketTitle: 'El mercado',
+    market: [
+      { stat: '$54B', label: 'Remesas Guatemala → USA 2024', growth: '+8% YoY' },
+      { stat: '$63B', label: 'Remesas México recibidas 2024', growth: '+10% YoY' },
+      { stat: '$8.4B', label: 'Remesas Honduras 2024', growth: '+12% YoY' },
+      { stat: '65%', label: 'Población desbancarizada CA', growth: 'Mercado virgen' },
+      { stat: '92%', label: 'Penetración smartphones GT/MX', growth: 'Canal directo' },
+    ],
+    edgeTitle: 'Ventajas competitivas',
+    edges: [
+      { icon: '🎯', title: 'First mover regional', desc: 'No existe red de TokenCoins nativa de Mesoamérica. LEN lo hace primero.' },
+      { icon: '🏗️', title: 'Infraestructura lista', desc: '6 microservicios en producción. fiat-bridge, wallet, fx-engine, auth funcionando.' },
+      { icon: '⚖️', title: 'Modelo legal sólido', desc: 'US Corp + GT S.A. + fideicomiso = misma estructura que Tether/Circle en su inicio.' },
+      { icon: '📱', title: 'Producto terminado', desc: 'Demo en vivo: 3 países, 3 wallets, envíos, FX, voucher. Todo funcionando.' },
+      { icon: '🔗', title: 'Banco-agnostic', desc: 'La misma arquitectura conecta con cualquier banco vía webhook. Escalar = agregar provider.' },
+    ],
+  };
   return (
     <div className="flex flex-col h-full px-8 py-6">
-      <Tag>13 — Mercado y Timing</Tag>
-      <h2 className="text-4xl font-black text-white mb-2">El mercado ya está listo —<br /><span className="text-[#A29BFE]">LEN también</span></h2>
-      <p className="text-white/50 mb-8">Convergencia de vacío regulatorio, adopción móvil y demanda insatisfecha.</p>
+      <Tag>{t.tag}</Tag>
+      <h2 className="text-4xl font-black text-white mb-2">{t.title}<br /><span className="text-[#A29BFE]">{t.hi}</span></h2>
+      <p className="text-white/50 mb-8">{t.sub}</p>
       <div className="grid grid-cols-2 gap-6 flex-1">
         <div className="space-y-3">
-          <p className="text-white/30 text-xs font-bold uppercase tracking-widest">El mercado</p>
-          {[
-            { stat: '$54B', label: 'Remesas Guatemala → USA 2024', growth: '+8% YoY' },
-            { stat: '$63B', label: 'Remesas México recibidas 2024', growth: '+10% YoY' },
-            { stat: '$8.4B', label: 'Remesas Honduras 2024', growth: '+12% YoY' },
-            { stat: '65%', label: 'Población desbancarizada CA', growth: 'Mercado virgen' },
-            { stat: '92%', label: 'Penetración smartphones GT/MX', growth: 'Canal directo' },
-          ].map(m => (
+          <p className="text-white/30 text-xs font-bold uppercase tracking-widest">{t.marketTitle}</p>
+          {t.market.map(m => (
             <div key={m.label} className="flex items-center justify-between bg-white/4 border border-white/8 rounded-xl px-5 py-3">
               <div><p className="text-white font-black text-xl">{m.stat}</p><p className="text-white/50 text-xs mt-0.5">{m.label}</p></div>
               <span className="text-emerald-400 text-xs font-bold bg-emerald-500/15 border border-emerald-500/25 px-2.5 py-1 rounded-full">{m.growth}</span>
@@ -794,14 +1119,8 @@ function SlideTraction() {
           ))}
         </div>
         <div className="space-y-3">
-          <p className="text-white/30 text-xs font-bold uppercase tracking-widest">Ventajas competitivas</p>
-          {[
-            { icon: '🎯', title: 'First mover regional', desc: 'No existe red de TokenCoins nativa de Mesoamérica. LEN lo hace primero.' },
-            { icon: '🏗️', title: 'Infraestructura lista', desc: '6 microservicios en producción. fiat-bridge, wallet, fx-engine, auth funcionando.' },
-            { icon: '⚖️', title: 'Modelo legal sólido', desc: 'US Corp + GT S.A. + fideicomiso = misma estructura que Tether/Circle en su inicio.' },
-            { icon: '📱', title: 'Producto terminado', desc: 'Demo en vivo: 3 países, 3 wallets, envíos, FX, voucher. Todo funcionando.' },
-            { icon: '🔗', title: 'Banco-agnostic', desc: 'La misma arquitectura conecta con cualquier banco vía webhook. Escalar = agregar provider.' },
-          ].map(v => (
+          <p className="text-white/30 text-xs font-bold uppercase tracking-widest">{t.edgeTitle}</p>
+          {t.edges.map(v => (
             <div key={v.icon} className="flex items-start gap-4 bg-white/4 border border-white/8 rounded-xl px-4 py-3">
               <span className="text-2xl flex-shrink-0">{v.icon}</span>
               <div><p className="text-white font-bold text-sm">{v.title}</p><p className="text-white/40 text-xs mt-0.5 leading-relaxed">{v.desc}</p></div>
@@ -814,31 +1133,56 @@ function SlideTraction() {
 }
 
 function SlideAsk() {
+  const lang = useLang();
+  const t = lang === 'en' ? {
+    tag: '14 — The Ask',
+    title: 'Because every', hi: 'LEN', title2: 'counts.',
+    sub: 'American software. Guatemalan tokens. Mesoamerican infrastructure. The financial network the region has needed for 30 years.',
+    stats: [
+      { value: '3',     label: 'Countries in network',    sub: 'Phase 1 live' },
+      { value: '0.3%',  label: 'Minimum FX fee',          sub: 'vs 5–8% competition' },
+      { value: '$800B', label: 'Total TAM',                sub: 'Mesoamerica remittances' },
+    ],
+    roundLabel: 'What we\'re looking for — Seed Round',
+    asks: [
+      { icon: '💰', label: 'Seed Investment', detail: '$500K – $1.5M USD for GTM in GT/MX + 2 additional countries + team' },
+      { icon: '🤝', label: 'Anchor bank', detail: 'Trust agreement with Banrural (GT) and BAC (HN) + Conekta/STP for MX' },
+      { icon: '📋', label: 'IDE/IFPE License', detail: 'Support for SIB Guatemala (IDE) and CNBV Mexico (IFPE) process' },
+    ],
+    footer: 'LEN — TokenCoin Network · Mesoamerica',
+  } : {
+    tag: '14 — Pitch',
+    title: 'Por que cada', hi: 'LEN', title2: 'cuenta.',
+    sub: 'Software americano. Tokens guatemaltecos. Infraestructura mesoamericana. La red financiera que la región necesitaba desde hace 30 años.',
+    stats: [
+      { value: '3',     label: 'Países en red',    sub: 'Fase 1 activa' },
+      { value: '0.3%',  label: 'Fee mínimo FX',    sub: 'vs 5–8% competencia' },
+      { value: '$800B', label: 'TAM Total',         sub: 'remesas Mesoamérica' },
+    ],
+    roundLabel: 'Lo que buscamos — Seed Round',
+    asks: [
+      { icon: '💰', label: 'Inversión Seed', detail: '$500K – $1.5M USD para GTM en GT/MX + 2 países adicionales + equipo' },
+      { icon: '🤝', label: 'Banco ancla', detail: 'Acuerdo fideicomiso con Banrural (GT) y BAC (HN) + Conekta/STP para MX' },
+      { icon: '📋', label: 'Licencia IDE/IFPE', detail: 'Acompañamiento proceso SIB Guatemala (IDE) y CNBV México (IFPE)' },
+    ],
+    footer: 'LEN — Red TokenCoin · Mesoamérica',
+  };
   return (
     <div className="flex flex-col items-center justify-center h-full px-8 text-center space-y-8">
       <div>
-        <Tag>14 — Pitch</Tag>
+        <Tag>{t.tag}</Tag>
         <h2 className="text-5xl lg:text-6xl font-black text-white mt-2">
-          Por que cada<br /><span className="text-[#A29BFE]">LEN</span> cuenta.
+          {t.title}<br /><span className="text-[#A29BFE]">{t.hi}</span> {t.title2}
         </h2>
-        <p className="text-white/50 text-lg mt-4 max-w-2xl mx-auto leading-relaxed">
-          Software americano. Tokens guatemaltecos. Infraestructura mesoamericana.
-          La red financiera que la región necesitaba desde hace 30 años.
-        </p>
+        <p className="text-white/50 text-lg mt-4 max-w-2xl mx-auto leading-relaxed">{t.sub}</p>
       </div>
       <div className="grid grid-cols-3 gap-6 max-w-3xl w-full">
-        <Stat value="3"     label="Países en red"   sub="Fase 1 activa" />
-        <Stat value="0.3%"  label="Fee mínimo FX"   sub="vs 5–8% competencia" />
-        <Stat value="$800B" label="TAM Total"        sub="remesas Mesoamérica" />
+        {t.stats.map(s => <Stat key={s.value} value={s.value} label={s.label} sub={s.sub} />)}
       </div>
       <div className="bg-white/5 border border-white/15 rounded-3xl p-8 max-w-3xl w-full">
-        <p className="text-white/40 text-xs font-bold uppercase tracking-widest mb-5">Lo que buscamos — Seed Round</p>
+        <p className="text-white/40 text-xs font-bold uppercase tracking-widest mb-5">{t.roundLabel}</p>
         <div className="grid grid-cols-3 gap-4 text-left">
-          {[
-            { icon: '💰', label: 'Inversión Seed', detail: '$500K – $1.5M USD para GTM en GT/MX + 2 países adicionales + equipo' },
-            { icon: '🤝', label: 'Banco ancla', detail: 'Acuerdo fideicomiso con Banrural (GT) y BAC (HN) + Conekta/STP para MX' },
-            { icon: '📋', label: 'Licencia IDE/IFPE', detail: 'Acompañamiento proceso SIB Guatemala (IDE) y CNBV México (IFPE)' },
-          ].map(i => (
+          {t.asks.map(i => (
             <div key={i.label} className="bg-white/4 border border-white/8 rounded-2xl p-4">
               <span className="text-2xl">{i.icon}</span>
               <p className="text-white font-bold text-sm mt-2">{i.label}</p>
@@ -852,7 +1196,7 @@ function SlideAsk() {
           <span className="text-[#6C5CE7] font-black text-2xl">L</span>
         </div>
         <div className="text-left">
-          <p className="text-white font-black text-xl">LEN — Red TokenCoin · Mesoamérica</p>
+          <p className="text-white font-black text-xl">{t.footer}</p>
           <p className="text-white/40 text-sm">len.app · hola@len.app</p>
         </div>
       </div>
@@ -885,9 +1229,10 @@ export default function PitchPage() {
   const [current,   setCurrent]   = useState(0);
   const [animating, setAnimating] = useState(false);
   const [printing,  setPrinting]  = useState(false);
+  const [lang,      setLang]      = useState<Lang>('es');
 
-  const total    = SLIDES.length;
-  const slideId  = SLIDES[current];
+  const total     = SLIDES.length;
+  const slideId   = SLIDES[current];
   const SlideComp = SLIDE_COMPONENTS[slideId];
 
   const go = useCallback((idx: number) => {
@@ -907,32 +1252,31 @@ export default function PitchPage() {
 
   function handlePrint() {
     setPrinting(true);
-    setTimeout(() => {
-      window.print();
-      setPrinting(false);
-    }, 300);
+    setTimeout(() => { window.print(); setPrinting(false); }, 300);
   }
 
   // ── Print mode: render ALL slides ─────────────────────────────────────────
   if (printing) {
     return (
-      <div style={{ background: 'radial-gradient(ellipse at 20% 0%, #1E1B4B 0%, #0D0B2B 60%)' }}>
-        <style>{PRINT_STYLE}</style>
-        {SLIDES.map((id) => {
-          const Comp = SLIDE_COMPONENTS[id];
-          return (
-            <div key={id} className="print-slide" style={{ width: '100vw', height: '100vh', overflow: 'hidden' }}>
-              <Comp />
-            </div>
-          );
-        })}
-      </div>
+      <LangCtx.Provider value={lang}>
+        <div style={{ background: 'radial-gradient(ellipse at 20% 0%, #1E1B4B 0%, #0D0B2B 60%)' }}>
+          <style>{PRINT_STYLE}</style>
+          {SLIDES.map((id) => {
+            const Comp = SLIDE_COMPONENTS[id];
+            return (
+              <div key={id} className="print-slide" style={{ width: '100vw', height: '100vh', overflow: 'hidden' }}>
+                <Comp />
+              </div>
+            );
+          })}
+        </div>
+      </LangCtx.Provider>
     );
   }
 
   // ── Normal presentation mode ───────────────────────────────────────────────
   return (
-    <>
+    <LangCtx.Provider value={lang}>
       <style>{PRINT_STYLE}</style>
       <div
         className="min-h-screen flex flex-col"
@@ -950,17 +1294,27 @@ export default function PitchPage() {
           </div>
           <div className="hidden md:flex items-center gap-1.5">
             {SLIDES.map((s, i) => (
-              <button key={s} onClick={() => go(i)} title={SLIDE_LABELS[s]}
+              <button key={s} onClick={() => go(i)} title={SLIDE_LABELS[s][lang]}
                 className={`transition-all rounded-full ${i === current ? 'w-6 h-2 bg-[#6C5CE7]' : 'w-2 h-2 bg-white/20 hover:bg-white/40'}`} />
             ))}
           </div>
-          <div className="flex items-center gap-3">
-            {/* Download button */}
+          <div className="flex items-center gap-2">
+            {/* Language toggle */}
+            <button
+              onClick={() => setLang(l => l === 'es' ? 'en' : 'es')}
+              className="flex items-center gap-1.5 bg-white/10 hover:bg-white/20 border border-white/20
+                         text-white text-xs font-bold px-3 py-2 rounded-xl transition-all"
+              title="Switch language"
+            >
+              <span>{lang === 'es' ? '🇺🇸' : '🇬🇹'}</span>
+              <span>{lang === 'es' ? 'EN' : 'ES'}</span>
+            </button>
+            {/* Download PDF */}
             <button
               onClick={handlePrint}
               className="flex items-center gap-2 bg-white/10 hover:bg-white/20 border border-white/20
                          text-white text-xs font-bold px-4 py-2 rounded-xl transition-all"
-              title="Descargar como PDF (Ctrl+P)"
+              title="Download as PDF (Ctrl+P)"
             >
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
@@ -985,7 +1339,7 @@ export default function PitchPage() {
                   ${i === current
                     ? 'bg-[#6C5CE7]/30 text-[#A29BFE] border border-[#6C5CE7]/50'
                     : 'text-white/30 hover:text-white/60 hover:bg-white/5'}`}>
-                {SLIDE_LABELS[s]}
+                {SLIDE_LABELS[s][lang]}
               </button>
             ))}
           </div>
@@ -1001,6 +1355,6 @@ export default function PitchPage() {
           </div>
         </div>
       </div>
-    </>
+    </LangCtx.Provider>
   );
 }
