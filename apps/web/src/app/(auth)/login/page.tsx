@@ -28,6 +28,97 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
+  // Demo quick-login — one click, no PIN step needed
+  async function demoLogin(demoPhone: string) {
+    setPhone(demoPhone);
+    setLoading(true);
+    setError('');
+    // Inline the demo logic with pin = '111111'
+    const demos: Record<string, { name: string; coin: string; balance: string; fiatBalance: string; usd: number; country: string }> = {
+      '11111': { name: 'Carlos Mendoza',  coin: 'QUETZA',  balance: '50000.00',  fiatBalance: '25000.00',  usd: 9500.00, country: 'GT' },
+      '22222': { name: 'Sofía Hernández', coin: 'MEXCOIN', balance: '250000.00', fiatBalance: '100000.00', usd: 7200.00, country: 'MX' },
+      '33333': { name: 'José Reyes',      coin: 'LEMPI',   balance: '500000.00', fiatBalance: '200000.00', usd: 8500.00, country: 'HN' },
+    };
+    const key = Object.keys(demos).find(k => demoPhone.includes(k));
+    const p   = key ? demos[key] : demos['11111'];
+
+    setTokens('demo-token', 'demo-refresh');
+    setUser({
+      id: `demo-${p.country.toLowerCase()}`,
+      phoneNumber: demoPhone,
+      phoneVerified: true,
+      firstName: p.name.split(' ')[0],
+      lastName:  p.name.split(' ')[1],
+      displayName: p.name,
+      country: p.country,
+      kycLevel: 2, kycStatus: 'approved', status: 'active',
+      createdAt: new Date().toISOString(),
+    });
+
+    const coin     = p.coin as import('@/store/wallet.store').CoinCode;
+    const coinMeta = (await import('@/store/wallet.store')).COINS[coin];
+    const { setWallets, setTransactions } = (await import('@/store/wallet.store')).useWalletStore.getState();
+    const userId   = `demo-${p.country.toLowerCase()}`;
+
+    const now  = Date.now();
+    const ago  = (ms: number) => new Date(now - ms).toISOString();
+    const peer1 = (p.country === 'MX' ? 'QUETZA' : 'MEXCOIN') as import('@/store/wallet.store').CoinCode;
+    const peer2 = (p.country === 'HN' ? 'MEXCOIN' : 'LEMPI')  as import('@/store/wallet.store').CoinCode;
+
+    const defaultWallets: import('@/store/wallet.store').WalletBalance[] = [{
+      coin, balance: p.balance, available: p.balance,
+      fiatBalance: p.fiatBalance, fiatCurrency: coinMeta.fiat, balanceUSD: p.usd,
+    }];
+    const defaultTxs: import('@/store/wallet.store').Transaction[] = [
+      { id: 'LEN-20260410-FLD-DEMO1', type: 'fiat_load', status: 'completed', direction: 'received',
+        fromCoin: coin, toCoin: coin, fromAmount: p.fiatBalance, toAmount: p.fiatBalance, fee: '0',
+        description: `Depósito bancario — ${coinMeta.fiat}`, createdAt: ago(8*86400000), completedAt: ago(8*86400000) },
+      { id: 'LEN-20260411-TKB-DEMO2', type: 'token_buy', status: 'completed', direction: 'internal',
+        fromCoin: coin, toCoin: coin,
+        fromAmount: (parseFloat(p.fiatBalance)*0.6).toFixed(2), toAmount: (parseFloat(p.balance)*0.6).toFixed(2),
+        fee: '0.0000', feePercent: 0, description: `Compra de tokens ${coin} · 0%`,
+        createdAt: ago(7*86400000), completedAt: ago(7*86400000) },
+      { id: 'LEN-20260411-FXS-DEMO3', type: 'fx_swap', status: 'completed', direction: 'received',
+        fromCoin: peer1, toCoin: coin, fromAmount: '2000.00',
+        toAmount: p.country==='MX'?'9760.00':p.country==='HN'?'6200.00':'260.00',
+        fee: '6.00', feePercent: 0.003, description: 'Pago recibido de Guatemala', senderName: 'María López',
+        createdAt: ago(6*86400000), completedAt: ago(6*86400000) },
+      { id: 'LEN-20260412-TRF-DEMO4', type: 'transfer', status: 'completed', direction: 'sent',
+        fromCoin: coin, toCoin: coin, fromAmount: '5000.00', toAmount: '5000.00', fee: '0',
+        description: 'Pago a familia', recipientName: 'Ana Martínez',
+        createdAt: ago(5*86400000), completedAt: ago(5*86400000) },
+      { id: 'LEN-20260413-TRF-DEMO7', type: 'transfer', status: 'completed', direction: 'received',
+        fromCoin: coin, toCoin: coin, fromAmount: '12500.00', toAmount: '12500.00', fee: '0',
+        description: 'Remesa recibida', senderName: 'Carlos Ruiz',
+        createdAt: ago(2*86400000), completedAt: ago(2*86400000) },
+      { id: 'LEN-20260413-TKS-DEMO8', type: 'token_sell', status: 'completed', direction: 'internal',
+        fromCoin: coin, toCoin: coin, fromAmount: '3000.00', toAmount: '2985.00',
+        fee: '15.0000', feePercent: 0.005, description: `Venta de tokens ${coin} · 0.5%`,
+        createdAt: ago(86400000), completedAt: ago(86400000) },
+    ];
+
+    try {
+      const { loadUserSnapshot, saveUserSnapshot } = await import('@/lib/user-db');
+      const snapshot = await loadUserSnapshot(userId);
+      if (snapshot?.wallets?.length) {
+        setWallets(snapshot.wallets);
+        setTransactions(snapshot.transactions);
+      } else {
+        setWallets(defaultWallets);
+        setTransactions(defaultTxs);
+        saveUserSnapshot(userId, { wallets: defaultWallets, transactions: defaultTxs, updatedAt: new Date().toISOString() });
+      }
+      const { startWalletSync } = await import('@/lib/wallet-sync');
+      startWalletSync(userId);
+    } catch {
+      setWallets(defaultWallets);
+      setTransactions(defaultTxs);
+    }
+
+    setLoading(false);
+    router.push('/dashboard');
+  }
+
   async function handleLogin() {
     if (pin.length < 6) return;
     setLoading(true);
@@ -273,16 +364,14 @@ export default function LoginPage() {
                 <div className="grid grid-cols-3 gap-2">
                   {[
                     { num: '11111', flag: '🇬🇹', label: 'Guatemala', coin: 'QUETZA' },
-                    { num: '22222', flag: '🇲🇽', label: 'México', coin: 'MEXCOIN' },
-                    { num: '33333', flag: '🇭🇳', label: 'Honduras', coin: 'LEMPI' },
+                    { num: '22222', flag: '🇲🇽', label: 'México',    coin: 'MEXCOIN' },
+                    { num: '33333', flag: '🇭🇳', label: 'Honduras',  coin: 'LEMPI' },
                   ].map(d => (
                     <button
                       key={d.num}
-                      onClick={() => { setPhone(d.num); }}
-                      className={`flex flex-col items-center gap-1 p-2 rounded-xl border-2 transition-all text-center
-                        ${phone === d.num
-                          ? 'border-len-purple bg-white shadow-len'
-                          : 'border-len-border bg-white/60 hover:border-len-violet'}`}
+                      onClick={() => demoLogin(d.num)}
+                      disabled={loading}
+                      className="flex flex-col items-center gap-1 p-2 rounded-xl border-2 border-len-border bg-white/60 hover:border-len-purple hover:bg-white hover:shadow-len transition-all text-center disabled:opacity-50"
                     >
                       <span className="text-xl">{d.flag}</span>
                       <span className="text-xs font-bold text-len-dark">{d.coin}</span>
@@ -290,7 +379,7 @@ export default function LoginPage() {
                     </button>
                   ))}
                 </div>
-                <p className="text-[11px] text-gray-400 mt-2 text-center">PIN demo: <strong className="text-len-purple">111111</strong></p>
+                <p className="text-[11px] text-gray-400 mt-2 text-center">Un click = entrar directo 🚀</p>
               </div>
 
               <div>
