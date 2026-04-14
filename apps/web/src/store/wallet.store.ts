@@ -214,9 +214,17 @@ export const useWalletStore = create<WalletState>()(
     return txId;
   },
 
-  recordTransfer: (tx: Transaction) => set(s => ({
-    transactions: [tx, ...s.transactions],
-  })),
+  recordTransfer: (tx: Transaction) => set(s => {
+    // Deduct from sender balance when direction === 'sent'
+    const wallets = tx.direction === 'sent'
+      ? s.wallets.map(w => {
+          if (w.coin !== tx.fromCoin) return w;
+          const newBal = Math.max(0, parseFloat(w.available) - parseFloat(tx.fromAmount));
+          return { ...w, balance: newBal.toFixed(2), available: newBal.toFixed(2) };
+        })
+      : s.wallets;
+    return { wallets, transactions: [tx, ...s.transactions] };
+  }),
   }),
   {
     name: 'mondega-wallet',

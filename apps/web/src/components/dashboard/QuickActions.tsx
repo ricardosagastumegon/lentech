@@ -1,5 +1,3 @@
-import Link from 'next/link';
-
 const ACTIONS = [
   {
     label: 'Enviar',
@@ -35,10 +33,22 @@ const ACTIONS = [
     ),
   },
   {
-    label: 'Tarjeta',
-    href: '/card',
+    label: 'Retirar',
+    href: '/withdraw',
     bg: 'bg-amber-50',
     iconBg: 'bg-amber-500',
+    icon: (
+      <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.2}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 5v4M10 7l2-2 2 2" />
+      </svg>
+    ),
+  },
+  {
+    label: 'Tarjeta',
+    href: '/card',
+    bg: 'bg-purple-50',
+    iconBg: 'bg-len-purple',
     icon: (
       <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.2}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
@@ -49,12 +59,12 @@ const ACTIONS = [
 
 export function QuickActions() {
   return (
-    <div className="grid grid-cols-4 gap-2.5">
+    <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1 -mx-1 px-1">
       {ACTIONS.map(action => (
         <a
           key={action.href}
           href={action.href}
-          className={`flex flex-col items-center gap-2 py-3 px-1 rounded-2xl ${action.bg}
+          className={`flex flex-col items-center gap-2 py-3 px-2 rounded-2xl ${action.bg} flex-shrink-0 w-[18%] min-w-[64px]
             border border-transparent hover:border-len-border hover:shadow-sm transition-all active:scale-95`}
         >
           <div className={`w-11 h-11 ${action.iconBg} rounded-xl flex items-center justify-center shadow-sm`}>

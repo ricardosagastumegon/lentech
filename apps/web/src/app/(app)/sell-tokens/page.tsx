@@ -274,7 +274,7 @@ export default function SellTokensPage() {
             <button className="btn-primary w-full" onClick={() => router.push('/dashboard')}>
               Ir al inicio
             </button>
-            <button className="btn-secondary w-full" onClick={() => router.push('/add-money')}>
+            <button className="btn-secondary w-full" onClick={() => router.push('/withdraw')}>
               Retirar al banco →
             </button>
           </div>
