@@ -1,91 +1,167 @@
 import Link from 'next/link';
-import { useWalletStore, COINS } from '@/store/wallet.store';
+import { useWalletStore, COINS, Transaction } from '@/store/wallet.store';
 
-const statusColors: Record<string, string> = {
-  completed:  'text-green-600',
-  pending:    'text-yellow-600',
-  processing: 'text-blue-600',
-  confirming: 'text-blue-600',
-  failed:     'text-red-600',
-  reversed:   'text-gray-500',
+const STATUS_LABELS: Record<Transaction['status'], string> = {
+  completed:  'Completada',
+  pending:    'Pendiente',
+  processing: 'Procesando',
+  failed:     'Fallida',
+  reversed:   'Revertida',
 };
 
-const typeIcons: Record<string, string> = {
-  transfer:      '→',
-  purchase:      '⬇',
-  sale:          '⬆',
-  fiat_load:     '＋',
-  fiat_withdraw: '－',
-  fx_swap:       '⇄',
-  fee:           '$',
-  refund:        '↩',
+const STATUS_COLORS: Record<Transaction['status'], string> = {
+  completed:  'text-emerald-600',
+  pending:    'text-amber-500',
+  processing: 'text-blue-500',
+  failed:     'text-red-500',
+  reversed:   'text-gray-400',
 };
+
+function formatRelative(iso: string): string {
+  const diff  = Date.now() - new Date(iso).getTime();
+  const mins  = Math.floor(diff / 60000);
+  const hours = Math.floor(diff / 3600000);
+  const days  = Math.floor(diff / 86400000);
+  if (mins < 1)   return 'Ahora';
+  if (mins < 60)  return `Hace ${mins}m`;
+  if (hours < 24) return `Hace ${hours}h`;
+  if (days < 7)   return `Hace ${days}d`;
+  return new Date(iso).toLocaleDateString('es-GT', { month: 'short', day: 'numeric' });
+}
+
+function TxIcon({ tx }: { tx: Transaction }) {
+  const isCross = tx.fromCoin !== tx.toCoin;
+  const meta    = COINS[tx.toCoin] ?? COINS[tx.fromCoin];
+  const fmeta   = COINS[tx.fromCoin];
+
+  // Token buy
+  if (tx.type === 'token_buy') return (
+    <div className="w-10 h-10 bg-len-light rounded-xl flex items-center justify-center flex-shrink-0 border border-len-border">
+      <svg className="w-5 h-5 text-len-purple" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.2}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+    </div>
+  );
+
+  // Token sell
+  if (tx.type === 'token_sell') return (
+    <div className="w-10 h-10 bg-amber-50 rounded-xl flex items-center justify-center flex-shrink-0 border border-amber-200">
+      <svg className="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.2}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+    </div>
+  );
+
+  // Fiat deposit
+  if (tx.type === 'fiat_load') return (
+    <div className="w-10 h-10 bg-emerald-50 rounded-xl flex items-center justify-center flex-shrink-0 border border-emerald-200">
+      <span className="text-lg">{fmeta.flag}</span>
+    </div>
+  );
+
+  // Fiat withdrawal
+  if (tx.type === 'fiat_withdraw') return (
+    <div className="w-10 h-10 bg-orange-50 rounded-xl flex items-center justify-center flex-shrink-0 border border-orange-200">
+      <span className="text-lg">{fmeta.flag}</span>
+    </div>
+  );
+
+  // FX / cross-coin
+  if (isCross) return (
+    <div className="relative w-10 h-10 flex-shrink-0">
+      <div className="absolute top-0 left-0 w-7 h-7 bg-len-light rounded-lg flex items-center justify-center border border-len-border">
+        <span className="text-sm">{fmeta.flag}</span>
+      </div>
+      <div className="absolute bottom-0 right-0 w-7 h-7 bg-white rounded-lg flex items-center justify-center border border-len-border shadow-sm">
+        <span className="text-sm">{COINS[tx.toCoin].flag}</span>
+      </div>
+    </div>
+  );
+
+  // Transfer sent/received
+  const isReceived = tx.direction === 'received';
+  return (
+    <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 border
+      ${isReceived ? 'bg-emerald-50 border-emerald-200' : 'bg-len-light border-len-border'}`}>
+      <span className="text-lg">{meta.flag}</span>
+    </div>
+  );
+}
 
 export function RecentTransactions({ loading }: { loading: boolean }) {
-  const transactions = useWalletStore((s) => s.transactions);
+  const transactions = useWalletStore(s => s.transactions);
+  const recent = transactions.slice(0, 5);
 
   if (loading) {
     return (
       <div className="space-y-2">
-        {[1, 2, 3].map((i) => (
-          <div key={i} className="flex items-center gap-3 p-3 rounded-xl animate-pulse">
-            <div className="w-10 h-10 rounded-xl bg-gray-200 flex-shrink-0" />
+        {[1, 2, 3].map(i => (
+          <div key={i} className="flex items-center gap-3 p-3 rounded-2xl animate-pulse bg-white border border-len-border">
+            <div className="w-10 h-10 rounded-xl bg-gray-100 flex-shrink-0" />
             <div className="flex-1">
-              <div className="h-3 bg-gray-200 rounded w-32 mb-2" />
+              <div className="h-3 bg-gray-100 rounded w-32 mb-2" />
               <div className="h-2 bg-gray-100 rounded w-20" />
             </div>
+            <div className="w-16 h-3 bg-gray-100 rounded" />
           </div>
         ))}
       </div>
     );
   }
 
-  if (transactions.length === 0) {
+  if (recent.length === 0) {
     return (
       <div className="text-center py-8 text-gray-400 text-sm">
-        No hay transacciones recientes
+        Sin movimientos aún
       </div>
     );
   }
 
   return (
-    <div className="space-y-1">
-      {transactions.map((tx) => {
+    <div className="space-y-1.5">
+      {recent.map(tx => {
         const isReceived = tx.direction === 'received';
-        const isFX = tx.fromCoin !== tx.toCoin;
-        const coinMeta = COINS[tx.toCoin];
+        const isInternal = tx.direction === 'internal';
+        const isCross    = tx.fromCoin !== tx.toCoin;
+
+        const amtNum = parseFloat(isReceived ? tx.toAmount : tx.fromAmount);
+        const amtStr = amtNum.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+        const coin   = isReceived ? tx.toCoin : tx.fromCoin;
+
+        const sign  = isReceived ? '+' : isInternal ? '' : '-';
+        const color = isReceived ? 'text-emerald-600' : isInternal ? 'text-len-purple' : 'text-len-dark';
 
         return (
           <Link
             key={tx.id}
-            href={`/transactions/${tx.id}`}
-            className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 transition-colors"
+            href="/transactions"
+            className="flex items-center gap-3 p-3 rounded-2xl hover:bg-len-light active:bg-len-light transition-colors"
           >
-            <div className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center text-gray-600 font-bold text-lg flex-shrink-0">
-              {isFX ? '⇄' : (typeIcons[tx.type] ?? (isReceived ? '⬇' : '→'))}
-            </div>
+            <TxIcon tx={tx} />
+
             <div className="flex-1 min-w-0">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-gray-900">
-                  {tx.description ?? tx.type.replace(/_/g, ' ')}
-                  {isFX && (
-                    <span className="ml-1 text-xs text-blue-500 font-normal">
-                      {tx.fromCoin}→{tx.toCoin}
-                    </span>
-                  )}
+              <p className="text-sm font-semibold text-len-dark truncate leading-snug">
+                {tx.description ?? tx.type.replace(/_/g, ' ')}
+              </p>
+              <div className="flex items-center gap-1.5 mt-0.5">
+                <span className={`text-[10px] font-semibold ${STATUS_COLORS[tx.status]}`}>
+                  {STATUS_LABELS[tx.status]}
                 </span>
-                <span className={`text-sm font-semibold ml-2 flex-shrink-0 ${isReceived ? 'text-green-600' : 'text-gray-900'}`}>
-                  {isReceived ? '+' : '-'}{Number(tx.toAmount).toLocaleString()} {tx.toCoin}
-                </span>
+                <span className="text-[10px] text-gray-300">·</span>
+                <span className="text-[10px] text-gray-400">{formatRelative(tx.createdAt)}</span>
               </div>
-              <div className="flex items-center justify-between mt-0.5">
-                <span className={`text-xs ${statusColors[tx.status] ?? 'text-gray-400'}`}>
-                  {tx.status}
-                </span>
-                <span className="text-xs text-gray-400">
-                  {new Date(tx.createdAt).toLocaleDateString('es-GT')}
-                </span>
-              </div>
+            </div>
+
+            <div className="text-right flex-shrink-0 max-w-[38%]">
+              <p className={`text-sm font-black tabular-nums leading-snug ${color}`}>
+                {sign}{amtStr}
+              </p>
+              <p className="text-[10px] text-gray-400 font-medium">{coin}</p>
+              {isCross && (
+                <p className="text-[10px] text-emerald-600 font-semibold tabular-nums">
+                  → {parseFloat(tx.toAmount).toLocaleString('en-US', { maximumFractionDigits: 0 })} {tx.toCoin}
+                </p>
+              )}
             </div>
           </Link>
         );

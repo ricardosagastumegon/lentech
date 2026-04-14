@@ -151,6 +151,24 @@ function TxIcon({ tx }: { tx: Transaction }) {
       </div>
     );
   }
+  if (tx.type === 'token_buy') {
+    return (
+      <div className="w-11 h-11 bg-len-light rounded-2xl flex items-center justify-center flex-shrink-0 border border-len-border">
+        <svg className="w-5 h-5 text-len-purple" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      </div>
+    );
+  }
+  if (tx.type === 'token_sell') {
+    return (
+      <div className="w-11 h-11 bg-amber-50 rounded-2xl flex items-center justify-center flex-shrink-0 border border-amber-200">
+        <svg className="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      </div>
+    );
+  }
   if (tx.type === 'purchase') {
     return (
       <div className="w-11 h-11 bg-purple-100 rounded-2xl flex items-center justify-center flex-shrink-0">
@@ -222,7 +240,7 @@ export default function TransactionsPage() {
   // Summary stats
   const totalSent     = allTxs.filter(t => t.direction === 'sent').length;
   const totalReceived = allTxs.filter(t => t.direction === 'received').length;
-  const totalVolUSD   = allTxs.reduce((sum, t) => sum + (parseFloat(t.fromAmount) * 0.13), 0);
+  const totalInternal = allTxs.filter(t => t.direction === 'internal').length;
 
   return (
     <div className="max-w-lg mx-auto px-4 pb-24">
@@ -236,9 +254,9 @@ export default function TransactionsPage() {
       {/* ── Summary chips ── */}
       <div className="grid grid-cols-3 gap-2 mb-5">
         {[
-          { label: 'Enviados',  value: totalSent,     color: 'text-len-purple', bg: 'bg-len-light border-len-border' },
+          { label: 'Enviados',  value: totalSent,     color: 'text-len-purple',   bg: 'bg-len-light border-len-border' },
           { label: 'Recibidos', value: totalReceived,  color: 'text-emerald-600', bg: 'bg-emerald-50 border-emerald-200' },
-          { label: 'Vol. USD',  value: `$${totalVolUSD.toFixed(0)}`, color: 'text-gray-700', bg: 'bg-white border-len-border' },
+          { label: 'Internos',  value: totalInternal,  color: 'text-gray-600',    bg: 'bg-white border-len-border' },
         ].map(c => (
           <div key={c.label} className={`rounded-2xl border px-3 py-2.5 text-center ${c.bg}`}>
             <p className={`text-lg font-black ${c.color}`}>{c.value}</p>
@@ -388,43 +406,35 @@ export default function TransactionsPage() {
 
                 {/* Info */}
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-1.5 mb-0.5">
-                    <p className="font-bold text-sm text-len-dark truncate">
-                      {tx.description ?? TYPE_LABELS[tx.type]}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-xs text-gray-400">
-                      {tx.type === 'fiat_load' || tx.type === 'fiat_withdraw'
-                        ? counterpart
-                        : isInternal
-                          ? `${tx.fromCoin} → ${tx.toCoin}`
-                          : counterpart
-                      }
-                    </span>
-                    <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${STATUS_COLORS[tx.status]}`}>
+                  <p className="font-bold text-sm text-len-dark truncate leading-snug">
+                    {tx.description ?? TYPE_LABELS[tx.type]}
+                  </p>
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                    <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full flex-shrink-0 ${STATUS_COLORS[tx.status]}`}>
                       {STATUS_LABELS[tx.status]}
                     </span>
+                    {!isInternal && counterpart !== 'Desconocido' && (
+                      <span className="text-[10px] text-gray-400 truncate">{counterpart}</span>
+                    )}
                   </div>
-                  <p className="text-[10px] text-gray-300 mt-0.5 font-medium">
+                  <p className="text-[10px] text-gray-300 mt-0.5">
                     {formatRelativeDate(tx.createdAt)}
-                    {isCross && ` · 1 ${tx.fromCoin} = ${fromMeta.flag}${toMeta.flag}`}
                   </p>
                 </div>
 
                 {/* Amount */}
-                <div className="text-right flex-shrink-0">
-                  <p className={`text-base font-black tabular-nums ${amountColor}`}>
+                <div className="text-right flex-shrink-0 max-w-[42%]">
+                  <p className={`text-sm font-black tabular-nums leading-snug ${amountColor}`}>
                     {sign}{amountDisplay}
                   </p>
                   {isCross && (
-                    <p className="text-xs text-emerald-600 font-semibold">
-                      → {parseFloat(tx.toAmount).toLocaleString('en-US', { minimumFractionDigits: 2 })} {tx.toCoin}
+                    <p className="text-[11px] text-emerald-600 font-semibold tabular-nums">
+                      → {parseFloat(tx.toAmount).toLocaleString('en-US', { maximumFractionDigits: 0 })} {tx.toCoin}
                     </p>
                   )}
                   {parseFloat(tx.fee ?? '0') > 0 && (
                     <p className="text-[10px] text-gray-300 tabular-nums">
-                      fee {tx.fee} {tx.fromCoin}
+                      fee {tx.fee}
                     </p>
                   )}
                 </div>

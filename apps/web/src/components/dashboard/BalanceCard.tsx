@@ -74,28 +74,27 @@ export function BalanceCard({ loading }: { loading: boolean }) {
           </div>
 
           {/* Fiat amount */}
-          <div className="flex items-end justify-between">
-            <div>
-              <span className="text-white/50 text-lg font-bold mr-1">{meta.symbol}</span>
-              <span className="text-4xl font-black text-white tracking-tight">
-                {hidden ? '••••••' : fmt(fiat)}
+          <div className="flex items-end justify-between gap-2">
+            <div className="min-w-0">
+              <span className="text-white/50 text-sm font-bold mr-1">{meta.symbol}</span>
+              <span className="text-3xl font-black text-white tracking-tight tabular-nums">
+                {hidden ? '•••••' : fmt(fiat)}
               </span>
-              <span className="text-white/60 text-base font-bold ml-2">{meta.fiat}</span>
+              <span className="text-white/60 text-sm font-bold ml-1.5">{meta.fiat}</span>
             </div>
-            {/* Comprar button — only if fiat > 0 */}
             {hasFiat && (
               <button
                 onClick={() => router.push('/buy-tokens')}
-                className="bg-white text-len-purple font-black text-xs px-4 py-2 rounded-full
-                           hover:bg-len-light active:scale-95 transition-all shadow-sm flex-shrink-0"
+                className="bg-white text-len-purple font-black text-xs px-3 py-2 rounded-full
+                           hover:bg-len-light active:scale-95 transition-all shadow-sm flex-shrink-0 whitespace-nowrap"
               >
-                Comprar tokens →
+                Comprar →
               </button>
             )}
             {!hasFiat && (
               <button
                 onClick={() => router.push('/add-money')}
-                className="bg-white/20 text-white font-bold text-xs px-4 py-2 rounded-full
+                className="bg-white/20 text-white font-bold text-xs px-3 py-2 rounded-full
                            hover:bg-white/30 active:scale-95 transition-all border border-white/30 flex-shrink-0"
               >
                 + Depositar

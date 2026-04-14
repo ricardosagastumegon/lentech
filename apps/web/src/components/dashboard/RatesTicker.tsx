@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { getTickerRates, USD_RATES } from '@/lib/fx-engine';
+import { getTickerRates } from '@/lib/fx-engine';
 import { COINS, CoinCode } from '@/store/wallet.store';
 
 type TickerRate = { from: CoinCode; to: CoinCode; rate: number; rateStr: string; change: number };
@@ -63,9 +63,9 @@ export function RatesTicker() {
                     {up ? '▲' : '▼'}{Math.abs(r.change).toFixed(2)}%
                   </span>
                 </div>
-                {/* USD ref */}
-                <p className="text-[9px] text-gray-300 mt-0.5 tabular-nums">
-                  1 {r.from} = ${USD_RATES[r.from].toFixed(4)} USD
+                {/* Fiat labels */}
+                <p className="text-[9px] text-gray-300 mt-0.5">
+                  {fm.fiat} → {tm.fiat}
                 </p>
               </div>
             );
