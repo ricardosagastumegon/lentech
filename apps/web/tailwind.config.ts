@@ -9,29 +9,29 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        'len-purple':  '#6C5CE7',
-        'len-violet':  '#A29BFE',
-        'len-dark':    '#1E1B4B',
-        'len-mid':     '#2D2B6B',
-        'len-light':   '#F5F3FF',
-        'len-border':  '#EDE9FE',
-        'len-surface': '#FAFAFE',
-        // keep mondega aliases for coin colors
+        'len-purple':  '#4338CA',   // índigo-700 — profundo, no eléctrico
+        'len-violet':  '#818CF8',   // índigo-400 — acento suave
+        'len-dark':    '#1E1B4B',   // navy — se mantiene
+        'len-mid':     '#312E81',   // índigo-900 — para gradientes intermedios
+        'len-light':   '#EEF2FF',   // índigo-50 — fondos limpios
+        'len-border':  '#E0E7FF',   // índigo-100 — bordes sutiles
+        'len-surface': '#F9FAFB',   // blanco neutro — sin tinte
+        // mondega aliases
         'mondega-green':   '#059669',
-        'mondega-surface': '#F5F3FF',
-        'mondega-border':  '#EDE9FE',
+        'mondega-surface': '#EEF2FF',
+        'mondega-border':  '#E0E7FF',
         'mondega-dark':    '#1E1B4B',
       },
       backgroundImage: {
-        'len-gradient': 'linear-gradient(135deg, #1E1B4B 0%, #4C3CCF 50%, #6C5CE7 100%)',
-        'len-card':     'linear-gradient(135deg, #6C5CE7 0%, #A29BFE 100%)',
+        'len-gradient': 'linear-gradient(135deg, #1E1B4B 0%, #312E81 55%, #4338CA 100%)',
+        'len-card':     'linear-gradient(135deg, #4338CA 0%, #818CF8 100%)',
       },
       fontFamily: {
         sans: ['Inter', 'system-ui', 'sans-serif'],
       },
       boxShadow: {
-        'len': '0 4px 24px rgba(108, 92, 231, 0.18)',
-        'len-lg': '0 8px 40px rgba(108, 92, 231, 0.24)',
+        'len':    '0 4px 24px rgba(67, 56, 202, 0.15)',
+        'len-lg': '0 8px 40px rgba(67, 56, 202, 0.20)',
       },
     },
   },

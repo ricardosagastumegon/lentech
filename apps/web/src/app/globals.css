@@ -5,12 +5,12 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
 :root {
-  --len-purple:  #6C5CE7;
-  --len-violet:  #A29BFE;
-  --len-dark:    #1E1B4B;
-  --len-light:   #F5F3FF;
-  --len-border:  #EDE9FE;
-  --len-surface: #FAFAFE;
+  --len-purple:  #4338CA;   /* índigo-700 — profundo, institucional, no eléctrico */
+  --len-violet:  #818CF8;   /* índigo-400 — acento suave, no lavanda */
+  --len-dark:    #1E1B4B;   /* navy oscuro — se mantiene, es perfecto */
+  --len-light:   #EEF2FF;   /* índigo-50 — fondo limpio, apenas teñido */
+  --len-border:  #E0E7FF;   /* índigo-100 — borde sutil */
+  --len-surface: #F9FAFB;   /* blanco neutro — sin tinte púrpura */
 }
 
 @layer base {
