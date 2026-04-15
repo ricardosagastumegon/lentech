@@ -415,6 +415,7 @@ export default function AdminPage() {
     txLimits, setTxLimits,
     fxOverrides, setFXOverride,
     userOverrides, upsertUserOverride, setUserStatus, removeUserOverride,
+    logout,
   } = useAdminStore();
 
   const [tab,        setTab]        = useState<Tab>('connectivity');
