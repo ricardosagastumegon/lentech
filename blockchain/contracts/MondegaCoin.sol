@@ -47,8 +47,8 @@ contract MondegaCoin is ERC20, ERC20Pausable, ERC20Burnable, AccessControl, Reen
     // ---- Events ----
     event Blacklisted(address indexed account, address indexed by, string reason);
     event Unblacklisted(address indexed account, address indexed by);
-    event Minted(address indexed to, uint256 amount, string reference);
-    event Burned(address indexed from, uint256 amount, string reference);
+    event Minted(address indexed to, uint256 amount, string txRef);
+    event Burned(address indexed from, uint256 amount, string txRef);
     event MaxSupplyUpdated(uint256 oldMax, uint256 newMax);
 
     // ---- Constructor ----
@@ -128,9 +128,9 @@ contract MondegaCoin is ERC20, ERC20Pausable, ERC20Burnable, AccessControl, Reen
      * @dev Mint new coins when a user buys with fiat.
      * @param to       Recipient wallet address
      * @param amount   Amount in coin units (2 decimals)
-     * @param reference Transaction reference for audit trail
+     * @param txRef Transaction reference for audit trail
      */
-    function mint(address to, uint256 amount, string calldata reference)
+    function mint(address to, uint256 amount, string calldata txRef)
         external
         onlyRole(MINTER_ROLE)
         nonReentrant
@@ -142,25 +142,24 @@ contract MondegaCoin is ERC20, ERC20Pausable, ERC20Burnable, AccessControl, Reen
             maxSupply == 0 || totalSupply() + amount <= maxSupply,
             "Would exceed max supply"
         );
-        _beforeTokenTransfer(address(0), to, amount);
         _mint(to, amount);
-        emit Minted(to, amount, reference);
+        emit Minted(to, amount, txRef);
     }
 
     /**
      * @dev Burn coins when a user sells for fiat.
      * @param from     Address to burn from
      * @param amount   Amount to burn
-     * @param reference Transaction reference
+     * @param txRef Transaction reference
      */
-    function burnFrom(address from, uint256 amount, string calldata reference)
+    function burnFrom(address from, uint256 amount, string calldata txRef)
         external
         onlyRole(BURNER_ROLE)
         nonReentrant
     {
         require(amount > 0, "Amount must be positive");
         _burn(from, amount);
-        emit Burned(from, amount, reference);
+        emit Burned(from, amount, txRef);
     }
 
     // ---- Emergency Controls ----
