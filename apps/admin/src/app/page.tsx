@@ -408,7 +408,6 @@ function ParamRow({
 // ─── Main page ────────────────────────────────────────────────────────────────
 export default function AdminPage() {
   const {
-    isAuthenticated, logout,
     liveMode, maintenanceMode, toggleLiveMode, toggleMaintenance,
     banks, pingAllBanks,
     fees, setFees,
@@ -423,8 +422,6 @@ export default function AdminPage() {
   const [userSearch, setUserSearch] = useState('');
   const [editingUser, setEditingUser] = useState<UserOverride | null | 'new'>('new' as unknown as null);
   const [showUserModal, setShowUserModal] = useState(false);
-
-  if (!isAuthenticated) return <LoginGate />;
 
   // ── Helpers ────────────────────────────────────────────────────────────────
   const countryBanks = (country: 'GT' | 'MX' | 'HN') =>
