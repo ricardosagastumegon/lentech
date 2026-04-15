@@ -2,56 +2,90 @@
  * LEN — Wallet ↔ Firestore sync service
  *
  * Two-way sync:
- *   1. Local changes → debounced save to Firestore (own document)
- *   2. Remote changes (incoming transfers from other users) → merge into local store
+ *   1. Local changes → debounced save to Firestore (wallet + transactions + bank accounts)
+ *   2. Remote changes (incoming transfers) → merge into local store
  *
  * Usage:
- *   startWalletSync('demo-gt')   // called after successful login
- *   stopWalletSync()              // called on logout
+ *   await syncFromFirestore('demo-gt')  // load latest state from Firestore (page reload)
+ *   startWalletSync('demo-gt')          // subscribe to local changes + remote changes
+ *   stopWalletSync()                    // called on logout / unmount
  */
 
 import { useWalletStore } from '@/store/wallet.store';
-import { saveUserSnapshot, subscribeToUserSnapshot } from './user-db';
+import { useBankStore } from '@/store/bank.store';
+import { loadUserSnapshot, saveUserSnapshot, subscribeToUserSnapshot } from './user-db';
 
-let zustandUnsub:   (() => void) | null = null;
+let walletUnsub:  (() => void) | null = null;
+let bankUnsub:    (() => void) | null = null;
 let firestoreUnsub: (() => void) | null = null;
-let debounceTimer:  ReturnType<typeof setTimeout> | null = null;
-let currentUserId:  string | null = null;
-let isExternalUpdate = false; // prevent save-loop when applying remote changes
+let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+let currentUserId: string | null = null;
+let isExternalUpdate = false; // prevent save-loop when applying remote data
+
+// ─── Save helper — always writes wallets + transactions + bank accounts ───────
+function scheduleSave() {
+  if (!currentUserId || isExternalUpdate) return;
+  if (debounceTimer) clearTimeout(debounceTimer);
+  debounceTimer = setTimeout(() => {
+    if (!currentUserId) return;
+    const { wallets, transactions } = useWalletStore.getState();
+    const { accounts: bankAccounts } = useBankStore.getState();
+    if (wallets.length > 0) {
+      saveUserSnapshot(currentUserId, {
+        wallets,
+        transactions,
+        bankAccounts,
+        updatedAt: new Date().toISOString(),
+      });
+    }
+  }, 1500);
+}
+
+/**
+ * Load latest Firestore snapshot into local stores (wallets, transactions, bank accounts).
+ * Sets isExternalUpdate=true so the write doesn't trigger a re-save.
+ * Call this on page reload when the user is already authenticated.
+ */
+export async function syncFromFirestore(userId: string): Promise<void> {
+  try {
+    const snapshot = await loadUserSnapshot(userId);
+    if (!snapshot?.wallets?.length) return;
+
+    isExternalUpdate = true;
+    useWalletStore.getState().setWallets(snapshot.wallets);
+    useWalletStore.getState().setTransactions(snapshot.transactions);
+    if (snapshot.bankAccounts?.length) {
+      useBankStore.setState({ accounts: snapshot.bankAccounts });
+    }
+    isExternalUpdate = false;
+  } catch {
+    isExternalUpdate = false;
+  }
+}
 
 export function startWalletSync(userId: string): void {
   stopWalletSync();
   currentUserId = userId;
 
-  // ── 1. Local → Firestore (debounced save) ────────────────────────────────
-  zustandUnsub = useWalletStore.subscribe((state) => {
-    if (!currentUserId || isExternalUpdate) return;
-    if (debounceTimer) clearTimeout(debounceTimer);
-    debounceTimer = setTimeout(() => {
-      if (currentUserId && state.wallets.length > 0) {
-        saveUserSnapshot(currentUserId, {
-          wallets:      state.wallets,
-          transactions: state.transactions,
-          updatedAt:    new Date().toISOString(),
-        });
-      }
-    }, 1500);
-  });
+  // ── 1. Local wallet changes → Firestore ─────────────────────────────────
+  walletUnsub = useWalletStore.subscribe(() => scheduleSave());
 
-  // ── 2. Firestore → Local (real-time incoming transfers) ──────────────────
+  // ── 2. Local bank account changes → Firestore ────────────────────────────
+  bankUnsub = useBankStore.subscribe(() => scheduleSave());
+
+  // ── 3. Firestore → Local (real-time incoming transfers) ──────────────────
   firestoreUnsub = subscribeToUserSnapshot(userId, (remoteSnap) => {
     if (!currentUserId) return;
 
-    // Only process external changes (updatedBy === 'system' means another user sent funds)
+    // Only process changes made by other users/system (not our own saves)
     if (remoteSnap.updatedBy === currentUserId) return;
 
-    const localState  = useWalletStore.getState();
-    const localTxIds  = new Set(localState.transactions.map(t => t.id));
-    const newTxs      = (remoteSnap.transactions ?? []).filter(t => !localTxIds.has(t.id));
+    const localState = useWalletStore.getState();
+    const localTxIds = new Set(localState.transactions.map(t => t.id));
+    const newTxs     = (remoteSnap.transactions ?? []).filter(t => !localTxIds.has(t.id));
 
     if (newTxs.length === 0) return; // nothing new
 
-    // Apply remote state — suppress the save-loop flag
     isExternalUpdate = true;
     useWalletStore.getState().setWallets(remoteSnap.wallets);
     useWalletStore.getState().setTransactions(remoteSnap.transactions);
@@ -60,8 +94,9 @@ export function startWalletSync(userId: string): void {
 }
 
 export function stopWalletSync(): void {
-  if (debounceTimer)  { clearTimeout(debounceTimer); debounceTimer = null; }
-  if (zustandUnsub)   { zustandUnsub();   zustandUnsub   = null; }
-  if (firestoreUnsub) { firestoreUnsub(); firestoreUnsub = null; }
+  if (debounceTimer)    { clearTimeout(debounceTimer); debounceTimer    = null; }
+  if (walletUnsub)      { walletUnsub();   walletUnsub    = null; }
+  if (bankUnsub)        { bankUnsub();     bankUnsub      = null; }
+  if (firestoreUnsub)   { firestoreUnsub(); firestoreUnsub = null; }
   currentUserId = null;
 }

@@ -8,14 +8,16 @@
 import { doc, getDoc, setDoc, onSnapshot } from 'firebase/firestore';
 import { getDb } from './firebase';
 import type { WalletBalance, Transaction, CoinCode } from '@/store/wallet.store';
+import type { BankAccount } from '@/store/bank.store';
 
 const COLLECTION = 'len_demo_users';
 
 export interface UserSnapshot {
-  wallets:      WalletBalance[];
-  transactions: Transaction[];
-  updatedAt:    string;
-  updatedBy?:   string; // 'system' = external credit from another user
+  wallets:       WalletBalance[];
+  transactions:  Transaction[];
+  bankAccounts?: BankAccount[];
+  updatedAt:     string;
+  updatedBy?:    string; // 'system' = external credit from another user
 }
 
 export async function loadUserSnapshot(userId: string): Promise<UserSnapshot | null> {

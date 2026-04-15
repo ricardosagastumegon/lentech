@@ -103,10 +103,14 @@ export default function LoginPage() {
       if (snapshot?.wallets?.length) {
         setWallets(snapshot.wallets);
         setTransactions(snapshot.transactions);
+        if (snapshot.bankAccounts?.length) {
+          const { useBankStore } = await import('@/store/bank.store');
+          useBankStore.setState({ accounts: snapshot.bankAccounts });
+        }
       } else {
         setWallets(defaultWallets);
         setTransactions(defaultTxs);
-        saveUserSnapshot(userId, { wallets: defaultWallets, transactions: defaultTxs, updatedAt: new Date().toISOString() });
+        saveUserSnapshot(userId, { wallets: defaultWallets, transactions: defaultTxs, bankAccounts: [], updatedAt: new Date().toISOString() });
       }
       const { startWalletSync } = await import('@/lib/wallet-sync');
       startWalletSync(userId);
@@ -228,12 +232,17 @@ export default function LoginPage() {
         if (snapshot?.wallets?.length) {
           setWallets(snapshot.wallets);
           setTransactions(snapshot.transactions);
+          if (snapshot.bankAccounts?.length) {
+            const { useBankStore } = await import('@/store/bank.store');
+            useBankStore.setState({ accounts: snapshot.bankAccounts });
+          }
         } else {
           setWallets(defaultWallets);
           setTransactions(defaultTxs);
           saveUserSnapshot(userId, {
             wallets:      defaultWallets,
             transactions: defaultTxs,
+            bankAccounts: [],
             updatedAt:    new Date().toISOString(),
           });
         }
