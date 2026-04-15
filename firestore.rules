@@ -1,0 +1,55 @@
+rules_version = '2';
+
+// ─── LEN — Firestore Security Rules ──────────────────────────────────────────
+// Collection: len_demo_users/{userId}
+//
+// NOTA DE ARQUITECTURA:
+//   La app LEN usa autenticación JWT propia (no Firebase Auth).
+//   Por eso request.auth es null desde el cliente.
+//   El acceso se controla via Firebase Admin SDK (service account) en el backend.
+//
+// REGLAS DEMO (actuales):
+//   - Solo los documentos de usuarios demo permitidos (demo-gt, demo-mx, demo-hn)
+//   - Nadie puede crear documentos con otros IDs desde el cliente
+//   - Lectura pública solo de documentos demo (necesaria para sync cross-device)
+//
+// REGLAS PRODUCCIÓN (cuando el backend esté activo):
+//   - Comentar el bloque DEMO y descomentar el bloque PRODUCCIÓN
+//   - Toda escritura pasa por Firebase Admin SDK → bypasa estas rules
+//
+// Deploy: firebase deploy --only firestore:rules
+// ─────────────────────────────────────────────────────────────────────────────
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── MODO DEMO ─────────────────────────────────────────────────────────────
+    // Solo los 3 usuarios demo tienen acceso de lectura/escritura
+    match /len_demo_users/{userId} {
+
+      // Usuarios demo permitidos
+      allow read, write: if userId in ['demo-gt', 'demo-mx', 'demo-hn'];
+    }
+
+    // ── TODO LO DEMÁS: DENEGADO ───────────────────────────────────────────────
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+
+    // ══════════════════════════════════════════════════════════════════════════
+    // REGLAS DE PRODUCCIÓN — descomentar cuando el backend JWT esté activo
+    // (el backend usa Firebase Admin SDK que bypasa estas rules)
+    // ══════════════════════════════════════════════════════════════════════════
+    //
+    // match /len_demo_users/{userId} {
+    //   // Sin acceso desde el cliente — todo va por Firebase Admin SDK (backend)
+    //   allow read, write: if false;
+    // }
+    //
+    // match /{document=**} {
+    //   allow read, write: if false;
+    // }
+    // ══════════════════════════════════════════════════════════════════════════
+  }
+}

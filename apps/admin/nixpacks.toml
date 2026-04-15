@@ -8,7 +8,7 @@ cmds = [
 ]
 
 [phases.build]
-cmds = ["pnpm --filter admin build"]
+cmds = ["rm -rf apps/admin/.next", "pnpm --filter admin build"]
 
 [start]
 cmd = "pnpm --filter admin start -p 3010"
