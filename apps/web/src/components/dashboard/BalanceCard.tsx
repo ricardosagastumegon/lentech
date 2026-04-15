@@ -42,6 +42,14 @@ export function BalanceCard({ loading }: { loading: boolean }) {
 
   const fmt = (n: number) => n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
+  // Abbreviate large numbers for display — 1,250,000 → "1.25M", 50,000 → "50K"
+  // Full number still shown in tooltip/accessible text
+  function fmtShort(n: number): string {
+    if (n >= 1_000_000) return `${(n / 1_000_000).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}M`;
+    if (n >= 10_000)    return `${(n / 1_000).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 1 })}K`;
+    return fmt(n);
+  }
+
   return (
     <div className="rounded-3xl overflow-hidden shadow-len-lg border border-len-border">
 
@@ -77,8 +85,11 @@ export function BalanceCard({ loading }: { loading: boolean }) {
           <div className="flex items-end justify-between gap-2">
             <div className="min-w-0">
               <span className="text-white/50 text-sm font-bold mr-1">{meta.symbol}</span>
-              <span className="text-3xl font-black text-white tracking-tight tabular-nums">
-                {hidden ? '•••••' : fmt(fiat)}
+              <span
+                className="text-3xl font-black text-white tracking-tight tabular-nums"
+                title={hidden ? undefined : fmt(fiat)}
+              >
+                {hidden ? '•••••' : fmtShort(fiat)}
               </span>
               <span className="text-white/60 text-sm font-bold ml-1.5">{meta.fiat}</span>
             </div>
@@ -132,8 +143,11 @@ export function BalanceCard({ loading }: { loading: boolean }) {
 
         <div className="flex items-center justify-between">
           <div>
-            <span className="text-3xl font-black text-len-dark tracking-tight">
-              {hidden ? '••••' : fmt(tokens)}
+            <span
+              className="text-3xl font-black text-len-dark tracking-tight"
+              title={hidden ? undefined : fmt(tokens)}
+            >
+              {hidden ? '••••' : fmtShort(tokens)}
             </span>
             <span className="text-gray-400 text-base font-bold ml-2">{w.coin}</span>
           </div>

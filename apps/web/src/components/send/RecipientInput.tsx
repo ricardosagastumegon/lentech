@@ -70,18 +70,27 @@ export function RecipientInput({ value, onChange, onResolved, error }: Recipient
     <div>
       <label className="block text-sm font-medium text-gray-700 mb-1">Destinatario</label>
 
-      {/* Quick-pick demo users */}
-      <div className="flex gap-2 mb-2">
-        {Object.values(DEMO_RECIPIENTS).map(d => (
-          <button key={d.userId} type="button" onClick={() => pick(d)}
-            className={`flex-1 flex flex-col items-center gap-0.5 py-1.5 rounded-xl border transition-all
-              ${resolved?.userId === d.userId
-                ? 'border-len-purple bg-white shadow-sm'
-                : 'border-len-border bg-len-light hover:border-len-violet'}`}>
-            <span className="text-base">{FLAG[d.country ?? ''] ?? '🌎'}</span>
-            <span className="text-[10px] font-bold text-len-dark">{d.displayName.split(' ')[0]}</span>
-          </button>
-        ))}
+      {/* Demo users quick-pick — clearly labeled as test mode */}
+      <div className="mb-3 rounded-2xl border border-amber-200 bg-amber-50 px-3 py-2">
+        <p className="text-[10px] font-bold text-amber-600 uppercase tracking-wide mb-1.5">
+          🧪 Módulo de pruebas — usuarios demo
+        </p>
+        <div className="flex gap-2">
+          {Object.values(DEMO_RECIPIENTS).map(d => (
+            <button key={d.userId} type="button" onClick={() => pick(d)}
+              className={`flex-1 flex flex-col items-center gap-0.5 py-1.5 rounded-xl border transition-all
+                ${resolved?.userId === d.userId
+                  ? 'border-len-purple bg-white shadow-sm'
+                  : 'border-amber-200 bg-white/70 hover:border-len-violet hover:bg-white'}`}>
+              <span className="text-base">{FLAG[d.country ?? ''] ?? '🌎'}</span>
+              <span className="text-[10px] font-bold text-len-dark">{d.displayName.split(' ')[0]}</span>
+              <span className="text-[9px] text-gray-400">{d.country}</span>
+            </button>
+          ))}
+        </div>
+        <p className="text-[10px] text-amber-500 mt-1.5 leading-tight">
+          En producción podrás buscar cualquier usuario LEN por número de teléfono.
+        </p>
       </div>
 
       <div className="relative">
@@ -96,7 +105,7 @@ export function RecipientInput({ value, onChange, onResolved, error }: Recipient
             else      { setResolved(null); onResolved(null); }
           }}
           onBlur={() => resolve(value)}
-          placeholder="Teléfono LEN o selecciona arriba"
+          placeholder="Teléfono o wallet LEN"
           className={`input-field w-full pr-12 ${error ? 'border-red-400' : ''}`}
         />
         <div className="absolute right-3 top-1/2 -translate-y-1/2">

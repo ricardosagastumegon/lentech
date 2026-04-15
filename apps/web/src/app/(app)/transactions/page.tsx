@@ -78,7 +78,7 @@ const DEMO_TX_BASE: Transaction[] = [
 ];
 
 // ─── Types & helpers ──────────────────────────────────────────────────────────
-type FilterType = 'all' | 'sent' | 'received' | 'load' | 'swap';
+type FilterType = 'all' | 'sent' | 'received' | 'load' | 'withdraw' | 'swap';
 
 const TYPE_LABELS: Record<Transaction['type'], string> = {
   transfer:     'Transferencia',
@@ -214,7 +214,8 @@ export default function TransactionsPage() {
     // Type filter
     if (typeFilter === 'sent')     txs = txs.filter(tx => tx.direction === 'sent');
     if (typeFilter === 'received') txs = txs.filter(tx => tx.direction === 'received');
-    if (typeFilter === 'load')     txs = txs.filter(tx => tx.type === 'fiat_load' || tx.type === 'fiat_withdraw');
+    if (typeFilter === 'load')     txs = txs.filter(tx => tx.type === 'fiat_load');
+    if (typeFilter === 'withdraw') txs = txs.filter(tx => tx.type === 'fiat_withdraw');
     if (typeFilter === 'swap')     txs = txs.filter(tx => tx.type === 'fx_swap');
 
     // Coin filter
@@ -293,7 +294,8 @@ export default function TransactionsPage() {
           { key: 'all',      label: 'Todos' },
           { key: 'sent',     label: 'Enviados' },
           { key: 'received', label: 'Recibidos' },
-          { key: 'load',     label: 'Cargas' },
+          { key: 'load',     label: 'Depósitos' },
+          { key: 'withdraw', label: 'Retiros' },
           { key: 'swap',     label: 'Swap FX' },
         ] as { key: FilterType; label: string }[]).map(f => (
           <button
