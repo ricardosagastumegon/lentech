@@ -60,13 +60,13 @@ function SlideHero() {
     tag: 'Mesoamerican TokenCoin Network',
     title1: 'The native', hi: 'TokenCoin network', title2: 'of Mesoamerica',
     sub: 'Instant transfers between Guatemala, Mexico and Honduras. One token per currency, backed 1:1. No intermediary banks.',
-    soon: 'soon', countries: 'Active countries', fee: 'Min. fee', tam: 'TAM remittances',
+    soon: 'soon', countries: 'Active countries', fee: 'Min. fee', tam: 'TAM informal economy',
     phase: 'Phase 1',
   } : {
     tag: 'Red TokenCoin de Mesoamérica',
     title1: 'La red de', hi: 'TokenCoins', title2: 'nativa de Mesoamérica',
     sub: 'Transferencias instantáneas entre Guatemala, México y Honduras. Un token por moneda, respaldado 1:1. Sin bancos intermediarios.',
-    soon: 'pronto', countries: 'Países activos', fee: 'Comisión mínima', tam: 'TAM remesas',
+    soon: 'pronto', countries: 'Países activos', fee: 'Comisión mínima', tam: 'TAM economía informal',
     phase: 'Fase 1',
   };
   return (
@@ -104,7 +104,7 @@ function SlideHero() {
       <div className="grid grid-cols-3 gap-6 pt-2">
         <Stat value="3"     label={t.countries}  sub={t.phase} />
         <Stat value="0.3%"  label={t.fee}        sub="vs 5–8% WU" />
-        <Stat value="$800B" label={t.tam}        sub="Mesoamérica 2024" />
+        <Stat value="$500M" label={t.tam}        sub="GT · MX · HN" />
       </div>
     </div>
   );
@@ -556,6 +556,7 @@ function SlideSecurity() {
       { n: '04', t: 'Banking idempotency',             d: 'externalReference UNIQUE in DB. Same deposit never credited twice.',      c: 'text-blue-400' },
       { n: '05', t: 'Replay prevention',               d: 'Webhooks with timestamp. Rejected if >5 minutes old.',                   c: 'text-rose-400' },
       { n: '06', t: 'Segregated funds (trust)',        d: 'Reserves in bank trust — never mixed with LEN capital.',                 c: 'text-purple-400' },
+      { n: '07', t: 'Isolated admin panel',            d: 'Separate Next.js app with independent auth. No shared session with users.', c: 'text-cyan-400' },
     ],
     kycTitle: 'KYC / Limits',
     kyc: [
@@ -565,7 +566,7 @@ function SlideSecurity() {
       { level: 'KYC 3', limit: 'Unlimited (institutional)', c: 'bg-[#6C5CE7]/20 text-[#A29BFE] border-[#6C5CE7]/30' },
     ],
     complianceTitle: 'Compliance',
-    compliance: ['✓ AML — Real-time monitoring','✓ LAFT — Guatemala anti-laundering law','✓ FATF — International standards','✓ Auditable logs 5 years','✓ Automatic suspicious activity reporting'],
+    compliance: ['✓ AML — Real-time monitoring','✓ LAFT — Guatemala anti-laundering law','✓ FATF — International standards','✓ Auditable logs 5 years','✓ Automatic suspicious activity reporting','✓ GAFILAT — Mesoamerican AML group'],
     reg: '🏛 Regulatory framework',
     regNote: 'LEN operates under the token regulatory vacuum in GT/HN (same as Tigo Money at launch). GT IDE license in progress. MX IFPE via partner (Bitso/Conekta).',
   } : {
@@ -579,6 +580,7 @@ function SlideSecurity() {
       { n: '04', t: 'Idempotencia bancaria',            d: 'externalReference UNIQUE en DB. El mismo depósito no se acredita dos veces.', c: 'text-blue-400' },
       { n: '05', t: 'Replay prevention',                d: 'Webhooks con timestamp. Rechazo si >5 minutos de antigüedad.',           c: 'text-rose-400' },
       { n: '06', t: 'Fondos segregados (fideicomiso)', d: 'Reservas en fideicomiso bancario — nunca mezcladas con capital de LEN.', c: 'text-purple-400' },
+      { n: '07', t: 'Panel Admin aislado',              d: 'App Next.js separada con autenticación independiente. Sin sesión compartida con usuarios.', c: 'text-cyan-400' },
     ],
     kycTitle: 'KYC / Límites',
     kyc: [
@@ -588,7 +590,7 @@ function SlideSecurity() {
       { level: 'KYC 3', limit: 'Sin límite (institucional)', c: 'bg-[#6C5CE7]/20 text-[#A29BFE] border-[#6C5CE7]/30' },
     ],
     complianceTitle: 'Compliance',
-    compliance: ['✓ AML — Monitoreo en tiempo real','✓ LAFT — Ley contra lavado GT','✓ FATF — Estándares internacionales','✓ Logs auditables 5 años','✓ Reporte automático operaciones sospechosas'],
+    compliance: ['✓ AML — Monitoreo en tiempo real','✓ LAFT — Ley contra lavado GT','✓ FATF — Estándares internacionales','✓ Logs auditables 5 años','✓ Reporte automático operaciones sospechosas','✓ GAFILAT — Grupo AML mesoamericano'],
     reg: '🏛 Marco regulatorio',
     regNote: 'LEN opera bajo vacío regulatorio de tokens en GT/HN (igual que Tigo Money en sus inicios). Licencia IDE GT en proceso. IFPE MX vía partner (Bitso/Conekta).',
   };
@@ -652,7 +654,7 @@ function SlideBanks() {
         withdraw: 'SIEFOM → Atlántida, Ficohsa,\nBanpaís, Occidente, Davivienda...',
         eta_in: '15–30 min', eta_out: '30–60 min M-F', color: 'border-[#6C5CE7]/30 bg-[#6C5CE7]/8' },
     ],
-    badges: ['🔐 HMAC-SHA256 per webhook','⏱ Replay prevention 5min','🔁 Guaranteed idempotency','🏛 Trust regulated by law','📋 Full audit trail'],
+    badges: ['🔐 HMAC-SHA256 per webhook','⏱ Replay prevention 5min','🔁 Guaranteed idempotency','🏛 Trust regulated by law','📋 Full audit trail','🔒 Bank accounts encrypted in Firestore','⚙️ Admin panel with full KYC/AML queue'],
   } : {
     tag: '08 — Conectividad Bancaria',
     title: 'Fideicomiso GT/HN.', hi: 'Sub-CLABE MX.',
@@ -673,7 +675,7 @@ function SlideBanks() {
         withdraw: 'SIEFOM → Atlántida, Ficohsa,\nBanpaís, Occidente, Davivienda...',
         eta_in: '15–30 min', eta_out: '30–60 min L-V', color: 'border-[#6C5CE7]/30 bg-[#6C5CE7]/8' },
     ],
-    badges: ['🔐 HMAC-SHA256 por webhook','⏱ Replay prevention 5min','🔁 Idempotencia garantizada','🏛 Fideicomiso regulado por ley','📋 Auditoría completa'],
+    badges: ['🔐 HMAC-SHA256 por webhook','⏱ Replay prevention 5min','🔁 Idempotencia garantizada','🏛 Fideicomiso regulado por ley','📋 Auditoría completa','🔒 Cuentas bancarias cifradas en Firestore','⚙️ Panel admin con cola KYC/AML'],
   };
   return (
     <div className="flex flex-col h-full px-8 py-6">
@@ -902,69 +904,69 @@ function SlideTech() {
   const lang = useLang();
   const t = lang === 'en' ? {
     tag: '11 — Tech Stack',
-    title: 'Production-ready', hi: 'microservices',
-    sub: 'Turborepo monorepo · Railway · NestJS · Next.js 14 · Firebase',
+    title: 'Production-ready', hi: 'architecture',
+    sub: 'Turborepo monorepo · Railway · Next.js 14 · Firebase Firestore · Isolated admin panel',
     cols: [
       { icon: '📱', title: 'Frontend / App', items: [
-        { name: 'Next.js 14', role: 'Web app (App Router)' },
+        { name: 'Next.js 14', role: 'Web app + Admin (2 separate apps)' },
         { name: 'React Native', role: 'iOS + Android (Expo)' },
-        { name: 'Zustand + persist', role: 'Global state + offline' },
-        { name: 'TailwindCSS', role: 'LEN UI system' },
-        { name: 'Canvas 2D API', role: 'PNG vouchers (no deps)' },
-        { name: 'Firebase Firestore', role: 'Cross-device sync' },
+        { name: 'Zustand + persist', role: 'Global state + offline cache' },
+        { name: 'Firebase Firestore', role: 'Real-time cross-device sync' },
+        { name: 'TailwindCSS', role: 'LEN UI design system' },
+        { name: 'Canvas 2D API', role: 'PNG vouchers — no deps' },
       ]},
-      { icon: '⚙️', title: 'Microservices', items: [
+      { icon: '⚙️', title: 'Microservices (roadmap)', items: [
         { name: 'auth-service', role: 'JWT, PIN, KYC' },
         { name: 'wallet-service', role: 'Balances, TX, tokens' },
         { name: 'fiat-bridge', role: 'Trust + STP webhooks' },
         { name: 'fx-engine', role: 'Real-time exchange rates' },
-        { name: 'tx-engine', role: 'Transaction engine' },
-        { name: 'notification', role: 'Push / SMS / Email' },
+        { name: 'tx-engine', role: 'Transaction engine (Go)' },
+        { name: 'compliance', role: 'AML monitoring + alerts' },
       ]},
       { icon: '🏗️', title: 'Infrastructure', items: [
-        { name: 'Railway', role: 'Auto-deploy (Nixpacks)' },
+        { name: 'Railway', role: 'Auto-deploy via Nixpacks' },
+        { name: 'GitHub Actions', role: 'CI: typecheck + build' },
         { name: 'PostgreSQL', role: 'Main database' },
         { name: 'Redis', role: 'Cache + Bull queues' },
         { name: 'NestJS', role: 'TS backend framework' },
-        { name: 'TypeORM', role: 'ORM + migrations' },
-        { name: 'BullMQ', role: 'Async webhooks' },
+        { name: 'BullMQ', role: 'Async webhook processing' },
       ]},
     ],
     secTitle: 'Stack Security',
     secItems: [
       { k: 'Language', v: 'TypeScript strict — no implicit any' },
       { k: 'Secrets', v: 'Railway env vars — never in code' },
-      { k: 'Communication', v: 'HTTPS + mTLS for SPEI (Banxico)' },
+      { k: 'Admin', v: 'Isolated app — independent auth, no shared session' },
       { k: 'Audit', v: 'Structured logs, 5-year retention' },
-      { k: 'CI/CD', v: 'Deploy from main via GitHub Actions' },
+      { k: 'CI/CD', v: 'typecheck + build on every push to main' },
     ],
   } : {
     tag: '11 — Stack Tecnológico',
-    title: 'Microservicios listos', hi: 'para producción',
-    sub: 'Monorepo Turborepo · Railway · NestJS · Next.js 14 · Firebase',
+    title: 'Arquitectura lista', hi: 'para producción',
+    sub: 'Monorepo Turborepo · Railway · Next.js 14 · Firebase Firestore · Panel admin aislado',
     cols: [
       { icon: '📱', title: 'Frontend / App', items: [
-        { name: 'Next.js 14', role: 'Web app (App Router)' },
+        { name: 'Next.js 14', role: 'Web app + Admin (2 apps separadas)' },
         { name: 'React Native', role: 'iOS + Android (Expo)' },
-        { name: 'Zustand + persist', role: 'Estado global + offline' },
-        { name: 'TailwindCSS', role: 'UI system LEN' },
-        { name: 'Canvas 2D API', role: 'Vouchers PNG sin deps' },
-        { name: 'Firebase Firestore', role: 'Sync cross-device' },
+        { name: 'Zustand + persist', role: 'Estado global + caché offline' },
+        { name: 'Firebase Firestore', role: 'Sync cross-device en tiempo real' },
+        { name: 'TailwindCSS', role: 'Sistema de diseño LEN' },
+        { name: 'Canvas 2D API', role: 'Vouchers PNG sin dependencias' },
       ]},
-      { icon: '⚙️', title: 'Microservicios', items: [
+      { icon: '⚙️', title: 'Microservicios (roadmap)', items: [
         { name: 'auth-service', role: 'JWT, PIN, KYC' },
         { name: 'wallet-service', role: 'Balances, TX, tokens' },
         { name: 'fiat-bridge', role: 'Fideicomiso + STP webhooks' },
         { name: 'fx-engine', role: 'Tipos de cambio RT' },
-        { name: 'tx-engine', role: 'Motor transacciones' },
-        { name: 'notification', role: 'Push / SMS / Email' },
+        { name: 'tx-engine', role: 'Motor transacciones (Go)' },
+        { name: 'compliance', role: 'Monitoreo AML + alertas' },
       ]},
       { icon: '🏗️', title: 'Infraestructura', items: [
-        { name: 'Railway', role: 'Deploy auto (Nixpacks)' },
+        { name: 'Railway', role: 'Deploy auto via Nixpacks' },
+        { name: 'GitHub Actions', role: 'CI: typecheck + build' },
         { name: 'PostgreSQL', role: 'DB principal' },
         { name: 'Redis', role: 'Cache + colas Bull' },
         { name: 'NestJS', role: 'Framework backend TS' },
-        { name: 'TypeORM', role: 'ORM + migraciones' },
         { name: 'BullMQ', role: 'Webhooks async' },
       ]},
     ],
@@ -972,9 +974,9 @@ function SlideTech() {
     secItems: [
       { k: 'Lenguaje', v: 'TypeScript strict — sin any implícitos' },
       { k: 'Secrets', v: 'Railway env vars — nunca en código' },
-      { k: 'Comunicación', v: 'HTTPS + mTLS para SPEI (Banxico)' },
+      { k: 'Admin', v: 'App aislada — auth independiente, sin sesión compartida' },
       { k: 'Auditoría', v: 'Logs estructurados, retención 5 años' },
-      { k: 'CI/CD', v: 'Deploy desde main via GitHub Actions' },
+      { k: 'CI/CD', v: 'typecheck + build en cada push a main' },
     ],
   };
   return (
@@ -1017,7 +1019,7 @@ function SlideRoadmap() {
     sub: 'The same infrastructure scales to each new country. Adding a country = adding a provider.',
     phases: [
       { phase: 'Phase 1', period: 'Live — Q2 2025', color: 'border-emerald-500/40 bg-emerald-500/8', badge: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
-        items: ['QUETZA (GT), MEXCOIN (MX), LEMPI (HN)','Banrural trust + STP sub-CLABEs','Web wallet + iOS/Android mobile app','KYC 1 & 2 — local documents','P2P transfers + FX + bank withdrawal','Conekta/Arcus agreement for MX'] },
+        items: ['✓ QUETZA (GT), MEXCOIN (MX), LEMPI (HN)','✓ Web wallet + bank accounts + admin panel','✓ KYC 1 & 2 — local documents + AML queue','✓ P2P transfers + FX + bank withdrawal','✓ Real-time cross-device sync (Firestore)','Banrural trust + STP sub-CLABEs (in progress)'] },
       { phase: 'Phase 2', period: 'Q3–Q4 2025', color: 'border-[#6C5CE7]/40 bg-[#6C5CE7]/8', badge: 'bg-[#6C5CE7]/20 text-[#A29BFE] border-[#6C5CE7]/30',
         items: ['COLÓN Digital (El Salvador)','LEN Mastercard virtual card','Public API for merchants','QR payments at point of sale','Scheduled (recurring) remittances','IFPE CNBV application in progress'] },
       { phase: 'Phase 3', period: 'Q1–Q3 2026', color: 'border-amber-500/30 bg-amber-500/5', badge: 'bg-amber-500/15 text-amber-400 border-amber-500/25',
@@ -1029,7 +1031,7 @@ function SlideRoadmap() {
     sub: 'La misma infraestructura escala a cada país nuevo. Agregar un país = agregar un provider.',
     phases: [
       { phase: 'Fase 1', period: 'Activo — Q2 2025', color: 'border-emerald-500/40 bg-emerald-500/8', badge: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
-        items: ['QUETZA (GT), MEXCOIN (MX), LEMPI (HN)','Fideicomiso Banrural + STP sub-CLABEs','Wallet web + app móvil iOS/Android','KYC 1 y 2 — documentos locales','Envío P2P + FX + retiro bancario','Acuerdo Conekta/Arcus para MX'] },
+        items: ['✓ QUETZA (GT), MEXCOIN (MX), LEMPI (HN)','✓ Wallet web + cuentas bancarias + panel admin','✓ KYC 1 y 2 — documentos locales + cola AML','✓ Envío P2P + FX + retiro bancario','✓ Sync cross-device en tiempo real (Firestore)','Fideicomiso Banrural + STP sub-CLABEs (en proceso)'] },
       { phase: 'Fase 2', period: 'Q3–Q4 2025', color: 'border-[#6C5CE7]/40 bg-[#6C5CE7]/8', badge: 'bg-[#6C5CE7]/20 text-[#A29BFE] border-[#6C5CE7]/30',
         items: ['COLÓN Digital (El Salvador)','Tarjeta LEN Mastercard virtual','API pública para comercios','Pagos QR en punto de venta','Remesas programadas (recurrentes)','Solicitud IFPE CNBV en proceso'] },
       { phase: 'Fase 3', period: 'Q1–Q3 2026', color: 'border-amber-500/30 bg-amber-500/5', badge: 'bg-amber-500/15 text-amber-400 border-amber-500/25',
@@ -1065,41 +1067,41 @@ function SlideTraction() {
   const t = lang === 'en' ? {
     tag: '13 — Market & Timing',
     title: 'The market is ready —', hi: 'so is LEN',
-    sub: 'Convergence of regulatory vacuum, mobile adoption and unmet demand.',
+    sub: 'Focus: informal economy cash flows between GT, MX and HN — $500M that move without formal infrastructure.',
     marketTitle: 'The market',
     market: [
-      { stat: '$54B', label: 'Remittances Guatemala → USA 2024', growth: '+8% YoY' },
-      { stat: '$63B', label: 'Remittances to Mexico received 2024', growth: '+10% YoY' },
-      { stat: '$8.4B', label: 'Honduras remittances 2024', growth: '+12% YoY' },
-      { stat: '65%', label: 'Unbanked population in CA', growth: 'Untapped market' },
-      { stat: '92%', label: 'Smartphone penetration GT/MX', growth: 'Direct channel' },
+      { stat: '$500M', label: 'Annual informal economy GT/MX/HN (Phase 1 TAM)', growth: 'Our focus' },
+      { stat: '65%',   label: 'Unbanked population in CA — no bank account', growth: 'Untapped market' },
+      { stat: '92%',   label: 'Smartphone penetration GT/MX — direct channel', growth: 'Distribution ready' },
+      { stat: '5–8%',  label: 'Fee charged by WU, Remitly and cash networks', growth: 'LEN: 0.3%' },
+      { stat: '38M',   label: 'Unbanked people in the region', growth: 'Serviceable' },
     ],
     edgeTitle: 'Competitive advantages',
     edges: [
       { icon: '🎯', title: 'Regional first mover', desc: 'No native Mesoamerican TokenCoin network exists. LEN does it first.' },
-      { icon: '🏗️', title: 'Infrastructure ready', desc: '6 microservices in production. fiat-bridge, wallet, fx-engine, auth all working.' },
+      { icon: '📱', title: 'Working product', desc: 'Live: web app + admin panel, 3 countries, wallets, bank accounts, transfers, FX, voucher.' },
+      { icon: '🔐', title: 'Bank-grade security', desc: 'HMAC webhooks, idempotency, JWT rotation, segregated trust funds, KYC levels 0–3.' },
       { icon: '⚖️', title: 'Solid legal model', desc: 'US Corp + GT S.A. + trust = same structure as Tether/Circle at launch.' },
-      { icon: '📱', title: 'Finished product', desc: 'Live demo: 3 countries, 3 wallets, transfers, FX, voucher. All working.' },
       { icon: '🔗', title: 'Bank-agnostic', desc: 'Same architecture connects to any bank via webhook. Scale = add provider.' },
     ],
   } : {
     tag: '13 — Mercado y Timing',
     title: 'El mercado ya está listo —', hi: 'LEN también',
-    sub: 'Convergencia de vacío regulatorio, adopción móvil y demanda insatisfecha.',
+    sub: 'Enfoque: flujos de economía informal entre GT, MX y HN — $500M que se mueven sin infraestructura formal.',
     marketTitle: 'El mercado',
     market: [
-      { stat: '$54B', label: 'Remesas Guatemala → USA 2024', growth: '+8% YoY' },
-      { stat: '$63B', label: 'Remesas México recibidas 2024', growth: '+10% YoY' },
-      { stat: '$8.4B', label: 'Remesas Honduras 2024', growth: '+12% YoY' },
-      { stat: '65%', label: 'Población desbancarizada CA', growth: 'Mercado virgen' },
-      { stat: '92%', label: 'Penetración smartphones GT/MX', growth: 'Canal directo' },
+      { stat: '$500M', label: 'Economía informal anual GT/MX/HN (TAM Fase 1)', growth: 'Nuestro foco' },
+      { stat: '65%',   label: 'Población desbancarizada en CA — sin cuenta bancaria', growth: 'Mercado virgen' },
+      { stat: '92%',   label: 'Penetración smartphones GT/MX — canal directo', growth: 'Distribución lista' },
+      { stat: '5–8%',  label: 'Comisión que cobran WU, Remitly y redes en efectivo', growth: 'LEN: 0.3%' },
+      { stat: '38M',   label: 'Personas desbancarizadas en la región', growth: 'Alcanzable' },
     ],
     edgeTitle: 'Ventajas competitivas',
     edges: [
       { icon: '🎯', title: 'First mover regional', desc: 'No existe red de TokenCoins nativa de Mesoamérica. LEN lo hace primero.' },
-      { icon: '🏗️', title: 'Infraestructura lista', desc: '6 microservicios en producción. fiat-bridge, wallet, fx-engine, auth funcionando.' },
+      { icon: '📱', title: 'Producto funcionando', desc: 'En vivo: web app + panel admin, 3 países, wallets, cuentas bancarias, envíos, FX, voucher.' },
+      { icon: '🔐', title: 'Seguridad bancaria', desc: 'Webhooks HMAC, idempotencia, JWT rotativo, fondos en fideicomiso segregado, KYC niveles 0–3.' },
       { icon: '⚖️', title: 'Modelo legal sólido', desc: 'US Corp + GT S.A. + fideicomiso = misma estructura que Tether/Circle en su inicio.' },
-      { icon: '📱', title: 'Producto terminado', desc: 'Demo en vivo: 3 países, 3 wallets, envíos, FX, voucher. Todo funcionando.' },
       { icon: '🔗', title: 'Banco-agnostic', desc: 'La misma arquitectura conecta con cualquier banco vía webhook. Escalar = agregar provider.' },
     ],
   };
@@ -1141,7 +1143,7 @@ function SlideAsk() {
     stats: [
       { value: '3',     label: 'Countries in network',    sub: 'Phase 1 live' },
       { value: '0.3%',  label: 'Minimum FX fee',          sub: 'vs 5–8% competition' },
-      { value: '$800B', label: 'Total TAM',                sub: 'Mesoamerica remittances' },
+      { value: '$500M', label: 'Phase 1 TAM',             sub: 'informal economy GT/MX/HN' },
     ],
     roundLabel: 'What we\'re looking for — Seed Round',
     asks: [
@@ -1157,7 +1159,7 @@ function SlideAsk() {
     stats: [
       { value: '3',     label: 'Países en red',    sub: 'Fase 1 activa' },
       { value: '0.3%',  label: 'Fee mínimo FX',    sub: 'vs 5–8% competencia' },
-      { value: '$800B', label: 'TAM Total',         sub: 'remesas Mesoamérica' },
+      { value: '$500M', label: 'TAM Fase 1',        sub: 'economía informal GT/MX/HN' },
     ],
     roundLabel: 'Lo que buscamos — Seed Round',
     asks: [
