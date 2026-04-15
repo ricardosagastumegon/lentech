@@ -1,0 +1,14 @@
+[phases.setup]
+nixPkgs = ["nodejs_20"]
+
+[phases.install]
+cmds = [
+  "npm install -g pnpm@9",
+  "pnpm install --no-frozen-lockfile"
+]
+
+[phases.build]
+cmds = ["rm -rf apps/admin/.next", "pnpm --filter admin build"]
+
+[start]
+cmd = "pnpm --filter admin start -p 3010"
