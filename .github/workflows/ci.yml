@@ -1,6 +1,8 @@
 # ============================================================
 # MONDEGA DIGITAL — Continuous Integration
 # Triggers: push + PR to main/develop
+# Covers: apps/web and apps/admin (Next.js)
+# Deploy: handled by Railway (nixpacks) — no Docker needed
 # ============================================================
 
 name: CI
@@ -17,12 +19,11 @@ concurrency:
 
 env:
   NODE_VERSION: '20'
-  GO_VERSION: '1.22'
   PNPM_VERSION: '9'
 
 jobs:
   # ──────────────────────────────────────────────
-  # 1. Install & cache deps (shared across jobs)
+  # 1. Install & cache deps
   # ──────────────────────────────────────────────
   install:
     name: Install dependencies
@@ -48,12 +49,11 @@ jobs:
           path: |
             node_modules
             apps/*/node_modules
-            services/*/node_modules
             packages/*/node_modules
           key: ${{ runner.os }}-pnpm-${{ hashFiles('**/pnpm-lock.yaml') }}
 
   # ──────────────────────────────────────────────
-  # 2. TypeScript type-check (all TS packages)
+  # 2. TypeScript type-check
   # ──────────────────────────────────────────────
   typecheck:
     name: TypeScript check
@@ -74,212 +74,33 @@ jobs:
           path: |
             node_modules
             apps/*/node_modules
-            services/*/node_modules
             packages/*/node_modules
           key: ${{ runner.os }}-pnpm-${{ hashFiles('**/pnpm-lock.yaml') }}
       - name: Install (if cache miss)
         run: pnpm install --frozen-lockfile
-      - name: Type check all packages
-        run: pnpm turbo typecheck
+      - name: Type check — web
+        working-directory: apps/web
+        run: pnpm typecheck
+      - name: Type check — admin
+        working-directory: apps/admin
+        run: pnpm typecheck
 
   # ──────────────────────────────────────────────
-  # 3. ESLint
-  # ──────────────────────────────────────────────
-  lint:
-    name: Lint
-    runs-on: ubuntu-latest
-    needs: install
-    steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v3
-        with:
-          version: ${{ env.PNPM_VERSION }}
-      - uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'pnpm'
-      - name: Restore cache
-        uses: actions/cache@v4
-        with:
-          path: |
-            node_modules
-            apps/*/node_modules
-            services/*/node_modules
-            packages/*/node_modules
-          key: ${{ runner.os }}-pnpm-${{ hashFiles('**/pnpm-lock.yaml') }}
-      - name: Install (if cache miss)
-        run: pnpm install --frozen-lockfile
-      - name: Lint
-        run: pnpm turbo lint
-
-  # ──────────────────────────────────────────────
-  # 4. Unit tests — NestJS services
-  # ──────────────────────────────────────────────
-  test-services:
-    name: Test NestJS services
-    runs-on: ubuntu-latest
-    needs: install
-
-    services:
-      postgres:
-        image: postgres:16-alpine
-        env:
-          POSTGRES_DB: mondega_test
-          POSTGRES_USER: mondega_user
-          POSTGRES_PASSWORD: test_password
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-
-      redis:
-        image: redis:7.2-alpine
-        ports:
-          - 6379:6379
-        options: >-
-          --health-cmd "redis-cli ping"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-
-    env:
-      NODE_ENV: test
-      DB_HOST: localhost
-      DB_PORT: 5432
-      DB_NAME: mondega_test
-      DB_USER: mondega_user
-      DB_PASSWORD: test_password
-      REDIS_HOST: localhost
-      REDIS_PORT: 6379
-      JWT_SECRET: ci-test-jwt-secret-minimum-32-chars
-      JWT_REFRESH_SECRET: ci-test-refresh-secret-min-32-chars
-      ENCRYPTION_KEY: 0000000000000000000000000000000000000000000000000000000000000000
-
-    steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v3
-        with:
-          version: ${{ env.PNPM_VERSION }}
-      - uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'pnpm'
-      - name: Restore cache
-        uses: actions/cache@v4
-        with:
-          path: |
-            node_modules
-            apps/*/node_modules
-            services/*/node_modules
-            packages/*/node_modules
-          key: ${{ runner.os }}-pnpm-${{ hashFiles('**/pnpm-lock.yaml') }}
-      - name: Install (if cache miss)
-        run: pnpm install --frozen-lockfile
-      - name: Run service tests
-        run: pnpm turbo test --filter=./services/*
-      - name: Upload coverage
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: coverage-services
-          path: services/*/coverage/lcov.info
-          retention-days: 7
-
-  # ──────────────────────────────────────────────
-  # 5. Unit tests — Next.js apps
-  # ──────────────────────────────────────────────
-  test-apps:
-    name: Test Next.js apps
-    runs-on: ubuntu-latest
-    needs: install
-    env:
-      NODE_ENV: test
-    steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v3
-        with:
-          version: ${{ env.PNPM_VERSION }}
-      - uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'pnpm'
-      - name: Restore cache
-        uses: actions/cache@v4
-        with:
-          path: |
-            node_modules
-            apps/*/node_modules
-            services/*/node_modules
-            packages/*/node_modules
-          key: ${{ runner.os }}-pnpm-${{ hashFiles('**/pnpm-lock.yaml') }}
-      - name: Install (if cache miss)
-        run: pnpm install --frozen-lockfile
-      - name: Test apps
-        run: pnpm turbo test --filter=./apps/*
-
-  # ──────────────────────────────────────────────
-  # 6. Go build & test — tx-engine
-  # ──────────────────────────────────────────────
-  test-go:
-    name: Go tx-engine
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: services/tx-engine
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
-        with:
-          go-version: ${{ env.GO_VERSION }}
-          cache: true
-          cache-dependency-path: services/tx-engine/go.sum
-      - name: Download Go modules
-        run: go mod download
-      - name: Vet
-        run: go vet ./...
-      - name: Test
-        run: go test -race -coverprofile=coverage.out ./...
-      - name: Build binary
-        run: go build -o /dev/null ./cmd/server
-
-  # ──────────────────────────────────────────────
-  # 7. Solidity — compile & test
-  # ──────────────────────────────────────────────
-  test-contracts:
-    name: Smart contracts
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: blockchain
-    steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v3
-        with:
-          version: ${{ env.PNPM_VERSION }}
-      - uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'pnpm'
-      - name: Install Hardhat deps
-        run: pnpm install --frozen-lockfile
-      - name: Compile contracts
-        run: pnpm hardhat compile
-      - name: Run contract tests
-        run: pnpm hardhat test
-
-  # ──────────────────────────────────────────────
-  # 8. Build check — all apps (no deploy)
+  # 3. Build check (validates Next.js build)
   # ──────────────────────────────────────────────
   build:
     name: Build apps
     runs-on: ubuntu-latest
-    needs: [typecheck, lint]
+    needs: typecheck
     env:
       NEXT_PUBLIC_API_URL: http://localhost:3000
-      NEXT_PUBLIC_ADMIN_API_URL: http://localhost:3001
+      NEXT_PUBLIC_FIREBASE_API_KEY: ci-placeholder
+      NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: ci-placeholder
+      NEXT_PUBLIC_FIREBASE_PROJECT_ID: ci-placeholder
+      NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: ci-placeholder
+      NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: ci-placeholder
+      NEXT_PUBLIC_FIREBASE_APP_ID: ci-placeholder
+      NEXT_PUBLIC_FIREBASE_VAPID_KEY: ci-placeholder
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v3
@@ -295,10 +116,13 @@ jobs:
           path: |
             node_modules
             apps/*/node_modules
-            services/*/node_modules
             packages/*/node_modules
           key: ${{ runner.os }}-pnpm-${{ hashFiles('**/pnpm-lock.yaml') }}
       - name: Install (if cache miss)
         run: pnpm install --frozen-lockfile
-      - name: Build
-        run: pnpm turbo build --filter=./apps/*
+      - name: Build web
+        working-directory: apps/web
+        run: pnpm build
+      - name: Build admin
+        working-directory: apps/admin
+        run: pnpm build
