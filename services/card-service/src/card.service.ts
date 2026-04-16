@@ -1,7 +1,8 @@
 // ============================================================
-// MONDEGA DIGITAL — Card Service (Fase 3)
+// MONDEGA DIGITAL — Card Service
 // Tarjeta débito Mondega — Virtual + Física
-// Integración con Mastercard Prepaid Processing (via Issuer)
+// Integración con Pomelo (Mastercard Internacional)
+// Docs: https://docs.pomelo.la
 // ============================================================
 
 import {
@@ -10,12 +11,12 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
-import axios from 'axios';
+import axios, { AxiosInstance } from 'axios';
 import { CardEntity } from './entities/card.entity';
 import { CardTransactionEntity } from './entities/card-transaction.entity';
 import { generateId, encrypt, decrypt } from '@mondega/shared-utils';
 
-export type CardType = 'virtual' | 'physical';
+export type CardType   = 'virtual' | 'physical';
 export type CardStatus = 'active' | 'frozen' | 'blocked' | 'expired' | 'pending';
 export type CardNetwork = 'mastercard' | 'visa';
 
@@ -23,7 +24,7 @@ export interface IssueCardDTO {
   userId: string;
   type: CardType;
   currency: string;
-  spendingLimitDaily?: number;  // In USD equivalent
+  spendingLimitDaily?: number;
   deliveryAddress?: {
     line1: string;
     line2?: string;
@@ -34,9 +35,51 @@ export interface IssueCardDTO {
   };
 }
 
+// ---- Pomelo types ----
+
+interface PomeloTokenResponse {
+  access_token: string;
+  expires_in: number;
+  token_type: string;
+}
+
+interface PomeloCard {
+  id: string;
+  last_four: string;
+  expiration_month: string;
+  expiration_year: string;
+  status: 'ACTIVE' | 'BLOCKED' | 'DISABLED';
+  provider: 'MASTERCARD' | 'VISA';
+}
+
+interface PomeloSensitiveData {
+  pan: string;
+  cvv: string;
+  expiration_month: string;
+  expiration_year: string;
+}
+
+interface PomeloAuthWebhook {
+  id: string;
+  card_id: string;
+  status: string;
+  amount: {
+    local: { total: number; currency: string };
+    transaction: { total: number; currency: string };
+  };
+  merchant: {
+    name: string;
+    mcc: string;
+    country: string;
+  };
+}
+
 @Injectable()
 export class CardService {
   private readonly logger = new Logger(CardService.name);
+  private pomeloClient!: AxiosInstance;
+  private accessToken: string | null = null;
+  private tokenExpiresAt = 0;
 
   constructor(
     @InjectRepository(CardEntity)
@@ -44,7 +87,13 @@ export class CardService {
     @InjectRepository(CardTransactionEntity)
     private readonly cardTxRepo: Repository<CardTransactionEntity>,
     private readonly config: ConfigService,
-  ) {}
+  ) {
+    const baseUrl = this.config.get<string>(
+      'POMELO_API_URL',
+      'https://api.sandbox.pomelo.la',
+    );
+    this.pomeloClient = axios.create({ baseURL: baseUrl, timeout: 10000 });
+  }
 
   // ---- Issue Card ----
 
@@ -55,7 +104,6 @@ export class CardService {
     type: CardType;
     estimatedDelivery?: string;
   }> {
-    // Check user doesn't already have active card of same type
     const existing = await this.cardRepo.findOne({
       where: { userId: dto.userId, type: dto.type, status: 'active' },
     });
@@ -63,59 +111,64 @@ export class CardService {
       throw new BadRequestException(`User already has an active ${dto.type} card`);
     }
 
-    // Call card issuer API (Marqeta, Galileo, or local processor)
-    const issuerResponse = await this.callIssuerAPI('POST', '/cards', {
-      user_token: dto.userId,
-      card_product_token: dto.type === 'virtual'
-        ? this.config.get('CARD_VIRTUAL_PRODUCT_TOKEN')
-        : this.config.get('CARD_PHYSICAL_PRODUCT_TOKEN'),
-      fulfillment: dto.deliveryAddress ? {
-        card_personalization: { text: { name_line_1: { value: 'MONDEGA USER' } } },
-        shipping: {
-          recipient_address: {
-            address1: dto.deliveryAddress.line1,
-            address2: dto.deliveryAddress.line2,
-            city: dto.deliveryAddress.city,
-            state: dto.deliveryAddress.state,
-            postal_code: dto.deliveryAddress.postalCode,
-            country: dto.deliveryAddress.country,
-          },
-        },
-      } : undefined,
-    });
+    const token = await this.getPomeloToken();
 
+    const payload: Record<string, unknown> = {
+      user_id:   dto.userId,
+      card_type: dto.type === 'virtual' ? 'VIRTUAL' : 'PHYSICAL',
+      currency:  dto.currency.toUpperCase(),
+      provider:  'MASTERCARD',
+    };
+
+    if (dto.type === 'physical' && dto.deliveryAddress) {
+      payload['shipping_address'] = {
+        address_line_1: dto.deliveryAddress.line1,
+        address_line_2: dto.deliveryAddress.line2,
+        city:           dto.deliveryAddress.city,
+        state:          dto.deliveryAddress.state,
+        postal_code:    dto.deliveryAddress.postalCode,
+        country:        dto.deliveryAddress.country,
+      };
+    }
+
+    const res = await this.pomeloClient.post<{ data: PomeloCard }>(
+      '/v1/cards',
+      payload,
+      { headers: { Authorization: `Bearer ${token}` } },
+    );
+
+    const pomeloCard = res.data.data;
     const cardId = generateId('crd');
+
     const card = this.cardRepo.create({
-      id: cardId,
-      userId: dto.userId,
-      issuerCardId: issuerResponse.token,
-      type: dto.type,
-      status: 'active',
-      network: 'mastercard' as CardNetwork,
-      currency: dto.currency,
-      // Store PAN encrypted — only last 4 exposed to user
-      panEncrypted: encrypt(issuerResponse.pan ?? ''),
-      lastFour: issuerResponse.last_four,
-      expiryMonth: issuerResponse.expiration_time?.slice(5, 7) ?? '00',
-      expiryYear: issuerResponse.expiration_time?.slice(0, 4) ?? '0000',
+      id:                    cardId,
+      userId:                dto.userId,
+      issuerCardId:          pomeloCard.id,
+      type:                  dto.type,
+      status:                'active',
+      network:               pomeloCard.provider.toLowerCase() as CardNetwork,
+      currency:              dto.currency.toUpperCase(),
+      panEncrypted:          encrypt(''),        // PAN never stored — revealed on demand
+      lastFour:              pomeloCard.last_four,
+      expiryMonth:           pomeloCard.expiration_month,
+      expiryYear:            pomeloCard.expiration_year,
       spendingLimitDailyUSD: dto.spendingLimitDaily ?? 500,
-      deliveryAddress: dto.deliveryAddress,
+      deliveryAddress:       dto.deliveryAddress as Record<string, unknown> | undefined,
     });
 
     await this.cardRepo.save(card);
-
     this.logger.log(`Card issued: ${cardId} | ${dto.type} | user=${dto.userId}`);
 
     return {
       cardId,
-      maskedPAN: `**** **** **** ${card.lastFour}`,
-      status: 'active',
-      type: dto.type,
+      maskedPAN:         `**** **** **** ${card.lastFour}`,
+      status:            'active',
+      type:              dto.type,
       estimatedDelivery: dto.type === 'physical' ? '7-14 días hábiles' : undefined,
     };
   }
 
-  // ---- Get Card Details ----
+  // ---- Get Card ----
 
   async getCard(userId: string, cardId: string): Promise<{
     cardId: string;
@@ -132,16 +185,35 @@ export class CardService {
     if (!card) throw new NotFoundException('Card not found');
 
     return {
-      cardId: card.id,
-      maskedPAN: `**** **** **** ${card.lastFour}`,
-      status: card.status as CardStatus,
-      type: card.type as CardType,
-      network: card.network as CardNetwork,
-      expiryMonth: card.expiryMonth,
-      expiryYear: card.expiryYear,
+      cardId:               card.id,
+      maskedPAN:            `**** **** **** ${card.lastFour}`,
+      status:               card.status as CardStatus,
+      type:                 card.type as CardType,
+      network:              card.network as CardNetwork,
+      expiryMonth:          card.expiryMonth,
+      expiryYear:           card.expiryYear,
       spendingLimitDailyUSD: card.spendingLimitDailyUSD,
-      createdAt: card.createdAt,
+      createdAt:            card.createdAt,
     };
+  }
+
+  // ---- List Cards for User ----
+
+  async listCards(userId: string) {
+    const cards = await this.cardRepo.find({
+      where: { userId },
+      order: { createdAt: 'DESC' },
+    });
+    return cards.map(c => ({
+      cardId:    c.id,
+      maskedPAN: `**** **** **** ${c.lastFour}`,
+      status:    c.status,
+      type:      c.type,
+      network:   c.network,
+      expiryMonth: c.expiryMonth,
+      expiryYear:  c.expiryYear,
+      createdAt: c.createdAt,
+    }));
   }
 
   // ---- Freeze / Unfreeze ----
@@ -149,42 +221,51 @@ export class CardService {
   async setStatus(userId: string, cardId: string, action: 'freeze' | 'unfreeze'): Promise<void> {
     const card = await this.cardRepo.findOne({ where: { id: cardId, userId } });
     if (!card) throw new NotFoundException('Card not found');
-    if (card.status === 'blocked') throw new BadRequestException('Blocked cards cannot be unfrozen');
+    if (card.status === 'blocked') throw new BadRequestException('Blocked cards cannot be modified');
 
+    const pomeloStatus = action === 'freeze' ? 'BLOCKED' : 'ACTIVE';
     const newStatus: CardStatus = action === 'freeze' ? 'frozen' : 'active';
 
-    // Sync with issuer
-    await this.callIssuerAPI('PUT', `/cards/${card.issuerCardId}`, {
-      state: action === 'freeze' ? 'SUSPENDED' : 'ACTIVE',
-    });
+    const token = await this.getPomeloToken();
+    await this.pomeloClient.patch(
+      `/v1/cards/${card.issuerCardId}/status`,
+      { status: pomeloStatus },
+      { headers: { Authorization: `Bearer ${token}` } },
+    );
 
     await this.cardRepo.update(cardId, { status: newStatus });
-    this.logger.log(`Card ${cardId} ${action}d by user ${userId}`);
+    this.logger.log(`Card ${cardId} ${action}d | user=${userId}`);
   }
 
-  // ---- Reveal Virtual Card Details (for online purchases) ----
+  // ---- Reveal Virtual Card PAN/CVV (for online purchases) ----
 
-  async revealCardDetails(userId: string, cardId: string, pin: string): Promise<{
+  async revealCardDetails(userId: string, cardId: string): Promise<{
     pan: string;
     cvv: string;
     expiryMonth: string;
     expiryYear: string;
   }> {
-    const card = await this.cardRepo.findOne({ where: { id: cardId, userId, type: 'virtual' } });
+    const card = await this.cardRepo.findOne({
+      where: { id: cardId, userId, type: 'virtual' },
+    });
     if (!card) throw new NotFoundException('Virtual card not found');
     if (card.status !== 'active') throw new BadRequestException('Card is not active');
 
-    // Verify PIN (would call auth service in production)
-    // Get sensitive data from issuer (they hold it, we never store unencrypted)
-    const issuerDetails = await this.callIssuerAPI('GET', `/cards/${card.issuerCardId}/showpan`);
+    const token = await this.getPomeloToken();
+    const res = await this.pomeloClient.post<{ data: PomeloSensitiveData }>(
+      `/v1/cards/${card.issuerCardId}/sensitive-data`,
+      {},
+      { headers: { Authorization: `Bearer ${token}` } },
+    );
 
-    this.logger.log(`Card details revealed for ${cardId} | user=${userId}`);
+    const d = res.data.data;
+    this.logger.log(`Card details revealed: ${cardId} | user=${userId}`);
 
     return {
-      pan: issuerDetails.pan,
-      cvv: issuerDetails.cvv_number,
-      expiryMonth: card.expiryMonth,
-      expiryYear: card.expiryYear,
+      pan:         d.pan,
+      cvv:         d.cvv,
+      expiryMonth: d.expiration_month,
+      expiryYear:  d.expiration_year,
     };
   }
 
@@ -204,49 +285,68 @@ export class CardService {
     return { items, total, page, limit, hasMore: total > page * limit };
   }
 
-  // ---- Webhook: Authorization request from card network ----
+  // ---- Pomelo Webhook: Authorization ----
 
-  async handleAuthorizationRequest(payload: {
-    cardToken: string;
-    amountUSD: number;
-    merchantName: string;
-    merchantCategory: string;
-    country: string;
-  }): Promise<{ approved: boolean; declineReason?: string }> {
+  async handlePomeloAuthorization(payload: PomeloAuthWebhook): Promise<{
+    status: 'APPROVED' | 'REJECTED';
+    reason?: string;
+  }> {
     const card = await this.cardRepo.findOne({
-      where: { issuerCardId: payload.cardToken },
+      where: { issuerCardId: payload.card_id },
     });
 
-    if (!card) return { approved: false, declineReason: 'Card not found' };
-    if (card.status !== 'active') return { approved: false, declineReason: `Card ${card.status}` };
+    if (!card) return { status: 'REJECTED', reason: 'CARD_NOT_FOUND' };
+    if (card.status !== 'active') return { status: 'REJECTED', reason: `CARD_${card.status.toUpperCase()}` };
 
-    // Check daily spending limit
+    const amountUSD = payload.amount.transaction.total;
     const todaySpend = await this.getTodaySpend(card.id);
-    if (todaySpend + payload.amountUSD > card.spendingLimitDailyUSD) {
-      return { approved: false, declineReason: 'Daily spending limit exceeded' };
+
+    if (todaySpend + amountUSD > card.spendingLimitDailyUSD) {
+      return { status: 'REJECTED', reason: 'DAILY_LIMIT_EXCEEDED' };
     }
 
-    // Check balance (would call wallet service in production)
+    // Record the authorization
+    await this.cardTxRepo.save(this.cardTxRepo.create({
+      cardId:           card.id,
+      issuerTxId:       payload.id,
+      type:             'authorization',
+      status:           'approved',
+      amountUSD,
+      amountLocal:      payload.amount.local.total,
+      localCurrency:    payload.amount.local.currency,
+      merchantName:     payload.merchant.name,
+      merchantCategory: payload.merchant.mcc,
+      country:          payload.merchant.country,
+    }));
 
-    return { approved: true };
+    return { status: 'APPROVED' };
   }
 
-  // ---- Private Helpers ----
+  // ---- Private: Pomelo OAuth2 token (client_credentials, cached) ----
 
-  private async callIssuerAPI(method: string, path: string, body?: Record<string, unknown>) {
-    const baseUrl = this.config.get('CARD_ISSUER_BASE_URL', 'https://sandbox.marqeta.com/v3');
-    const key = this.config.getOrThrow('CARD_ISSUER_API_KEY');
-    const secret = this.config.getOrThrow('CARD_ISSUER_API_SECRET');
+  private async getPomeloToken(): Promise<string> {
+    if (this.accessToken && Date.now() < this.tokenExpiresAt) {
+      return this.accessToken;
+    }
 
-    const res = await axios.request({
-      method: method as any,
-      url: `${baseUrl}${path}`,
-      auth: { username: key, password: secret },
-      data: body,
-      timeout: 10000,
-    });
+    const clientId     = this.config.getOrThrow<string>('POMELO_CLIENT_ID');
+    const clientSecret = this.config.getOrThrow<string>('POMELO_CLIENT_SECRET');
+    const audience     = this.config.get<string>('POMELO_AUDIENCE', 'https://api.pomelo.la');
 
-    return res.data;
+    const res = await this.pomeloClient.post<PomeloTokenResponse>(
+      '/oauth/token',
+      new URLSearchParams({
+        grant_type:    'client_credentials',
+        client_id:     clientId,
+        client_secret: clientSecret,
+        audience,
+      }),
+      { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } },
+    );
+
+    this.accessToken   = res.data.access_token;
+    this.tokenExpiresAt = Date.now() + (res.data.expires_in - 30) * 1000; // 30s buffer
+    return this.accessToken;
   }
 
   private async getTodaySpend(cardId: string): Promise<number> {
