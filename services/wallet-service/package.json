@@ -1,7 +1,7 @@
 {
-  "name": "@mondega/fiat-bridge",
+  "name": "@mondega/wallet-service",
   "version": "1.0.0",
-  "description": "Mondega Digital — Fiat Bridge: deposit/withdrawal via Banrural (GT), SPEI/CoDi/OXXO (MX), BAC (HN)",
+  "description": "Mondega Digital — Wallet Service: balances, transfers, blockchain sync, transaction history",
   "private": true,
   "scripts": {
     "build": "nest build",
@@ -28,10 +28,13 @@
     "@nestjs/swagger": "^7.4.2",
     "@nestjs/throttler": "^6.3.0",
     "@nestjs/typeorm": "^10.0.2",
+    "@nestjs-modules/ioredis": "^2.0.2",
     "axios": "^1.7.9",
     "bull": "^4.16.5",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.1",
+    "ethers": "^6.13.4",
+    "ioredis": "^5.4.2",
     "pg": "^8.13.3",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",

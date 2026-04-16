@@ -1,7 +1,7 @@
 {
-  "name": "@mondega/fiat-bridge",
+  "name": "@mondega/compliance",
   "version": "1.0.0",
-  "description": "Mondega Digital — Fiat Bridge: deposit/withdrawal via Banrural (GT), SPEI/CoDi/OXXO (MX), BAC (HN)",
+  "description": "Mondega Digital — Compliance Service: AML/CFT engine, FATF rules, sanctions screening, reporting",
   "private": true,
   "scripts": {
     "build": "nest build",

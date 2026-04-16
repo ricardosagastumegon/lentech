@@ -12,6 +12,7 @@
     "noImplicitReturns": true,
     "exactOptionalPropertyTypes": true,
     "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
@@ -20,7 +21,12 @@
     "sourceMap": true,
     "incremental": true,
     "experimentalDecorators": true,
-    "emitDecoratorMetadata": true
+    "emitDecoratorMetadata": true,
+    "paths": {
+      "@mondega/shared-utils": ["./packages/shared-utils/src/index.ts"],
+      "@mondega/shared-types": ["./packages/shared-types/src/index.ts"],
+      "@mondega/shared-types/*": ["./packages/shared-types/src/*"]
+    }
   },
   "exclude": ["node_modules", "dist", ".next", "coverage"]
 }
