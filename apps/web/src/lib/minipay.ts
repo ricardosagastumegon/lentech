@@ -20,7 +20,23 @@ import {
   formatUnits,
   type Address,
 } from "viem";
-import { celo, celoAlfajores } from "viem/chains";
+import { celo } from "viem/chains";
+import { defineChain } from "viem";
+
+// Celo Sepolia — nuevo testnet L2 de Celo (chainId 11142220)
+// Reemplaza a Alfajores que fue deprecado en 2024
+const celoSepolia = defineChain({
+  id: 11142220,
+  name: "Celo Sepolia",
+  nativeCurrency: { name: "Sepolia CELO", symbol: "S-CELO", decimals: 18 },
+  rpcUrls: {
+    default: { http: ["https://celo-sepolia.drpc.org"] },
+  },
+  blockExplorers: {
+    default: { name: "Celo Sepolia Explorer", url: "https://celo-sepolia.blockscout.com" },
+  },
+  testnet: true,
+});
 
 // ── Addresses de contratos ────────────────────────────────────────────────────
 // Llenar con las direcciones reales despues del deploy en Celo
@@ -41,7 +57,7 @@ export const CELO_CONTRACTS = {
 } as const;
 
 export const CELO_CHAIN_IDS = {
-  alfajores: 44787,
+  sepolia:  11142220, // Celo Sepolia — nuevo testnet L2 (reemplaza Alfajores)
   mainnet:   42220,
 } as const;
 
@@ -115,7 +131,7 @@ let _publicClient: any = null;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function getPublicClient(): any {
   if (_publicClient) return _publicClient;
-  const chain = getCeloEnv() === "mainnet" ? celo : celoAlfajores;
+  const chain = getCeloEnv() === "mainnet" ? celo : celoSepolia;
   _publicClient = createPublicClient({ chain, transport: http() });
   return _publicClient;
 }
@@ -124,7 +140,7 @@ export function getPublicClient(): any {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function getWalletClient(): any | null {
   if (!hasCeloWallet()) return null;
-  const chain = getCeloEnv() === "mainnet" ? celo : celoAlfajores;
+  const chain = getCeloEnv() === "mainnet" ? celo : celoSepolia;
   return createWalletClient({
     chain,
     transport: custom((window as any).ethereum),
@@ -177,7 +193,7 @@ export async function isOnCelo(): Promise<boolean> {
   const chainId = await getCeloChainId();
   return (
     chainId === CELO_CHAIN_IDS.mainnet ||
-    chainId === CELO_CHAIN_IDS.alfajores
+    chainId === CELO_CHAIN_IDS.sepolia
   );
 }
 
@@ -218,7 +234,7 @@ export async function sendMexcoin(
   if (!walletClient) return null;
   try {
     const amountUnits = parseUnits(amount, 2);
-    const chain = getCeloEnv() === "mainnet" ? celo : celoAlfajores;
+    const chain = getCeloEnv() === "mainnet" ? celo : celoSepolia;
     const hash = await walletClient.writeContract({
       address: contracts.MEXCOIN,
       abi: ERC20_ABI,

@@ -24,10 +24,10 @@ const config: HardhatUserConfig = {
       accounts: DEPLOYER_KEY ? [DEPLOYER_KEY] : [],
     },
 
-    // ── Celo Sepolia (nuevo testnet L2) ──────────────────────
+    // ── Celo Sepolia (nuevo testnet L2, chainId 11142220) ────
     "celo-sepolia": {
-      url:      "https://celo-sepolia.g.alchemy.com/v2/demo",
-      chainId:  44787,
+      url:      "https://celo-sepolia.drpc.org",
+      chainId:  11142220,
       accounts: DEPLOYER_KEY ? [DEPLOYER_KEY] : [],
     },
 
