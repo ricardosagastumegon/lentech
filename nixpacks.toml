@@ -1,14 +1,11 @@
 [phases.setup]
-nixPkgs = ["nodejs_20"]
+nixPkgs = ["nodejs_20", "nodePackages.pnpm"]
 
 [phases.install]
-cmds = [
-  "npm install -g pnpm@9",
-  "pnpm install --no-frozen-lockfile"
-]
+cmds = ["pnpm install --no-frozen-lockfile"]
 
 [phases.build]
-cmds = ["rm -rf apps/admin/.next", "pnpm --filter admin build"]
+cmds = ["pnpm --filter admin build"]
 
 [start]
-cmd = "pnpm --filter admin start -p 3010"
+cmd = "pnpm --filter admin start -p ${PORT:-3010}"
