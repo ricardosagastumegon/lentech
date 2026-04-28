@@ -1292,7 +1292,7 @@ export default function PitchPage() {
             </div>
             <span className="text-white font-black">LEN</span>
             <span className="text-white/20 mx-1">·</span>
-            <span className="text-white/40 text-sm">Investor Deck 2025</span>
+            <span className="text-white/40 text-sm">Investor Deck · Actualizado 28 Abr 2026</span>
           </div>
           <div className="hidden md:flex items-center gap-1.5">
             {SLIDES.map((s, i) => (
