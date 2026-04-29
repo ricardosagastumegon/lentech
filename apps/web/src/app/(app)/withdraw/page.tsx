@@ -213,6 +213,28 @@ export default function WithdrawPage() {
   const { wallets }  = useWalletStore();
   const { accounts, addAccount, removeAccount } = useBankStore();
 
+  // Retiros deshabilitados hasta integrar proveedor SPEI/ACH
+  if (process.env.NEXT_PUBLIC_WITHDRAWALS_ENABLED !== 'true') {
+    return (
+      <div className="min-h-[70vh] flex flex-col items-center justify-center px-4 text-center">
+        <div className="w-16 h-16 bg-len-light rounded-3xl flex items-center justify-center mx-auto mb-4">
+          <span className="text-3xl">🏦</span>
+        </div>
+        <h1 className="text-xl font-black text-len-dark mb-2">Retiros próximamente</h1>
+        <p className="text-gray-500 text-sm max-w-xs leading-relaxed">
+          Estamos finalizando la integración bancaria para habilitar retiros a tu cuenta.
+          Tu saldo está seguro y disponible.
+        </p>
+        <button
+          onClick={() => router.back()}
+          className="mt-6 btn-secondary"
+        >
+          ← Volver
+        </button>
+      </div>
+    );
+  }
+
   const country  = (user?.country ?? 'GT') as BankCountry;
   const coin     = COUNTRY_TO_COIN[country] ?? 'QUETZA';
   const meta     = COINS[coin];
