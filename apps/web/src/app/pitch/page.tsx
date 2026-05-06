@@ -410,14 +410,14 @@ function SlideModel() {
     notItems: ['A bank that takes deposits','An institution that lends user funds','A regulated financial intermediary','Custodians of user fiat'],
     yes: '✅ What we ARE',
     yesItems: ['A software company (IP in USA)','Issuer of 1:1 backed tokens','Fiat is in regulated bank trust (GT/HN) or user sub-CLABE (MX)','Same as Tether, Circle, Bitso at launch'],
-    cols: ['Model','Intermediation','Launch','Initial Cost','Legal Risk'],
+    cols: ['Model','Intermediation','Launch','Legal Risk'],
     note: '★ = Selected model for LEN Phase 1',
     rows: [
-      { model: 'Pool account (bank)', inter: true,  launch: 'Immediate', cost: '$0',         risk: 'High legal — deposit-taking', highlight: false },
-      { model: 'Trust + token issuance GT/HN', inter: false, launch: '3–6 wks', cost: '$5–15K', risk: 'Minimal — not a deposit', highlight: true },
-      { model: 'STP sub-CLABE per user (MX)', inter: false, launch: '2–4 wks', cost: 'API costs', risk: 'Minimal — user\'s own funds', highlight: true },
-      { model: 'BaaS partner (Bitso/BAC)', inter: false, launch: '4–8 wks', cost: 'Rev share', risk: 'Low — partner dependency', highlight: false },
-      { model: 'IFPE/IDE own license', inter: false, launch: '6–18 mo', cost: '$50–200K', risk: 'Low — long term', highlight: false },
+      { model: 'Pool account (bank)', inter: true,  launch: 'Immediate', risk: 'High legal — deposit-taking', highlight: false },
+      { model: 'Trust + token issuance GT/HN', inter: false, launch: '3–6 wks', risk: 'Minimal — not a deposit', highlight: true },
+      { model: 'STP sub-CLABE per user (MX)', inter: false, launch: '2–4 wks', risk: 'Minimal — user\'s own funds', highlight: true },
+      { model: 'BaaS partner (Bitso/BAC)', inter: false, launch: '4–8 wks', risk: 'Low — partner dependency', highlight: false },
+      { model: 'IFPE/IDE own license', inter: false, launch: '6–18 mo', risk: 'Low — long term', highlight: false },
     ],
     yes_label: '✓ No', no_label: '⚠ Yes',
   } : {
@@ -428,14 +428,14 @@ function SlideModel() {
     notItems: ['Un banco que capta depósitos','Una institución que presta el dinero de los usuarios','Un intermediario financiero regulado','Custodios del fiat de los usuarios'],
     yes: '✅ Lo que SÍ somos',
     yesItems: ['Empresa de software (IP en USA)','Emisor de tokens respaldados 1:1','El fiat está en fideicomiso bancario regulado (GT/HN) o en sub-CLABE del usuario (MX)','Igual que Tether, Circle, Bitso en su inicio'],
-    cols: ['Modelo','Intermediación','Lanzamiento','Costo inicial','Riesgo legal'],
+    cols: ['Modelo','Intermediación','Lanzamiento','Riesgo legal'],
     note: '★ = Modelo seleccionado para Fase 1 LEN',
     rows: [
-      { model: 'Pool account (banco)', inter: true,  launch: 'Inmediato', cost: '$0',         risk: 'Legal alto — captación', highlight: false },
-      { model: 'Fideicomiso + emisión token GT/HN', inter: false, launch: '3–6 sem', cost: '$5–15K', risk: 'Mínimo — no es depósito', highlight: true },
-      { model: 'STP sub-CLABE por usuario (MX)', inter: false, launch: '2–4 sem', cost: 'API costs', risk: 'Mínimo — fondos del usuario', highlight: true },
-      { model: 'BaaS partner (Bitso/BAC)', inter: false, launch: '4–8 sem', cost: 'Rev share', risk: 'Bajo — dependencia partner', highlight: false },
-      { model: 'IFPE/IDE licencia propia', inter: false, launch: '6–18 meses', cost: '$50–200K', risk: 'Bajo — largo plazo', highlight: false },
+      { model: 'Pool account (banco)', inter: true,  launch: 'Inmediato', risk: 'Legal alto — captación', highlight: false },
+      { model: 'Fideicomiso + emisión token GT/HN', inter: false, launch: '3–6 sem', risk: 'Mínimo — no es depósito', highlight: true },
+      { model: 'STP sub-CLABE por usuario (MX)', inter: false, launch: '2–4 sem', risk: 'Mínimo — fondos del usuario', highlight: true },
+      { model: 'BaaS partner (Bitso/BAC)', inter: false, launch: '4–8 sem', risk: 'Bajo — dependencia partner', highlight: false },
+      { model: 'IFPE/IDE licencia propia', inter: false, launch: '6–18 meses', risk: 'Bajo — largo plazo', highlight: false },
     ],
     yes_label: '✓ No', no_label: '⚠ Sí',
   };
@@ -477,7 +477,6 @@ function SlideModel() {
                 <td className="px-4 py-3"><span className={`font-semibold ${r.highlight ? 'text-white' : 'text-white/60'}`}>{r.highlight && <span className="text-[#A29BFE] mr-1">★</span>}{r.model}</span></td>
                 <td className="px-3 py-3 text-center">{r.inter ? <span className="text-red-400 font-bold">{t.no_label}</span> : <span className="text-emerald-400 font-bold">{t.yes_label}</span>}</td>
                 <td className="px-3 py-3 text-center"><span className={`text-xs font-bold px-2 py-1 rounded-lg ${r.highlight ? 'bg-emerald-500/20 text-emerald-400' : 'text-white/50'}`}>{r.launch}</span></td>
-                <td className="px-3 py-3 text-center text-white/50 text-xs">{r.cost}</td>
                 <td className="px-4 py-3 text-white/50 text-xs">{r.risk}</td>
               </tr>
             ))}
