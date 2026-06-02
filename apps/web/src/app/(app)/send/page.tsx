@@ -66,6 +66,37 @@ export default function SendPage() {
     // Recipient tx gets a different ID so both sender+receiver have unique records
     const rxId = genTxId(fromCoin !== toCoin ? 'FXS' : 'TRF');
 
+    // ── Usuario REAL (usr_*): transferencia autoritativa en el LEDGER ──
+    const authUser = useAuthStore.getState().user;
+    const token    = useAuthStore.getState().accessToken;
+    if (authUser?.id?.startsWith('usr_') && token) {
+      try {
+        const res = await fetch('/api/wallet/transfer', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify({
+            toUserId: recipientInfo?.userId,
+            toName:   recipientInfo?.displayName ?? recipient,
+            fromCoin, toCoin, fromAmount: quote.fromAmount, description,
+          }),
+        });
+        const json = await res.json();
+        if (!res.ok || !json.ok) throw new Error(json.error || 'No se pudo completar el envío');
+        // Refresca saldo + historial desde el ledger (fuente de verdad)
+        const { syncFromBackend } = await import('@/lib/wallet-sync');
+        await syncFromBackend(token);
+        setTxId(json.data.ref);
+        setTxDate(now);
+        setStep('success');
+      } catch (e) {
+        setError(e instanceof Error ? e.message : 'Error al enviar');
+      } finally {
+        setLoading(false);
+      }
+      return;
+    }
+
+    // ── Usuario DEMO (demo-*): flujo client-side existente ──
     try {
       await apiClient.post('/wallet/transfer', {
         toIdentifier: recipient, fromCoin, toCoin,

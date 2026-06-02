@@ -194,6 +194,7 @@ export default function TransactionsPage() {
 
   const allTxs: Transaction[] = storeTxs;
 
+  const [selected,   setSelected]   = useState<Transaction | null>(null);
   const [search,     setSearch]     = useState('');
   const [typeFilter, setTypeFilter] = useState<FilterType>('all');
   const [coinFilter, setCoinFilter] = useState<CoinCode | 'all'>('all');
@@ -399,8 +400,9 @@ export default function TransactionsPage() {
 
             return (
               <div key={tx.id}
+                onClick={() => setSelected(tx)}
                 className="bg-white rounded-3xl border border-len-border p-4 flex items-center gap-3
-                           hover:border-len-violet hover:shadow-sm transition-all cursor-pointer">
+                           hover:border-len-violet hover:shadow-sm transition-all cursor-pointer active:scale-[0.99]">
 
                 {/* Icon */}
                 <TxIcon tx={tx} />
@@ -453,6 +455,70 @@ export default function TransactionsPage() {
           </button>
         </div>
       )}
+
+      {/* ── Detalle del movimiento ── */}
+      {selected && <TxDetailModal tx={selected} onClose={() => setSelected(null)} />}
+    </div>
+  );
+}
+
+function TxDetailModal({ tx, onClose }: { tx: Transaction; onClose: () => void }) {
+  const isReceived = tx.direction === 'received';
+  const isInternal = tx.direction === 'internal';
+  const isCross    = tx.fromCoin !== tx.toCoin;
+  const counterpart = isReceived ? (tx.senderName ?? '—') : (tx.recipientName ?? '—');
+  const fullDate = new Date(tx.createdAt).toLocaleString('es-GT', { dateStyle: 'long', timeStyle: 'short' });
+  const fmt = (s: string) => parseFloat(s).toLocaleString('en-US', { minimumFractionDigits: 2 });
+
+  const rows: { label: string; value: string; strong?: boolean; green?: boolean }[] = [];
+  if (!isInternal && counterpart !== '—') rows.push({ label: isReceived ? 'De' : 'Para', value: counterpart, strong: true });
+  rows.push({ label: isReceived ? 'Monto recibido' : 'Monto', value: `${fmt(tx.fromAmount)} ${tx.fromCoin}` });
+  if (isCross) {
+    rows.push({ label: 'Destino recibe', value: `${fmt(tx.toAmount)} ${tx.toCoin}`, green: true, strong: true });
+    if (tx.fxRate) rows.push({ label: 'Tipo de cambio', value: `1 ${tx.fromCoin} = ${tx.fxRate} ${tx.toCoin}` });
+  }
+  if (parseFloat(tx.fee ?? '0') > 0) rows.push({ label: 'Comisión', value: `${tx.fee} ${tx.fromCoin}` });
+  rows.push({ label: 'Estado', value: STATUS_LABELS[tx.status], green: tx.status === 'completed' });
+  rows.push({ label: 'Fecha', value: fullDate });
+  rows.push({ label: 'ID', value: tx.id });
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-sm"
+      onClick={onClose}>
+      <div className="bg-white w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl p-6 max-h-[88vh] overflow-y-auto shadow-len-lg"
+        onClick={e => e.stopPropagation()}>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-black text-len-dark">{TYPE_LABELS[tx.type]}</h3>
+          <button onClick={onClose} className="w-8 h-8 rounded-full bg-len-light text-gray-500 hover:text-len-dark font-bold">✕</button>
+        </div>
+
+        <div className="text-center py-5 border-y border-len-border mb-4">
+          <p className={`text-3xl font-black tabular-nums ${isReceived ? 'text-emerald-600' : isInternal ? 'text-len-purple' : 'text-len-dark'}`}>
+            {isReceived ? '+' : isInternal ? '⇄ ' : '-'}{fmt(tx.fromAmount)}
+            <span className="text-base text-gray-400 font-bold ml-1.5">{tx.fromCoin}</span>
+          </p>
+          {isCross && (
+            <p className="text-sm text-emerald-600 font-bold mt-1">→ {fmt(tx.toAmount)} {tx.toCoin}</p>
+          )}
+        </div>
+
+        <div className="space-y-2.5">
+          {rows.map(r => (
+            <div key={r.label} className="flex justify-between gap-3 text-sm">
+              <span className="text-gray-500 flex-shrink-0">{r.label}</span>
+              <span className={`text-right break-all ${r.green ? 'text-emerald-600' : 'text-len-dark'} ${r.strong ? 'font-bold' : 'font-medium'}`}>
+                {r.value}
+              </span>
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-5 bg-len-light rounded-2xl px-4 py-3 text-center border border-len-border">
+          <p className="text-[11px] text-gray-500 font-medium">✓ Transacción verificada · respaldo 1:1 en tu banco</p>
+        </div>
+
+        <button onClick={onClose} className="btn-secondary w-full mt-4">Cerrar</button>
+      </div>
     </div>
   );
 }

@@ -1,50 +1,34 @@
 /**
  * POST /api/transfers/withdraw
  *
- * El usuario quiere convertir MEXCOIN de vuelta a MXN y recibirlo en su banco.
+ * El usuario convierte MEXCOIN a MXN y lo recibe en su banco vía SPEI.
  *
- * Flujo (con manejo de errores y rollback):
- *   ① LEN verifica saldo MEXCOIN del usuario
- *   ② LEN bloquea fondos en Cuenca (hold) — previene double-spend
- *   ③ LEN quema MEXCOIN en Celo
- *   ④ Si burn exitoso → LEN ordena SPEI saliente a Cuenca
- *   ⑤ Si burn falla   → LEN libera el hold en Cuenca
- *   ⑥ Registra transacción en Firestore
+ * Flujo con Pomelo (modelo balance-authorizer):
+ *   ① LEN verifica saldo MEXCOIN en Celo
+ *   ② LEN quema MEXCOIN en Celo
+ *   ③ Si burn exitoso → LEN ordena SPEI saliente vía API Pomelo (o STP)
+ *   ④ Si burn falla   → no se toca nada (el saldo no cambió)
+ *   ⑤ Si SPEI falla   → requiere intervención manual (MEXCOIN ya quemado)
  *
- * Este orden garantiza que nunca se quema MEXCOIN sin enviar el SPEI.
+ * Nota: Con Pomelo como balance-authorizer, LEN controla el saldo MEXCOIN.
+ * El SPEI saliente se orquesta vía Pomelo Transfers o un proveedor STP separado.
+ * Por ahora registramos la intención y marcamos como "pending_spei" hasta confirmar.
  */
 
 import { NextRequest, NextResponse } from "next/server";
 import { burnMexcoin, getMexcoinBalanceServer } from "@/lib/celo-admin";
-import { sendWithdrawal, holdFunds, releaseHold } from "@/lib/cuenca-client";
-import { getDb } from "@/lib/firebase";
-import { doc, setDoc, serverTimestamp } from "firebase/firestore";
-import type { WithdrawRequest, ApiResponse } from "@/types/cuenca";
+import { getAdminDb } from "@/lib/firebase-admin";
+import { verifyAuth } from "@/lib/auth";
+import type { WithdrawRequest, ApiResponse } from "@/types/pomelo";
 import type { Address } from "viem";
 
-// ── Comisión de retiro ────────────────────────────────────────────────────────
-const WITHDRAWAL_FEE_PERCENT = 0.003;  // 0.3% — misma que el pitch
-
-// ── Límites ───────────────────────────────────────────────────────────────────
-const MIN_WITHDRAWAL_MXN = 50;         // $50 MXN mínimo
-const MAX_WITHDRAWAL_MXN = 50_000;     // $50,000 MXN por transacción
-
-// ── Autenticación ─────────────────────────────────────────────────────────────
-function extractUserId(req: NextRequest): string | null {
-  const auth = req.headers.get("authorization");
-  if (!auth?.startsWith("Bearer ")) return null;
-  try {
-    const payload = auth.split(".")[1];
-    const decoded = JSON.parse(Buffer.from(payload, "base64").toString());
-    return decoded.sub ?? decoded.user_id ?? null;
-  } catch {
-    return null;
-  }
-}
+const WITHDRAWAL_FEE_PERCENT = 0.003;
+const MIN_WITHDRAWAL_MXN = 50;
+const MAX_WITHDRAWAL_MXN = 50_000;
 
 export async function POST(req: NextRequest): Promise<NextResponse<ApiResponse>> {
   // ── 1. Autenticación ───────────────────────────────────────────────────────
-  const userId = extractUserId(req);
+  const userId = await verifyAuth(req);
   if (!userId) {
     return NextResponse.json(
       { ok: false, error: "Token de autenticación requerido", code: "UNAUTHORIZED" },
@@ -52,7 +36,7 @@ export async function POST(req: NextRequest): Promise<NextResponse<ApiResponse>>
     );
   }
 
-  // ── 2. Parsear y validar request ───────────────────────────────────────────
+  // ── 2. Parsear y validar ───────────────────────────────────────────────────
   let body: WithdrawRequest;
   try {
     body = await req.json() as WithdrawRequest;
@@ -72,7 +56,6 @@ export async function POST(req: NextRequest): Promise<NextResponse<ApiResponse>>
     );
   }
 
-  // Validar formato CLABE (18 dígitos)
   if (!/^\d{18}$/.test(destination_clabe)) {
     return NextResponse.json(
       { ok: false, error: "CLABE inválida. Debe tener 18 dígitos", code: "INVALID_CLABE" },
@@ -96,9 +79,9 @@ export async function POST(req: NextRequest): Promise<NextResponse<ApiResponse>>
   }
 
   // ── 3. Calcular comisión ───────────────────────────────────────────────────
-  const fee = parseFloat((amountNum * WITHDRAWAL_FEE_PERCENT).toFixed(2));
+  const fee           = parseFloat((amountNum * WITHDRAWAL_FEE_PERCENT).toFixed(2));
   const amountAfterFee = parseFloat((amountNum - fee).toFixed(2));
-  const amountCents = Math.round(amountAfterFee * 100); // Cuenca usa centavos
+  const withdrawalRef  = `WD-${userId}-${Date.now()}`;
 
   // ── 4. Verificar saldo MEXCOIN ─────────────────────────────────────────────
   let balance: string;
@@ -118,27 +101,7 @@ export async function POST(req: NextRequest): Promise<NextResponse<ApiResponse>>
     );
   }
 
-  const withdrawalRef = `WD-${userId}-${Date.now()}`;
-
-  // ── 5. Hold en Cuenca (bloquear fondos fiat) ───────────────────────────────
-  let holdId: string | null = null;
-  try {
-    const hold = await holdFunds({
-      user_id:      userId,
-      amount_cents: amountCents,
-      reference:    withdrawalRef,
-    });
-    holdId = hold.hold_id;
-  } catch (err) {
-    const message = err instanceof Error ? err.message : "Error desconocido";
-    console.error(`[withdraw] Error creando hold en Cuenca:`, message);
-    return NextResponse.json(
-      { ok: false, error: `Error en Cuenca: ${message}`, code: "HOLD_FAILED" },
-      { status: 500 }
-    );
-  }
-
-  // ── 6. Quemar MEXCOIN en Celo ──────────────────────────────────────────────
+  // ── 5. Quemar MEXCOIN en Celo ──────────────────────────────────────────────
   let txHash: string;
   try {
     txHash = await burnMexcoin(
@@ -147,44 +110,20 @@ export async function POST(req: NextRequest): Promise<NextResponse<ApiResponse>>
       `WITHDRAW:${withdrawalRef}`
     );
   } catch (err) {
-    // ROLLBACK: liberar hold en Cuenca
-    if (holdId) {
-      await releaseHold(holdId).catch((e) =>
-        console.error(`[withdraw] Error liberando hold ${holdId}:`, e)
-      );
-    }
     const message = err instanceof Error ? err.message : "Error desconocido";
-    console.error(`[withdraw] Error quemando MEXCOIN, hold liberado:`, message);
+    console.error(`[withdraw] Error quemando MEXCOIN:`, message);
     return NextResponse.json(
-      { ok: false, error: `Error en blockchain: ${message}. Fondos liberados.`, code: "BURN_FAILED" },
+      { ok: false, error: `Error en blockchain: ${message}`, code: "BURN_FAILED" },
       { status: 500 }
     );
   }
 
-  // ── 7. Ordenar SPEI saliente a Cuenca ─────────────────────────────────────
-  let cuencaWithdrawal;
-  try {
-    cuencaWithdrawal = await sendWithdrawal({
-      user_id:           userId,
-      amount_cents:      amountCents,
-      destination_clabe: destination_clabe,
-      reference:         withdrawalRef,
-    });
-  } catch (err) {
-    // MEXCOIN ya fue quemado pero el SPEI falló — requiere intervención manual
-    const message = err instanceof Error ? err.message : "Error desconocido";
-    console.error(`[withdraw] CRÍTICO: MEXCOIN quemado pero SPEI falló. tx: ${txHash}. Error:`, message);
-    // TODO: sistema de alertas (PagerDuty/Slack) para intervención manual
-    return NextResponse.json(
-      { ok: false, error: "SPEI no procesado. Contacta soporte con tu referencia.", code: "SPEI_FAILED", },
-      { status: 500 }
-    );
-  }
-
-  // ── 8. Registrar en Firestore ──────────────────────────────────────────────
-  const db = getDb();
-  const txDocRef = doc(db, "len_transactions", txHash);
-  await setDoc(txDocRef, {
+  // ── 6. Registrar retiro pendiente de SPEI ─────────────────────────────────
+  // MEXCOIN quemado. El SPEI saliente se procesa de forma asíncrona
+  // (Pomelo Transfers API o STP directo). El status cambia a "spei_sent"
+  // cuando el proveedor confirma la transferencia.
+  const db = getAdminDb();
+  await db.collection("len_transactions").doc(txHash).set({
     type:                 "withdrawal",
     user_id:              userId,
     wallet_address,
@@ -194,31 +133,33 @@ export async function POST(req: NextRequest): Promise<NextResponse<ApiResponse>>
     mexcoin_burned:       amountNum.toFixed(2),
     destination_clabe,
     celo_tx_hash:         txHash,
-    cuenca_withdrawal_id: cuencaWithdrawal.withdrawal_id,
-    cuenca_status:        cuencaWithdrawal.status,
     reference:            withdrawalRef,
-    status:               "completed",
-    created_at:           serverTimestamp(),
+    spei_status:          "pending",
+    status:               "processing",
+    created_at:           new Date(),
   });
+
+  // TODO: encolar trabajo para enviar SPEI vía Pomelo/STP
+  // await queueSpeiTransfer({ txHash, userId, amountAfterFee, destination_clabe, withdrawalRef });
 
   console.log(
     `[withdraw] ✓ ${amountNum.toFixed(2)} MEXCOIN quemado | ` +
-    `SPEI ${amountAfterFee.toFixed(2)} MXN → CLABE: ${destination_clabe.slice(0, 6)}... | ` +
+    `SPEI pendiente: ${amountAfterFee.toFixed(2)} MXN → CLABE: ${destination_clabe.slice(0, 6)}... | ` +
     `tx: ${txHash}`
   );
 
   return NextResponse.json({
     ok: true,
     data: {
-      withdrawal_id:       cuencaWithdrawal.withdrawal_id,
-      mexcoin_burned:      amountNum.toFixed(2),
-      amount_mxn:          amountNum.toFixed(2),
-      fee_mxn:             fee.toFixed(2),
-      amount_received_mxn: amountAfterFee.toFixed(2),
-      destination_clabe:   `${destination_clabe.slice(0, 6)}...${destination_clabe.slice(-4)}`,
-      celo_tx_hash:        txHash,
-      estimated_arrival:   cuencaWithdrawal.estimated_time,
-      reference:           withdrawalRef,
+      mexcoin_burned:       amountNum.toFixed(2),
+      amount_mxn:           amountNum.toFixed(2),
+      fee_mxn:              fee.toFixed(2),
+      amount_received_mxn:  amountAfterFee.toFixed(2),
+      destination_clabe:    `${destination_clabe.slice(0, 6)}...${destination_clabe.slice(-4)}`,
+      celo_tx_hash:         txHash,
+      spei_status:          "processing",
+      reference:            withdrawalRef,
+      message:              "MEXCOIN quemado. SPEI en procesamiento (1-2 días hábiles).",
     },
   });
 }
