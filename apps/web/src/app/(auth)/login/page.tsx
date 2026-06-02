@@ -40,8 +40,18 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error,   setError]   = useState('');
 
-  async function handleLogin() {
-    if (pin.length < 6) return;
+  const DEMO_ON = process.env.NEXT_PUBLIC_DEMO_MODE !== 'false';
+
+  // Entrar como demo vía el FLUJO REAL (mismo ledger, sin divergencia).
+  function demoLogin() {
+    setPhone('50211111111');
+    setStep('pin');
+    setPin('111111');
+    handleLogin('50211111111', '111111');
+  }
+
+  async function handleLogin(phoneArg: string = phone, pinArg: string = pin) {
+    if (pinArg.length < 6) return;
     setLoading(true);
     setError('');
 
@@ -49,7 +59,7 @@ export default function LoginPage() {
       const res = await fetch('/api/auth/token', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ phone, pin }),
+        body:    JSON.stringify({ phone: phoneArg, pin: pinArg }),
       });
       const json = await res.json();
 
@@ -77,21 +87,23 @@ export default function LoginPage() {
         createdAt:    new Date().toISOString(),
       });
 
-      // Cargar snapshot del usuario si existe (best-effort)
+      // Cargar saldo/historial (best-effort)
       try {
-        const { loadUserSnapshot } = await import('@/lib/user-db');
-        const { setWallets, setTransactions } = (await import('@/store/wallet.store')).useWalletStore.getState();
-        const snapshot = await loadUserSnapshot(user.user_id);
-        if (snapshot?.wallets?.length) {
-          setWallets(snapshot.wallets);
-          setTransactions(snapshot.transactions);
-          if (snapshot.bankAccounts?.length) {
-            const { useBankStore } = await import('@/store/bank.store');
-            useBankStore.setState({ accounts: snapshot.bankAccounts });
+        const sync = await import('@/lib/wallet-sync');
+        if (user.user_id.startsWith('usr_')) {
+          // Usuario real → ledger autoritativo
+          await sync.syncFromBackend(access_token);
+        } else {
+          // Demo legacy → Firestore demo
+          const { loadUserSnapshot } = await import('@/lib/user-db');
+          const { setWallets, setTransactions } = (await import('@/store/wallet.store')).useWalletStore.getState();
+          const snapshot = await loadUserSnapshot(user.user_id);
+          if (snapshot?.wallets?.length) {
+            setWallets(snapshot.wallets);
+            setTransactions(snapshot.transactions);
           }
+          sync.startWalletSync(user.user_id);
         }
-        const { startWalletSync } = await import('@/lib/wallet-sync');
-        startWalletSync(user.user_id);
       } catch { /* no bloquea el login si falla */ }
 
       router.push('/dashboard');
@@ -217,6 +229,22 @@ export default function LoginPage() {
                   Crear cuenta
                 </Link>
               </p>
+
+              {DEMO_ON && (
+                <>
+                  <div className="relative my-1">
+                    <div className="border-t border-len-border" />
+                    <span className="absolute left-1/2 -translate-x-1/2 -top-2 bg-len-surface px-2 text-[10px] text-gray-400 uppercase tracking-widest">demo</span>
+                  </div>
+                  <button
+                    onClick={demoLogin}
+                    disabled={loading}
+                    className="w-full text-sm text-len-purple border-2 border-len-border rounded-2xl py-2.5 font-semibold hover:border-len-purple transition-colors disabled:opacity-50"
+                  >
+                    {loading ? 'Entrando…' : 'Entrar como demo (Carlos · 🇬🇹 GT) →'}
+                  </button>
+                </>
+              )}
             </div>
           ) : (
             <div className="space-y-6">
@@ -238,7 +266,7 @@ export default function LoginPage() {
                 length={6}
                 value={pin}
                 onChange={setPin}
-                onComplete={handleLogin}
+                onComplete={() => handleLogin()}
                 className="mb-2"
               />
 
@@ -250,7 +278,7 @@ export default function LoginPage() {
 
               <button
                 className="btn-primary w-full"
-                onClick={handleLogin}
+                onClick={() => handleLogin()}
                 disabled={pin.length < 6 || loading}
               >
                 {loading ? <LoadingSpinner size="sm" /> : 'Entrar a LEN'}
