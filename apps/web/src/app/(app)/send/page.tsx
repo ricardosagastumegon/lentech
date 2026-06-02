@@ -13,7 +13,7 @@ import { CoinCode, COUNTRY_TO_COIN, COINS, genTxId } from '@/store/wallet.store'
 import { useAuthStore } from '@/store/auth.store';
 import { useWalletStore } from '@/store/wallet.store';
 import { TransactionVoucher } from '@/components/ui/TransactionVoucher';
-import { creditTransfer } from '@/lib/user-db';
+import { creditTransfer, saveUserSnapshot } from '@/lib/user-db';
 
 type Step = 'recipient' | 'amount' | 'quote' | 'success';
 
@@ -85,6 +85,16 @@ export default function SendPage() {
       recipientName: recipientInfo?.displayName ?? recipient,
       createdAt: now, completedAt: now,
     });
+
+    // ── Flush inmediato a Firestore — evita perder el registro por el debounce ─
+    if (user?.id) {
+      const { wallets, transactions } = useWalletStore.getState();
+      await saveUserSnapshot(user.id, {
+        wallets,
+        transactions,
+        updatedAt: now,
+      });
+    }
 
     // ── Credit recipient via Firestore (cross-user real-time) ─────────────────
     if (recipientInfo?.userId) {
