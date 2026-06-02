@@ -31,6 +31,8 @@ export interface LenUser {
   celo_address?:       string;
   conduit_customer_id?: string;
   pomelo_user_id?:     string;
+  kyc_level?:          number;          // 0=anónimo, 1=básico, 2=verificado, 3=empresarial
+  kyc_status?:         string;          // none | in_review | approved | rejected
   created_at:          Date;
   updated_at:          Date;
   last_login_at?:      Date;
