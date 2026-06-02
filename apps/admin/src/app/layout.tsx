@@ -11,7 +11,10 @@ const inter = Inter({ subsets: ['latin'] });
 
 const NAV = [
   { href: '/',            label: 'Panel de Control', icon: '⚡' },
-  { href: '/users',       label: 'Usuarios',          icon: '👥' },
+  { href: '/mint',        label: 'Mint Manual',      icon: '🪙' },
+  { href: '/commission',  label: 'Comisiones',        icon: '💸' },
+  { href: '/access',      label: 'Accesos',           icon: '🔑' },
+  { href: '/users',       label: 'Usuarios (legacy)', icon: '👥' },
   { href: '/kyc-review',  label: 'Cola KYC',          icon: '🔐' },
   { href: '/alerts',      label: 'Alertas AML',       icon: '⚠️' },
 ];
