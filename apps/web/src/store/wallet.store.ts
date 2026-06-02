@@ -94,6 +94,22 @@ export function genTxId(type: 'TRF' | 'TKB' | 'TKS' | 'FXS' | 'FLD' | 'FWD'): st
   return `LEN-${date}-${type}-${rand}`;
 }
 
+// ─── Modelo de una sola moneda ───────────────────────────────────────────────
+// El depósito fiat se convierte automáticamente en el token 1:1 (menos comisión).
+// No hay saldo fiat separado: cualquier `fiatBalance` heredado se pliega dentro del
+// saldo del coin para que toda la app muestre y use UN solo saldo.
+export function foldFiatIntoCoin(wallets: WalletBalance[]): WalletBalance[] {
+  return (wallets ?? []).map(w => {
+    const total = parseFloat(w.available || w.balance || '0') + parseFloat(w.fiatBalance || '0');
+    return {
+      ...w,
+      balance:     total.toFixed(2),
+      available:   total.toFixed(2),
+      fiatBalance: '0',
+    };
+  });
+}
+
 interface WalletState {
   wallets: WalletBalance[];
   transactions: Transaction[];
@@ -115,11 +131,11 @@ export const useWalletStore = create<WalletState>()(
   wallets: [],
   transactions: [],
 
-  setWallets: (wallets) => set({ wallets }),
+  setWallets: (wallets) => set({ wallets: foldFiatIntoCoin(wallets) }),
 
   setBalance: (data: unknown) => {
     const d = data as { wallets?: WalletBalance[]; items?: WalletBalance[] };
-    set({ wallets: d?.wallets ?? d?.items ?? [] });
+    set({ wallets: foldFiatIntoCoin(d?.wallets ?? d?.items ?? []) });
   },
 
   setTransactions: (transactions) => set({ transactions }),

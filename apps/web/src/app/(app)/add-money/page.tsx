@@ -67,7 +67,7 @@ export default function AdquirirPage() {
   const coin      = COUNTRY_TO_COIN[country] ?? 'QUETZA';
   const coinMeta  = COINS[coin as CoinCode];
   const wallet    = wallets.find(w => w.coin === coin);
-  const fiatBalance = parseFloat(wallet?.fiatBalance ?? '0');
+  const coinBalance = parseFloat(wallet?.available ?? '0');
 
   const deposit = getUserDepositInfo(user?.id ?? 'demo-gt', country);
 
@@ -91,16 +91,16 @@ export default function AdquirirPage() {
           Cargar wallet {coinMeta.flag}
         </h1>
         <p className="text-gray-500 text-sm mt-1">
-          Deposita {coinMeta.fiat} · llega a tu saldo fiat automáticamente
+          Deposita {coinMeta.fiat} · se convierte en {coin} automáticamente
         </p>
       </div>
 
-      {/* Current fiat balance */}
+      {/* Current coin balance */}
       <div className="bg-len-light rounded-2xl px-4 py-3 border border-len-border flex items-center justify-between mb-5">
         <div>
-          <p className="text-xs text-gray-400 font-medium">Saldo fiat disponible</p>
+          <p className="text-xs text-gray-400 font-medium">Tu saldo {coin}</p>
           <p className="text-lg font-black text-len-dark tabular-nums">
-            {fmt(fiatBalance)} <span className="text-gray-400 font-bold text-sm">{coinMeta.fiat}</span>
+            {fmt(coinBalance)} <span className="text-gray-400 font-bold text-sm">{coin}</span>
           </p>
         </div>
         <span className="text-2xl">{coinMeta.flag}</span>
@@ -115,8 +115,8 @@ export default function AdquirirPage() {
               ? `Transfieres ${coinMeta.fiat} desde tu banco a tu CLABE LEN exclusiva`
               : `Transfieres ${coinMeta.fiat} desde CUALQUIER banco a tu cuenta LEN en ${deposit.bank}`,
             `El banco notifica a LEN automáticamente — sin referencias ni pasos extras`,
-            `Tu saldo fiat aparece en la app${country === 'MX' ? ' en segundos' : ' en 15–30 minutos'}`,
-            `Conviertes fiat → tokens ${coin} cuando quieras (1:1, sin comisión)`,
+            `Tu depósito se convierte AUTOMÁTICAMENTE en ${coin} (1:1)${country === 'MX' ? ' en segundos' : ' en 15–30 minutos'}`,
+            `Listo: tu saldo ${coin} queda disponible para enviar, recibir o retirar`,
           ].map((step, i) => (
             <div key={i} className="flex items-start gap-2.5">
               <span className="w-5 h-5 bg-len-purple text-white text-[10px] font-black rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
@@ -217,19 +217,6 @@ export default function AdquirirPage() {
             : `Este número de cuenta siempre es tuyo. Guárdalo en tus contactos bancarios como "Mi cuenta LEN ${deposit.bank}" para futuros depósitos.`}
         </p>
       </div>
-
-      {/* CTA — convert tokens */}
-      {fiatBalance > 0 && (
-        <div className="bg-len-light rounded-2xl px-4 py-4 border border-len-border flex items-center justify-between">
-          <div>
-            <p className="text-sm font-bold text-len-dark">Tienes {fmt(fiatBalance)} {coinMeta.fiat} disponibles</p>
-            <p className="text-xs text-gray-400 mt-0.5">Conviértelos a tokens {coin} para enviar o intercambiar</p>
-          </div>
-          <button onClick={() => router.push('/buy-tokens')} className="btn-primary text-sm px-4 py-2.5 whitespace-nowrap ml-3">
-            Comprar →
-          </button>
-        </div>
-      )}
 
       {/* Receive from LEN users */}
       <div className="mt-4 bg-len-light rounded-3xl border border-len-border px-4 py-4">
