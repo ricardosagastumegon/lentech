@@ -21,8 +21,10 @@ function toTransaction(e: LedgerEntry) {
     fromAmount:  e.amount.toFixed(2),
     toAmount:    e.amount.toFixed(2),
     fee:         "0",
-    description: e.description,
-    counterparty: e.counterparty,
+    description:   e.description,
+    counterparty:  e.counterparty,
+    senderName:    received ? e.counterparty_name : undefined,
+    recipientName: received ? undefined : e.counterparty_name,
     createdAt:   new Date(e.created_at).toISOString(),
     completedAt: new Date(e.created_at).toISOString(),
   };

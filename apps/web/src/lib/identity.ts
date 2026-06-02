@@ -50,8 +50,14 @@ export interface KycSubmission {
 const DOCS = "len_kyc_documents";
 const SUBS = "len_kyc_submissions";
 
+// Firestore limita 1MB por documento; validamos el dataURL reducido del cliente.
+const MAX_DOC_BYTES = 900_000;
+
 /** Guarda un documento KYC (dataURL ya reducido en el cliente). */
 export async function storeKycDocument(userId: string, type: KycDocType, dataUrl: string): Promise<void> {
+  if (Buffer.byteLength(dataUrl, "utf8") > MAX_DOC_BYTES) {
+    throw new Error(`La imagen "${type}" es muy grande. Toma la foto de nuevo con menos resolución.`);
+  }
   const db = getAdminDb();
   await db.collection(DOCS).doc(`${userId}__${type}`).set({
     user_id:     userId,

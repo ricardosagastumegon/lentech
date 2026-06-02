@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import { apiClient } from '@/lib/api-client';
+import { useAuthStore } from '@/store/auth.store';
 import { COINS } from '@/store/wallet.store';
 
 interface ResolvedRecipient {
@@ -19,11 +19,11 @@ interface RecipientInputProps {
   error?:     string;
 }
 
-// Demo users resolved locally — no backend needed
+// Usuarios demo SEMBRADOS (reales, usr_*) — el envío cae en el ledger del receptor.
 const DEMO_RECIPIENTS: Record<string, ResolvedRecipient> = {
-  '11111': { userId: 'demo-gt', displayName: 'Carlos Mendoza',  walletAddress: '11111', kycLevel: 2, country: 'GT' },
-  '22222': { userId: 'demo-mx', displayName: 'Sofía Hernández', walletAddress: '22222', kycLevel: 2, country: 'MX' },
-  '33333': { userId: 'demo-hn', displayName: 'José Reyes',      walletAddress: '33333', kycLevel: 2, country: 'HN' },
+  '50211111111':   { userId: 'usr_gt_demo01', displayName: 'Carlos Mendoza',  walletAddress: '50211111111',   kycLevel: 2, country: 'GT' },
+  '5215511111111': { userId: 'usr_mx_demo01', displayName: 'Sofía Hernández', walletAddress: '5215511111111', kycLevel: 2, country: 'MX' },
+  '50411111111':   { userId: 'usr_hn_demo01', displayName: 'José Reyes',      walletAddress: '50411111111',   kycLevel: 2, country: 'HN' },
 };
 
 const FLAG: Record<string, string> = { GT: '🇬🇹', MX: '🇲🇽', HN: '🇭🇳' };
@@ -46,9 +46,16 @@ export function RecipientInput({ value, onChange, onResolved, error }: Recipient
     if (demo) { setResolved(demo); onResolved(demo); return; }
     setResolving(true);
     try {
-      const res = await apiClient.post('/wallets/resolve-recipient', { recipient: clean });
-      setResolved(res.data);
-      onResolved(res.data);
+      const token = useAuthStore.getState().accessToken;
+      const res = await fetch('/api/wallet/resolve-recipient', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        body:    JSON.stringify({ recipient: clean }),
+      });
+      const json = await res.json();
+      if (!res.ok || !json.ok) { setResolved(null); onResolved(null); return; }
+      setResolved(json.data);
+      onResolved(json.data);
     } catch {
       setResolved(null);
       onResolved(null);

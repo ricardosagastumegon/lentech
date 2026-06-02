@@ -12,32 +12,20 @@ import { apiClient } from '@/lib/api-client';
 
 export default function DashboardPage() {
   const { user } = useAuthStore();
-  const { setBalance, setTransactions } = useWalletStore();
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // If wallet already has data (demo mode), skip API call
-    const current = useWalletStore.getState();
-    if (current.wallets.length > 0) {
-      setLoading(false);
-      return;
-    }
-    async function fetchData() {
-      try {
-        const [balanceRes, txRes] = await Promise.all([
-          apiClient.get('/wallet/balance'),
-          apiClient.get('/wallet/transactions?limit=5'),
-        ]);
-        setBalance(balanceRes.data);
-        setTransactions(txRes.data.items);
-      } catch {
-        // Backend not yet connected
-      } finally {
-        setLoading(false);
+    (async () => {
+      const authUser = useAuthStore.getState().user;
+      const token    = useAuthStore.getState().accessToken;
+      // Usuario real: saldo + historial SIEMPRE del ledger (no datos viejos del cache).
+      if (authUser?.id?.startsWith('usr_') && token) {
+        const { syncFromBackend } = await import('@/lib/wallet-sync');
+        await syncFromBackend(token);
       }
-    }
-    fetchData();
-  }, [setBalance, setTransactions]);
+      setLoading(false);
+    })();
+  }, []);
 
   const greeting = () => {
     const h = new Date().getHours();

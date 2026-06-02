@@ -29,9 +29,13 @@ export interface LedgerEntry {
   type:         LedgerEntryType;
   ref?:         string;            // referencia externa (webhook id, tx hash)
   description?: string;
-  counterparty?: string;
+  counterparty?:      string;      // user_id de la contraparte
+  counterparty_name?: string;      // nombre mostrable de la contraparte
   created_at:   Date;
 }
+
+/** Una "pata" de un asiento múltiple (sin created_at). */
+export type LedgerLeg = Omit<LedgerEntry, "created_at">;
 
 const ENTRIES  = "len_ledger_entries";
 const BALANCES = "len_balances";
@@ -65,6 +69,52 @@ export async function postEntry(
     tx.set(entryRef, { ...e, amount: round2(e.amount), created_at: new Date() });
     tx.set(balRef, { user_id: e.user_id, coin: e.coin, balance: next, updated_at: new Date() }, { merge: true });
     return { posted: true, balance: next };
+  });
+}
+
+/**
+ * Publica VARIAS patas en UNA sola transacción atómica e idempotente.
+ * O todas se aplican, o ninguna (no se puede destruir/duplicar valor a medias).
+ * Idempotente: si todas las patas ya existen, no hace nada.
+ * Lanza "INSUFFICIENT_FUNDS" si algún débito dejaría un saldo negativo.
+ */
+export async function postEntries(legs: LedgerLeg[]): Promise<void> {
+  if (legs.length === 0) return;
+  for (const l of legs) if (!(l.amount > 0)) throw new Error("amount debe ser positivo");
+
+  const db = getAdminDb();
+  const entryRefs = legs.map(l => db.collection(ENTRIES).doc(l.entry_id));
+  const balKeys   = [...new Set(legs.map(l => balanceId(l.user_id, l.coin)))];
+  const balRefs: Record<string, FirebaseFirestore.DocumentReference> = {};
+  for (const l of legs) balRefs[balanceId(l.user_id, l.coin)] = db.collection(BALANCES).doc(balanceId(l.user_id, l.coin));
+
+  await db.runTransaction(async (tx) => {
+    // ── LECTURAS primero (requisito de Firestore) ──
+    const entrySnaps = await Promise.all(entryRefs.map(r => tx.get(r)));
+    if (entrySnaps.every(s => s.exists)) return; // idempotente: ya posteado
+
+    const balEntries = await Promise.all(balKeys.map(async k => [k, await tx.get(balRefs[k])] as const));
+    const balances: Record<string, number> = {};
+    for (const [k, snap] of balEntries) balances[k] = snap.exists ? Number(snap.data()!.balance ?? 0) : 0;
+
+    // ── Calcular + validar saldos ──
+    legs.forEach((l, i) => {
+      if (entrySnaps[i].exists) return; // pata ya posteada, no recalcular
+      const k = balanceId(l.user_id, l.coin);
+      balances[k] = round2(balances[k] + (l.direction === "credit" ? l.amount : -l.amount));
+      if (balances[k] < 0) throw new Error("INSUFFICIENT_FUNDS");
+    });
+
+    // ── ESCRITURAS ──
+    legs.forEach((l, i) => {
+      if (entrySnaps[i].exists) return;
+      tx.set(entryRefs[i], { ...l, amount: round2(l.amount), created_at: new Date() });
+    });
+    for (const k of balKeys) {
+      const sep = k.lastIndexOf("__");
+      const uid = k.slice(0, sep); const coin = k.slice(sep + 2);
+      tx.set(balRefs[k], { user_id: uid, coin, balance: balances[k], updated_at: new Date() }, { merge: true });
+    }
   });
 }
 

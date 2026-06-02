@@ -75,9 +75,12 @@ export async function syncFromBackend(token: string): Promise<boolean> {
     ]);
     if (!balRes.ok) return false;
     const bal = await balRes.json();
-    const tx  = txRes.ok ? await txRes.json() : { data: { items: [] } };
     useWalletStore.getState().setWallets(bal?.data?.wallets ?? []);
-    useWalletStore.getState().setTransactions(tx?.data?.items ?? []);
+    // Solo sobrescribir historial si el endpoint respondió OK (no borrarlo en fallo).
+    if (txRes.ok) {
+      const tx = await txRes.json();
+      useWalletStore.getState().setTransactions(tx?.data?.items ?? []);
+    }
     return true;
   } catch {
     return false;

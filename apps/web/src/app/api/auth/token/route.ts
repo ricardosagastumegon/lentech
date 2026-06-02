@@ -90,10 +90,10 @@ export async function POST(req: NextRequest) {
   } catch (e) {
     // Devuelve SIEMPRE JSON (evita "Unexpected end of JSON input" en el cliente).
     // El mensaje ayuda a diagnosticar config de entorno (Firebase Admin / JWT secret).
+    // Log server-side; NUNCA exponer el mensaje interno (filtra config/infra).
     console.error("[auth/token] error:", e);
-    const msg = e instanceof Error ? e.message : "Error interno del servidor";
     return NextResponse.json(
-      { ok: false, error: msg, code: "SERVER_ERROR" },
+      { ok: false, error: "Error interno del servidor", code: "SERVER_ERROR" },
       { status: 500 },
     );
   }
