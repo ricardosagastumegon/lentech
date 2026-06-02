@@ -32,14 +32,20 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     let cancelled = false;
 
     (async () => {
-      const { syncFromFirestore, startWalletSync } = await import('@/lib/wallet-sync');
+      const sync = await import('@/lib/wallet-sync');
       if (cancelled) return;
-      // Load latest state from Firestore (handles page reload + cross-device)
-      await syncFromFirestore(user.id);
+
+      // Usuario REAL (usr_*): saldo/tx desde el backend autoritativo (ledger).
+      if (user.id.startsWith('usr_')) {
+        const token = useAuthStore.getState().accessToken;
+        if (token) await sync.syncFromBackend(token);
+        return;
+      }
+
+      // Usuario DEMO (demo-*): sync con Firestore demo (cross-device) — sin cambios.
+      await sync.syncFromFirestore(user.id);
       if (cancelled) return;
-      // Subscribe to local changes (wallet, transactions, bank accounts → Firestore)
-      // and to remote changes (incoming P2P transfers → local store)
-      startWalletSync(user.id);
+      sync.startWalletSync(user.id);
     })();
 
     return () => {

@@ -63,6 +63,27 @@ export async function syncFromFirestore(userId: string): Promise<void> {
   }
 }
 
+/**
+ * Carga saldo y transacciones desde el BACKEND autoritativo (ledger) para usuarios reales.
+ * El cliente solo MUESTRA lo que el servidor dice — no calcula saldos.
+ */
+export async function syncFromBackend(token: string): Promise<boolean> {
+  try {
+    const [balRes, txRes] = await Promise.all([
+      fetch('/api/wallet/balance',            { headers: { Authorization: `Bearer ${token}` } }),
+      fetch('/api/wallet/transactions?limit=50', { headers: { Authorization: `Bearer ${token}` } }),
+    ]);
+    if (!balRes.ok) return false;
+    const bal = await balRes.json();
+    const tx  = txRes.ok ? await txRes.json() : { data: { items: [] } };
+    useWalletStore.getState().setWallets(bal?.data?.wallets ?? []);
+    useWalletStore.getState().setTransactions(tx?.data?.items ?? []);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export function startWalletSync(userId: string): void {
   stopWalletSync();
   currentUserId = userId;
