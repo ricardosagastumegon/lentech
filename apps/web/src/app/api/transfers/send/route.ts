@@ -17,9 +17,9 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { getMexcoinBalanceServer } from "@/lib/celo-admin";
-import { getDb } from "@/lib/firebase";
+import { getAdminDb } from "@/lib/firebase-admin";
+import { verifyAuth } from "@/lib/auth";
 import {
-  createPublicClient,
   createWalletClient,
   http,
   parseUnits,
@@ -27,8 +27,7 @@ import {
   type Address,
 } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
-import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
-import type { TransferRequest, ApiResponse } from "@/types/cuenca";
+import type { TransferRequest, ApiResponse } from "@/types/pomelo";
 
 // ── Config Celo ───────────────────────────────────────────────────────────────
 
@@ -69,24 +68,9 @@ const LIMITS = {
   daily_mxn:     200_000,   // $200,000 MXN por día (umbral UIF)
 };
 
-// ── Autenticación simple por JWT ──────────────────────────────────────────────
-function extractUserId(req: NextRequest): string | null {
-  const auth = req.headers.get("authorization");
-  if (!auth?.startsWith("Bearer ")) return null;
-  // TODO: verificar JWT con jose o jsonwebtoken en producción
-  // Por ahora retorna el sub del payload (sin verificar para sandbox)
-  try {
-    const payload = auth.split(".")[1];
-    const decoded = JSON.parse(Buffer.from(payload, "base64").toString());
-    return decoded.sub ?? decoded.user_id ?? null;
-  } catch {
-    return null;
-  }
-}
-
 export async function POST(req: NextRequest): Promise<NextResponse<ApiResponse>> {
   // ── 1. Autenticación ───────────────────────────────────────────────────────
-  const userId = extractUserId(req);
+  const userId = await verifyAuth(req);
   if (!userId) {
     return NextResponse.json(
       { ok: false, error: "Token de autenticación requerido", code: "UNAUTHORIZED" },
@@ -185,10 +169,9 @@ export async function POST(req: NextRequest): Promise<NextResponse<ApiResponse>>
     );
   }
 
-  // ── 6. Registrar en Firestore ──────────────────────────────────────────────
-  const db = getDb();
-  const txDocRef = doc(db, "len_transactions", txHash);
-  await setDoc(txDocRef, {
+  // ── 6. Registrar en Firestore (Admin SDK — bypasa rules) ─────────────────────
+  const db = getAdminDb();
+  await db.collection("len_transactions").doc(txHash).set({
     type:          "transfer",
     from_user_id:  userId,
     from_address,
@@ -199,7 +182,7 @@ export async function POST(req: NextRequest): Promise<NextResponse<ApiResponse>>
     tx_hash:       txHash,
     network:       chain.name,
     status:        "completed",
-    created_at:    serverTimestamp(),
+    created_at:    new Date(),
   });
 
   console.log(`[transfer] ✓ ${amountNum.toFixed(2)} MEXCOIN | ${from_address} → ${to_address} | tx: ${txHash}`);
