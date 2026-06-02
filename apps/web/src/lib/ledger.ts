@@ -97,12 +97,24 @@ export async function getBalances(userId: string): Promise<{ coin: string; balan
   return snap.docs.map(d => ({ coin: String(d.data().coin), balance: Number(d.data().balance ?? 0) }));
 }
 
+/** Normaliza created_at: Firestore lo devuelve como Timestamp, no como Date/ISO. */
+function toJsDate(v: unknown): Date {
+  if (v && typeof (v as { toDate?: () => Date }).toDate === "function") {
+    return (v as { toDate: () => Date }).toDate();
+  }
+  const d = new Date(v as string | number | Date);
+  return isNaN(d.getTime()) ? new Date(0) : d;
+}
+
 export async function listEntries(userId: string, limit = 50): Promise<LedgerEntry[]> {
   const db = getAdminDb();
   // Sin índice compuesto: filtra por user_id y ordena en memoria.
   const snap = await db.collection(ENTRIES).where("user_id", "==", userId).get();
   return snap.docs
-    .map(d => d.data() as LedgerEntry)
-    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+    .map(d => {
+      const data = d.data() as LedgerEntry;
+      return { ...data, created_at: toJsDate(data.created_at) };
+    })
+    .sort((a, b) => b.created_at.getTime() - a.created_at.getTime())
     .slice(0, limit);
 }
