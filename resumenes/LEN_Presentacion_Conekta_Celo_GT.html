@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LEN — Conekta · Celo · Banrural Guatemala</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --purple: #4338CA;
+    --violet: #818CF8;
+    --dark:   #1E1B4B;
+    --mid:    #312E81;
+    --light:  #EEF2FF;
+    --border: #E0E7FF;
+    --white:  #FFFFFF;
+    --green:  #10B981;
+    --amber:  #F59E0B;
+    --red:    #EF4444;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: #0f0e1a;
+    overflow: hidden;
+    height: 100vh;
+    width: 100vw;
+  }
+
+  .deck {
+    width: 100%;
+    height: 100%;
+    position: relative;
+  }
+
+  .slide {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 60px 80px;
+    opacity: 0;
+    transform: translateX(60px);
+    transition: opacity .45s cubic-bezier(.4,0,.2,1), transform .45s cubic-bezier(.4,0,.2,1);
+    pointer-events: none;
+  }
+
+  .slide.active {
+    opacity: 1;
+    transform: translateX(0);
+    pointer-events: all;
+  }
+
+  .slide.exit {
+    opacity: 0;
+    transform: translateX(-60px);
+  }
+
+  /* ── Slide backgrounds ── */
+  .bg-hero    { background: linear-gradient(135deg, #1E1B4B 0%, #312E81 55%, #4338CA 100%); }
+  .bg-dark    { background: linear-gradient(160deg, #1E1B4B 0%, #0f0e1a 100%); }
+  .bg-mid     { background: linear-gradient(160deg, #1a1836 0%, #1E1B4B 100%); }
+  .bg-accent  { background: linear-gradient(135deg, #312E81 0%, #4338CA 100%); }
+
+  /* ── Typography ── */
+  .tag {
+    font-size: 11px; font-weight: 700; letter-spacing: 3px;
+    text-transform: uppercase; color: var(--violet);
+    margin-bottom: 20px;
+  }
+
+  h1 { font-size: 72px; font-weight: 900; color: #fff; line-height: 1; }
+  h2 { font-size: 48px; font-weight: 800; color: #fff; line-height: 1.1; margin-bottom: 16px; }
+  h3 { font-size: 28px; font-weight: 700; color: #fff; margin-bottom: 12px; }
+  .sub { font-size: 20px; font-weight: 400; color: rgba(255,255,255,.65); margin-top: 16px; line-height: 1.5; }
+  .accent { color: var(--violet); }
+
+  /* ── Cards ── */
+  .cards { display: flex; gap: 20px; width: 100%; }
+
+  .card {
+    flex: 1;
+    background: rgba(255,255,255,.06);
+    border: 1px solid rgba(255,255,255,.1);
+    border-radius: 20px;
+    padding: 28px;
+    backdrop-filter: blur(10px);
+  }
+
+  .card-icon {
+    font-size: 36px;
+    margin-bottom: 14px;
+    display: block;
+  }
+
+  .card h3 { font-size: 18px; color: #fff; margin-bottom: 8px; }
+  .card p  { font-size: 14px; color: rgba(255,255,255,.6); line-height: 1.6; }
+  .card .badge {
+    display: inline-block;
+    margin-top: 12px;
+    padding: 4px 12px;
+    border-radius: 100px;
+    font-size: 12px;
+    font-weight: 600;
+  }
+
+  /* ── Flow diagram ── */
+  .flow {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    width: 100%;
+    margin-top: 20px;
+  }
+
+  .flow-box {
+    flex: 1;
+    background: rgba(255,255,255,.07);
+    border: 1px solid rgba(129,140,248,.3);
+    border-radius: 16px;
+    padding: 20px 16px;
+    text-align: center;
+  }
+
+  .flow-box .icon { font-size: 28px; margin-bottom: 8px; display: block; }
+  .flow-box .name { font-size: 15px; font-weight: 700; color: #fff; }
+  .flow-box .desc { font-size: 12px; color: rgba(255,255,255,.5); margin-top: 4px; line-height: 1.4; }
+
+  .flow-arrow {
+    flex: 0 0 48px;
+    text-align: center;
+    color: var(--violet);
+    font-size: 22px;
+    font-weight: 300;
+  }
+
+  /* ── Steps ── */
+  .steps { width: 100%; display: flex; flex-direction: column; gap: 14px; }
+
+  .step {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    background: rgba(255,255,255,.05);
+    border: 1px solid rgba(255,255,255,.08);
+    border-radius: 14px;
+    padding: 18px 20px;
+  }
+
+  .step-num {
+    flex: 0 0 36px; height: 36px;
+    background: var(--purple);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; font-weight: 700; color: #fff;
+  }
+
+  .step-body h4 { font-size: 15px; font-weight: 600; color: #fff; }
+  .step-body p  { font-size: 13px; color: rgba(255,255,255,.55); margin-top: 3px; }
+  .step-time {
+    margin-left: auto;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--violet);
+    white-space: nowrap;
+    padding-top: 3px;
+  }
+
+  /* ── API table ── */
+  .api-table { width: 100%; border-collapse: collapse; }
+  .api-table th {
+    text-align: left; font-size: 11px; font-weight: 700;
+    letter-spacing: 2px; text-transform: uppercase;
+    color: var(--violet); padding: 10px 14px;
+    border-bottom: 1px solid rgba(255,255,255,.1);
+  }
+  .api-table td {
+    font-size: 13px; color: rgba(255,255,255,.8);
+    padding: 12px 14px;
+    border-bottom: 1px solid rgba(255,255,255,.05);
+  }
+  .api-table tr:hover td { background: rgba(255,255,255,.04); }
+  .method {
+    display: inline-block;
+    padding: 2px 8px; border-radius: 6px;
+    font-size: 11px; font-weight: 700;
+    background: rgba(67,56,202,.4); color: var(--violet);
+  }
+  .method.post { background: rgba(16,185,129,.2); color: #34D399; }
+  .method.get  { background: rgba(59,130,246,.2); color: #60A5FA; }
+
+  /* ── Comparison ── */
+  .compare { width: 100%; }
+  .compare-row {
+    display: flex; align-items: center; gap: 0;
+    margin-bottom: 12px;
+  }
+  .compare-label {
+    width: 120px; font-size: 13px; color: rgba(255,255,255,.5); flex-shrink: 0;
+  }
+  .compare-bar-wrap { flex: 1; display: flex; gap: 8px; align-items: center; }
+  .bar {
+    height: 36px; border-radius: 8px;
+    display: flex; align-items: center;
+    padding: 0 12px;
+    font-size: 13px; font-weight: 600; color: #fff;
+    transition: width .8s ease;
+  }
+  .bar.bad  { background: rgba(239,68,68,.3); border: 1px solid rgba(239,68,68,.4); }
+  .bar.ok   { background: rgba(245,158,11,.3); border: 1px solid rgba(245,158,11,.4); }
+  .bar.good { background: linear-gradient(90deg,#4338CA,#818CF8); }
+
+  /* ── Stats ── */
+  .stats { display: flex; gap: 24px; width: 100%; }
+  .stat {
+    flex: 1;
+    background: rgba(255,255,255,.06);
+    border: 1px solid rgba(255,255,255,.1);
+    border-radius: 20px;
+    padding: 32px 24px;
+    text-align: center;
+  }
+  .stat-num { font-size: 52px; font-weight: 900; color: var(--violet); line-height: 1; }
+  .stat-label { font-size: 14px; color: rgba(255,255,255,.55); margin-top: 10px; }
+
+  /* ── Quote ── */
+  .quote {
+    font-size: 36px; font-weight: 700; color: #fff;
+    line-height: 1.3; text-align: center;
+    max-width: 900px;
+  }
+  .quote span { color: var(--violet); }
+
+  /* ── Security ── */
+  .sec-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; width: 100%; }
+  .sec-item {
+    background: rgba(255,255,255,.05);
+    border: 1px solid rgba(129,140,248,.2);
+    border-radius: 14px;
+    padding: 18px;
+    display: flex; gap: 14px; align-items: flex-start;
+  }
+  .sec-icon { font-size: 24px; flex-shrink: 0; }
+  .sec-body h4 { font-size: 14px; font-weight: 600; color: #fff; }
+  .sec-body p  { font-size: 12px; color: rgba(255,255,255,.5); margin-top: 4px; line-height: 1.5; }
+
+  /* ── Status dots ── */
+  .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
+  .dot.green { background: var(--green); box-shadow: 0 0 8px var(--green); }
+  .dot.amber { background: var(--amber); }
+  .dot.red   { background: var(--red); }
+
+  /* ── Nav ── */
+  .nav {
+    position: fixed; bottom: 32px; left: 50%;
+    transform: translateX(-50%);
+    display: flex; align-items: center; gap: 20px;
+    background: rgba(255,255,255,.08);
+    border: 1px solid rgba(255,255,255,.12);
+    border-radius: 100px;
+    padding: 10px 24px;
+    backdrop-filter: blur(20px);
+    z-index: 100;
+  }
+
+  .nav button {
+    background: none; border: none; cursor: pointer;
+    color: rgba(255,255,255,.6); font-size: 18px;
+    transition: color .2s;
+    display: flex; align-items: center;
+  }
+  .nav button:hover { color: #fff; }
+  .nav button:disabled { color: rgba(255,255,255,.2); cursor: default; }
+
+  .slide-counter { font-size: 13px; font-weight: 500; color: rgba(255,255,255,.5); min-width: 60px; text-align: center; }
+
+  .dots {
+    display: flex; gap: 6px;
+  }
+  .dot-nav {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: rgba(255,255,255,.25);
+    transition: all .3s; cursor: pointer;
+    border: none;
+  }
+  .dot-nav.active { width: 20px; border-radius: 3px; background: var(--violet); }
+
+  /* ── Logo/title header ── */
+  .slide-header {
+    position: absolute; top: 36px; left: 60px; right: 60px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .logo { font-size: 18px; font-weight: 800; color: rgba(255,255,255,.4); letter-spacing: 2px; }
+  .slide-title-tag { font-size: 12px; color: rgba(255,255,255,.3); font-weight: 500; }
+
+  .two-col { display: flex; gap: 40px; width: 100%; align-items: flex-start; }
+  .two-col > div { flex: 1; }
+
+  .pill {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 6px 16px; border-radius: 100px;
+    font-size: 13px; font-weight: 600;
+  }
+  .pill.purple { background: rgba(67,56,202,.3); color: var(--violet); border: 1px solid rgba(129,140,248,.3); }
+  .pill.green  { background: rgba(16,185,129,.2); color: #34D399; border: 1px solid rgba(52,211,153,.3); }
+  .pill.amber  { background: rgba(245,158,11,.2); color: #FCD34D; border: 1px solid rgba(252,211,77,.3); }
+</style>
+</head>
+<body>
+<div class="deck" id="deck">
+
+  <!-- SLIDE 1: HERO -->
+  <div class="slide bg-hero active" id="s1">
+    <div style="text-align:center; max-width:900px;">
+      <div class="tag">Presentación Técnica · 2026</div>
+      <h1 style="font-size:80px; margin-bottom:24px;">
+        <span style="color:rgba(255,255,255,.3)">Conekta</span>
+        <span style="color:rgba(129,140,248,.6)"> · </span>
+        <span style="color:#fff">LEN</span>
+        <span style="color:rgba(129,140,248,.6)"> · </span>
+        <span style="color:rgba(255,255,255,.3)">Celo</span>
+        <span style="color:rgba(129,140,248,.6)"> · </span>
+        <span style="color:rgba(255,255,255,.3)">Banrural</span>
+      </h1>
+      <p class="sub" style="font-size:22px; max-width:700px; margin:0 auto;">
+        Cómo LEN conecta México y Guatemala usando blockchain como puente invisible entre dos sistemas bancarios
+      </p>
+      <div style="display:flex; gap:12px; margin-top:40px; justify-content:center;">
+        <span class="pill purple">🇲🇽 MXN · MEXCOIN</span>
+        <span class="pill purple">⛓️ Celo Network</span>
+        <span class="pill purple">🇬🇹 GTQ · QUETZA</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 2: EL PROBLEMA -->
+  <div class="slide bg-dark" id="s2">
+    <div class="slide-header"><span class="logo">LEN</span><span class="slide-title-tag">El Problema</span></div>
+    <div style="width:100%; max-width:1000px;">
+      <div class="tag">Por qué existe LEN</div>
+      <h2>Enviar dinero MX→GT<br/>cuesta demasiado</h2>
+      <div class="cards" style="margin-top:36px;">
+        <div class="card">
+          <span class="card-icon">🏦</span>
+          <h3>Banco tradicional</h3>
+          <p>3–5% de comisión. TC bancario desfavorable. Solo días hábiles. Requiere cuenta en ambos países.</p>
+          <span class="badge" style="background:rgba(239,68,68,.2); color:#F87171;">$150–$250 MXN por $5,000</span>
+        </div>
+        <div class="card">
+          <span class="card-icon">💸</span>
+          <h3>Western Union / Remitly</h3>
+          <p>2–4% de comisión. Tipo de cambio spot menos 1–2%. 0–24 horas. Solo digital.</p>
+          <span class="badge" style="background:rgba(245,158,11,.2); color:#FCD34D;">$100–$200 MXN por $5,000</span>
+        </div>
+        <div class="card" style="border-color:rgba(129,140,248,.4);">
+          <span class="card-icon">⚡</span>
+          <h3>LEN</h3>
+          <p>0.3% de comisión. TC mercado real. 24/7. Solo teléfono. Sin cuenta bancaria requerida.</p>
+          <span class="badge" style="background:rgba(16,185,129,.2); color:#34D399;">$15 MXN por $5,000</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 3: LAS 3 CAPAS -->
+  <div class="slide bg-mid" id="s3">
+    <div class="slide-header"><span class="logo">LEN</span><span class="slide-title-tag">Arquitectura</span></div>
+    <div style="width:100%; max-width:1000px;">
+      <div class="tag">Cómo está construido</div>
+      <h2>Tres capas,<br/>una experiencia</h2>
+      <div class="cards" style="margin-top:36px;">
+        <div class="card" style="border-color:rgba(59,130,246,.3);">
+          <span class="card-icon">🏧</span>
+          <h3 style="color:#60A5FA;">Capa Fiat</h3>
+          <p><strong style="color:rgba(255,255,255,.8);">México:</strong> Conekta (SPEI, tarjeta, OXXO)<br/><strong style="color:rgba(255,255,255,.8);">Guatemala:</strong> Banrural / BAC Guatemala<br/>Dinero tradicional. Regulado. Familiar.</p>
+        </div>
+        <div class="card" style="border-color:rgba(129,140,248,.5); background:rgba(67,56,202,.15);">
+          <span class="card-icon">🔄</span>
+          <h3 style="color:var(--violet);">LEN · Orquestador</h3>
+          <p>Conecta ambos mundos. Verifica KYC/AML. Aplica tipo de cambio. Controla mint/burn. Firma transacciones.</p>
+        </div>
+        <div class="card" style="border-color:rgba(16,185,129,.3);">
+          <span class="card-icon">⛓️</span>
+          <h3 style="color:#34D399;">Capa Blockchain</h3>
+          <p><strong style="color:rgba(255,255,255,.8);">Celo Network:</strong> EVM, 2 seg por bloque.<br/>MEXCOIN (MXN) y QUETZA (GTQ).<br/>Costo: &lt;$0.01 USD por remesa completa.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 4: FLUJO MX → GT -->
+  <div class="slide bg-dark" id="s4">
+    <div class="slide-header"><span class="logo">LEN</span><span class="slide-title-tag">Flujo MX → GT</span></div>
+    <div style="width:100%; max-width:1050px;">
+      <div class="tag">Caso de uso principal</div>
+      <h2 style="font-size:38px;">Carlos (MX) envía $1,000 MXN<br/>a María (GT) → Q267 GTQ</h2>
+
+      <div class="flow" style="margin-top:28px;">
+        <div class="flow-box">
+          <span class="icon">🇲🇽</span>
+          <div class="name">Carlos</div>
+          <div class="desc">Deposita MXN<br/>via SPEI</div>
+        </div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box" style="border-color:rgba(129,140,248,.4);">
+          <span class="icon">🏦</span>
+          <div class="name">Conekta</div>
+          <div class="desc">Recibe fondos<br/>Dispara webhook</div>
+        </div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box" style="border-color:rgba(129,140,248,.6); background:rgba(67,56,202,.2);">
+          <span class="icon">⚡</span>
+          <div class="name">LEN</div>
+          <div class="desc">Mint MEXCOIN<br/>Swap FX<br/>Burn + Mint QUETZA</div>
+        </div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box" style="border-color:rgba(129,140,248,.4);">
+          <span class="icon">⛓️</span>
+          <div class="name">Celo</div>
+          <div class="desc">Liquidación<br/>~2 segundos</div>
+        </div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box" style="border-color:rgba(129,140,248,.4);">
+          <span class="icon">🏦</span>
+          <div class="name">Banrural</div>
+          <div class="desc">Recibe GTQ<br/>Deposita a cuenta</div>
+        </div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box">
+          <span class="icon">🇬🇹</span>
+          <div class="name">María</div>
+          <div class="desc">Recibe Q267<br/>en su banco</div>
+        </div>
+      </div>
+
+      <div style="display:flex; gap:16px; margin-top:24px;">
+        <div style="flex:1; background:rgba(255,255,255,.04); border-radius:12px; padding:16px 20px; border:1px solid rgba(255,255,255,.08);">
+          <span style="font-size:11px; font-weight:700; letter-spacing:2px; color:var(--violet); text-transform:uppercase;">Costo total</span>
+          <div style="font-size:28px; font-weight:800; color:#fff; margin-top:6px;">$3 MXN <span style="font-size:16px; color:rgba(255,255,255,.4);">= 0.3%</span></div>
+        </div>
+        <div style="flex:1; background:rgba(255,255,255,.04); border-radius:12px; padding:16px 20px; border:1px solid rgba(255,255,255,.08);">
+          <span style="font-size:11px; font-weight:700; letter-spacing:2px; color:var(--violet); text-transform:uppercase;">Tiempo total</span>
+          <div style="font-size:28px; font-weight:800; color:#fff; margin-top:6px;">&lt;2 hrs <span style="font-size:16px; color:rgba(255,255,255,.4);">24/7</span></div>
+        </div>
+        <div style="flex:1; background:rgba(255,255,255,.04); border-radius:12px; padding:16px 20px; border:1px solid rgba(255,255,255,.08);">
+          <span style="font-size:11px; font-weight:700; letter-spacing:2px; color:var(--violet); text-transform:uppercase;">Costo blockchain</span>
+          <div style="font-size:28px; font-weight:800; color:#fff; margin-top:6px;">&lt;$0.01 <span style="font-size:16px; color:rgba(255,255,255,.4);">USD</span></div>
+        </div>
+        <div style="flex:1; background:rgba(255,255,255,.04); border-radius:12px; padding:16px 20px; border:1px solid rgba(255,255,255,.08);">
+          <span style="font-size:11px; font-weight:700; letter-spacing:2px; color:var(--violet); text-transform:uppercase;">TC ventaja</span>
+          <div style="font-size:28px; font-weight:800; color:#34D399; margin-top:6px;">+Q11 <span style="font-size:16px; color:rgba(255,255,255,.4);">vs banco</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 5: PASOS DETALLADOS -->
+  <div class="slide bg-mid" id="s5">
+    <div class="slide-header"><span class="logo">LEN</span><span class="slide-title-tag">Pasos Técnicos</span></div>
+    <div style="width:100%; max-width:1000px;">
+      <div class="tag">Bajo el capó</div>
+      <h2 style="font-size:36px; margin-bottom:24px;">10 pasos · Una remesa completa</h2>
+      <div class="two-col">
+        <div class="steps">
+          <div class="step">
+            <div class="step-num">1</div>
+            <div class="step-body"><h4>SPEI de Carlos a CLABE LEN en Conekta</h4><p>Conekta genera CLABE virtual por usuario</p></div>
+            <div class="step-time">0–30 min</div>
+          </div>
+          <div class="step">
+            <div class="step-num">2</div>
+            <div class="step-body"><h4>Conekta webhook → LEN</h4><p>POST /api/webhooks/conekta/deposit — HMAC-SHA256</p></div>
+            <div class="step-time">Inmediato</div>
+          </div>
+          <div class="step">
+            <div class="step-num">3</div>
+            <div class="step-body"><h4>LEN mintea 1,000 MEXCOIN en Celo</h4><p>MEXCOIN.mint(carlos_address, 100000)</p></div>
+            <div class="step-time">~2 seg</div>
+          </div>
+          <div class="step">
+            <div class="step-num">4</div>
+            <div class="step-body"><h4>Carlos confirma envío desde app LEN</h4><p>JWT verificado → límites AML → tipo de cambio</p></div>
+            <div class="step-time">Inmediato</div>
+          </div>
+          <div class="step">
+            <div class="step-num">5</div>
+            <div class="step-body"><h4>LEN aplica TC: 1,000 MXN = Q267 GTQ</h4><p>Feed Banxico + Banguat en tiempo real</p></div>
+            <div class="step-time">&lt;200ms</div>
+          </div>
+        </div>
+        <div class="steps">
+          <div class="step">
+            <div class="step-num">6</div>
+            <div class="step-body"><h4>LEN quema 1,000 MEXCOIN de Carlos</h4><p>MEXCOIN.burn(carlos_address, 100000)</p></div>
+            <div class="step-time">~2 seg</div>
+          </div>
+          <div class="step">
+            <div class="step-num">7</div>
+            <div class="step-body"><h4>LEN mintea 267 QUETZA para María</h4><p>QUETZA.mint(maria_address, 26700)</p></div>
+            <div class="step-time">~2 seg</div>
+          </div>
+          <div class="step">
+            <div class="step-num">8</div>
+            <div class="step-body"><h4>LEN quema QUETZA de María</h4><p>QUETZA.burn(maria_address, 26700)</p></div>
+            <div class="step-time">~2 seg</div>
+          </div>
+          <div class="step">
+            <div class="step-num">9</div>
+            <div class="step-body"><h4>LEN → API Banrural: transferir Q267 GTQ</h4><p>A cuenta bancaria de María en Banrural</p></div>
+            <div class="step-time">&lt;5 seg</div>
+          </div>
+          <div class="step">
+            <div class="step-num">10</div>
+            <div class="step-body"><h4>María recibe Q267 en su banco</h4><p>ACH Guatemala o transferencia directa Banrural</p></div>
+            <div class="step-time">0–2 hrs</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 6: APIs -->
+  <div class="slide bg-dark" id="s6">
+    <div class="slide-header"><span class="logo">LEN</span><span class="slide-title-tag">Conectividad de APIs</span></div>
+    <div style="width:100%; max-width:1000px;">
+      <div class="tag">Integraciones técnicas</div>
+      <h2 style="margin-bottom:28px;">APIs por participante</h2>
+      <div class="two-col">
+        <div>
+          <p style="font-size:12px; font-weight:700; color:var(--violet); letter-spacing:2px; text-transform:uppercase; margin-bottom:12px;">🏦 Conekta → LEN (webhooks entrantes)</p>
+          <table class="api-table">
+            <tr><th>Evento</th><th>Ruta LEN</th></tr>
+            <tr><td><code style="color:#34D399;">order.paid</code></td><td style="font-size:12px; color:rgba(255,255,255,.6);">/api/webhooks/conekta/deposit</td></tr>
+            <tr><td><code style="color:#34D399;">charge.paid</code></td><td style="font-size:12px; color:rgba(255,255,255,.6);">/api/webhooks/conekta/card</td></tr>
+          </table>
+          <p style="font-size:12px; font-weight:700; color:var(--violet); letter-spacing:2px; text-transform:uppercase; margin:20px 0 12px;">⚡ LEN → Conekta (llamadas salientes)</p>
+          <table class="api-table">
+            <tr><th>Acción</th><th>Endpoint</th></tr>
+            <tr><td>Enviar SPEI</td><td style="font-size:12px; color:rgba(255,255,255,.6);">POST /api/v1/payouts</td></tr>
+            <tr><td>Crear orden</td><td style="font-size:12px; color:rgba(255,255,255,.6);">POST /api/v1/orders</td></tr>
+          </table>
+        </div>
+        <div>
+          <p style="font-size:12px; font-weight:700; color:var(--violet); letter-spacing:2px; text-transform:uppercase; margin-bottom:12px;">🇬🇹 Banrural → LEN (webhooks entrantes)</p>
+          <table class="api-table">
+            <tr><th>Evento</th><th>Ruta LEN</th></tr>
+            <tr><td><code style="color:#34D399;">deposit.received</code></td><td style="font-size:12px; color:rgba(255,255,255,.6);">/api/webhooks/banrural/deposit</td></tr>
+          </table>
+          <p style="font-size:12px; font-weight:700; color:var(--violet); letter-spacing:2px; text-transform:uppercase; margin:20px 0 12px;">⛓️ LEN → Celo (blockchain)</p>
+          <table class="api-table">
+            <tr><th>Operación</th><th>Costo</th></tr>
+            <tr><td>mint / burn MEXCOIN</td><td style="color:#34D399;">~$0.001 USD</td></tr>
+            <tr><td>mint / burn QUETZA</td><td style="color:#34D399;">~$0.001 USD</td></tr>
+            <tr><td>Costo total por remesa</td><td style="color:#34D399; font-weight:700;">&lt;$0.01 USD</td></tr>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 7: SEGURIDAD -->
+  <div class="slide bg-mid" id="s7">
+    <div class="slide-header"><span class="logo">LEN</span><span class="slide-title-tag">Seguridad</span></div>
+    <div style="width:100%; max-width:1000px;">
+      <div class="tag">Modelo de confianza</div>
+      <h2 style="margin-bottom:28px;">Seguridad en cada capa</h2>
+      <div class="sec-grid">
+        <div class="sec-item">
+          <div class="sec-icon">🔐</div>
+          <div class="sec-body">
+            <h4>Webhooks — HMAC-SHA256</h4>
+            <p>Conekta y Banrural firman cada request. LEN verifica la firma antes de procesar. Comparación timing-safe para evitar ataques de tiempo.</p>
+          </div>
+        </div>
+        <div class="sec-item">
+          <div class="sec-icon">🪙</div>
+          <div class="sec-body">
+            <h4>Contratos Celo — Roles separados</h4>
+            <p>Solo MINTER_ROLE puede mintear. Solo BURNER_ROLE puede quemar. Solo la treasury wallet de LEN tiene ambos roles. Pausable en emergencias.</p>
+          </div>
+        </div>
+        <div class="sec-item">
+          <div class="sec-icon">🎫</div>
+          <div class="sec-body">
+            <h4>JWT — HS256 firmado</h4>
+            <p>Tokens firmados con secreto de 256 bits. Expiración de 24h. Verificación criptográfica en cada request de usuario. No hay decode sin verificar.</p>
+          </div>
+        </div>
+        <div class="sec-item">
+          <div class="sec-icon">🔄</div>
+          <div class="sec-body">
+            <h4>Idempotencia — Firestore</h4>
+            <p>Cada evento webhook tiene ID único registrado en Firestore. Si Conekta o Banrural reenvían el webhook, LEN no mintea dos veces.</p>
+          </div>
+        </div>
+        <div class="sec-item">
+          <div class="sec-icon">📊</div>
+          <div class="sec-body">
+            <h4>Límites AML / UIF</h4>
+            <p>$50,000 MXN máximo por transacción. $200,000 MXN diarios por usuario. Umbral regulatorio México (UIF). Verificación automática pre-ejecución.</p>
+          </div>
+        </div>
+        <div class="sec-item">
+          <div class="sec-icon">🗄️</div>
+          <div class="sec-body">
+            <h4>Firestore — Admin SDK</h4>
+            <p>API routes usan Firebase Admin SDK con service account. Bypasa security rules. El cliente (navegador) tiene acceso cero a colecciones de producción.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 8: COMPARACIÓN -->
+  <div class="slide bg-dark" id="s8">
+    <div class="slide-header"><span class="logo">LEN</span><span class="slide-title-tag">Comparativa</span></div>
+    <div style="width:100%; max-width:900px;">
+      <div class="tag">Por qué LEN gana</div>
+      <h2 style="margin-bottom:36px;">LEN vs competencia</h2>
+
+      <div style="display:flex; flex-direction:column; gap:16px;">
+        <div class="compare-row">
+          <div class="compare-label" style="font-weight:700; color:rgba(255,255,255,.3); font-size:11px; text-transform:uppercase; letter-spacing:1px;">Costo</div>
+          <div class="compare-bar-wrap">
+            <div class="bar bad" style="width:65%;">Banco 3–5%</div>
+          </div>
+        </div>
+        <div class="compare-row">
+          <div class="compare-label"></div>
+          <div class="compare-bar-wrap">
+            <div class="bar ok" style="width:42%;">WU / Remitly 2–4%</div>
+          </div>
+        </div>
+        <div class="compare-row">
+          <div class="compare-label"></div>
+          <div class="compare-bar-wrap">
+            <div class="bar good" style="width:12%;">LEN &nbsp;0.3%</div>
+          </div>
+        </div>
+
+        <div style="height:1px; background:rgba(255,255,255,.08); margin:8px 0;"></div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px;">
+          <div class="card" style="text-align:center;">
+            <div style="font-size:14px; color:rgba(255,255,255,.4); margin-bottom:8px;">Banco</div>
+            <div style="font-size:32px;">🏦</div>
+            <div style="margin-top:12px; display:flex; flex-direction:column; gap:6px; text-align:left;">
+              <div style="font-size:13px; color:rgba(255,255,255,.6);">⏱ 1–3 días hábiles</div>
+              <div style="font-size:13px; color:rgba(255,255,255,.6);">🕐 L–V 9am–5pm</div>
+              <div style="font-size:13px; color:rgba(255,255,255,.6);">💰 TC bancario (peor)</div>
+              <div style="font-size:13px; color:rgba(255,255,255,.6);">📋 Cuenta en ambos países</div>
+            </div>
+          </div>
+          <div class="card" style="text-align:center;">
+            <div style="font-size:14px; color:rgba(255,255,255,.4); margin-bottom:8px;">Western Union</div>
+            <div style="font-size:32px;">💸</div>
+            <div style="margin-top:12px; display:flex; flex-direction:column; gap:6px; text-align:left;">
+              <div style="font-size:13px; color:rgba(255,255,255,.6);">⏱ 0–24 horas</div>
+              <div style="font-size:13px; color:rgba(255,255,255,.6);">🕐 24/7 digital</div>
+              <div style="font-size:13px; color:rgba(255,255,255,.6);">💰 Spot –1–2%</div>
+              <div style="font-size:13px; color:rgba(255,255,255,.6);">📋 Tarjeta o cuenta</div>
+            </div>
+          </div>
+          <div class="card" style="text-align:center; border-color:rgba(129,140,248,.5); background:rgba(67,56,202,.15);">
+            <div style="font-size:14px; color:var(--violet); margin-bottom:8px; font-weight:700;">LEN ⚡</div>
+            <div style="font-size:32px;">🌎</div>
+            <div style="margin-top:12px; display:flex; flex-direction:column; gap:6px; text-align:left;">
+              <div style="font-size:13px; color:#fff;">⏱ &lt;2 horas</div>
+              <div style="font-size:13px; color:#fff;">🕐 24/7 siempre</div>
+              <div style="font-size:13px; color:#fff;">💰 TC mercado real</div>
+              <div style="font-size:13px; color:#fff;">📱 Solo teléfono</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 9: ESTADO ACTUAL -->
+  <div class="slide bg-mid" id="s9">
+    <div class="slide-header"><span class="logo">LEN</span><span class="slide-title-tag">Estado Actual</span></div>
+    <div style="width:100%; max-width:1000px;">
+      <div class="tag">Dónde estamos hoy</div>
+      <h2 style="margin-bottom:28px;">Qué está hecho · Qué falta</h2>
+      <div class="two-col">
+        <div>
+          <p style="font-size:13px; font-weight:700; color:#34D399; letter-spacing:2px; text-transform:uppercase; margin-bottom:14px;">✅ Completado</p>
+          <div class="steps">
+            <div class="step" style="padding:14px 16px;">
+              <div class="step-body"><h4><span class="dot green"></span>Contratos en Celo Sepolia</h4><p>MEXCOIN · QUETZA · LEMPI · 5 más — deployados 2026-04-23</p></div>
+            </div>
+            <div class="step" style="padding:14px 16px;">
+              <div class="step-body"><h4><span class="dot green"></span>Backend Pomelo completo</h4><p>5 endpoints · OAuth 2.0 · HMAC firmado · Admin SDK</p></div>
+            </div>
+            <div class="step" style="padding:14px 16px;">
+              <div class="step-body"><h4><span class="dot green"></span>Seguridad JWT + Firestore</h4><p>jose HS256 · Firebase Admin · Rules cerradas</p></div>
+            </div>
+            <div class="step" style="padding:14px 16px;">
+              <div class="step-body"><h4><span class="dot green"></span>App demo LIVE</h4><p>web-production-1c372.up.railway.app</p></div>
+            </div>
+          </div>
+        </div>
+        <div>
+          <p style="font-size:13px; font-weight:700; color:#FCD34D; letter-spacing:2px; text-transform:uppercase; margin-bottom:14px;">⏳ Pendiente</p>
+          <div class="steps">
+            <div class="step" style="padding:14px 16px;">
+              <div class="step-body"><h4><span class="dot amber"></span>Credenciales Pomelo sandbox</h4><p>Registro en developers.pomelo.la</p></div>
+            </div>
+            <div class="step" style="padding:14px 16px;">
+              <div class="step-body"><h4><span class="dot amber"></span>Conekta — contrato MX</h4><p>RFC empresa MX · API keys producción</p></div>
+            </div>
+            <div class="step" style="padding:14px 16px;">
+              <div class="step-body"><h4><span class="dot red"></span>Banrural GT — negociación</h4><p>Cuenta GTQ · API transferencias</p></div>
+            </div>
+            <div class="step" style="padding:14px 16px;">
+              <div class="step-body"><h4><span class="dot red"></span>Celo Mainnet deploy</h4><p>~$3 USD en CELO para gas real</p></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 10: QUOTE FINAL -->
+  <div class="slide bg-hero" id="s10">
+    <div style="text-align:center; max-width:900px;">
+      <div class="tag">La visión de LEN</div>
+      <div class="quote" style="font-size:42px; margin-bottom:40px;">
+        "El dinero no cruza fronteras.<br/>
+        <span>La información sí.</span><br/>
+        Celo es el puente invisible."
+      </div>
+      <div class="stats" style="max-width:700px; margin:0 auto;">
+        <div class="stat">
+          <div class="stat-num">0.3%</div>
+          <div class="stat-label">Comisión total<br/>vs 3–5% banco</div>
+        </div>
+        <div class="stat">
+          <div class="stat-num">&lt;2h</div>
+          <div class="stat-label">Tiempo entrega<br/>vs 1–3 días</div>
+        </div>
+        <div class="stat">
+          <div class="stat-num">24/7</div>
+          <div class="stat-label">Sin horarios<br/>bancarios</div>
+        </div>
+        <div class="stat">
+          <div class="stat-num">$0</div>
+          <div class="stat-label">Cuenta bancaria<br/>requerida</div>
+        </div>
+      </div>
+      <div style="margin-top:40px; display:flex; gap:12px; justify-content:center;">
+        <span class="pill purple">🇲🇽 Conekta</span>
+        <span class="pill purple">⚡ LEN</span>
+        <span class="pill purple">⛓️ Celo</span>
+        <span class="pill purple">🇬🇹 Banrural</span>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /deck -->
+
+<!-- NAV -->
+<div class="nav">
+  <button id="btn-prev" onclick="nav(-1)" disabled>←</button>
+  <div class="dots" id="dots"></div>
+  <span class="slide-counter" id="counter">1 / 10</span>
+  <button id="btn-next" onclick="nav(1)">→</button>
+</div>
+
+<script>
+  const slides = document.querySelectorAll('.slide');
+  const total  = slides.length;
+  let cur = 0;
+
+  // Build dots
+  const dotsEl = document.getElementById('dots');
+  slides.forEach((_, i) => {
+    const d = document.createElement('button');
+    d.className = 'dot-nav' + (i===0?' active':'');
+    d.onclick = () => goTo(i);
+    dotsEl.appendChild(d);
+  });
+
+  function goTo(n) {
+    slides[cur].classList.remove('active');
+    slides[cur].classList.add('exit');
+    setTimeout(() => slides[cur].classList.remove('exit'), 450);
+    cur = n;
+    slides[cur].classList.add('active');
+    document.querySelectorAll('.dot-nav').forEach((d,i) => d.classList.toggle('active', i===cur));
+    document.getElementById('counter').textContent = `${cur+1} / ${total}`;
+    document.getElementById('btn-prev').disabled = cur === 0;
+    document.getElementById('btn-next').disabled = cur === total-1;
+  }
+
+  function nav(dir) {
+    const n = cur + dir;
+    if (n >= 0 && n < total) goTo(n);
+  }
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') nav(1);
+    if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')                     nav(-1);
+  });
+</script>
+</body>
+</html>

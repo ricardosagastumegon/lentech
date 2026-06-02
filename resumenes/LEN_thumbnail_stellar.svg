@@ -1,0 +1,201 @@
+<svg width="1280" height="720" viewBox="0 0 1280 720" xmlns="http://www.w3.org/2000/svg" font-family="Inter, system-ui, sans-serif">
+  <defs>
+    <!-- Background gradient matching LEN brand -->
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%"   stop-color="#1E1B4B"/>
+      <stop offset="55%"  stop-color="#312E81"/>
+      <stop offset="100%" stop-color="#4338CA"/>
+    </linearGradient>
+
+    <!-- Card glass effect -->
+    <linearGradient id="cardGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%"   stop-color="#ffffff" stop-opacity="0.14"/>
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0.05"/>
+    </linearGradient>
+
+    <!-- Token card gradient -->
+    <linearGradient id="tokenGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%"   stop-color="#4338CA" stop-opacity="0.7"/>
+      <stop offset="100%" stop-color="#818CF8" stop-opacity="0.3"/>
+    </linearGradient>
+
+    <!-- Glow -->
+    <radialGradient id="centerGlow" cx="30%" cy="50%" r="55%">
+      <stop offset="0%"   stop-color="#818CF8" stop-opacity="0.18"/>
+      <stop offset="100%" stop-color="#1E1B4B" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- Logo hex clip -->
+    <clipPath id="hexClip">
+      <polygon points="64,0 128,32 128,96 64,128 0,96 0,32"/>
+    </clipPath>
+
+    <!-- Drop shadow filter -->
+    <filter id="cardShadow" x="-10%" y="-10%" width="120%" height="130%">
+      <feDropShadow dx="0" dy="8" stdDeviation="16" flood-color="#4338CA" flood-opacity="0.25"/>
+    </filter>
+    <filter id="glowFilter">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+    </filter>
+  </defs>
+
+  <!-- ── BACKGROUND ───────────────────────────────────────────── -->
+  <rect width="1280" height="720" fill="url(#bgGrad)"/>
+  <rect width="1280" height="720" fill="url(#centerGlow)"/>
+
+  <!-- Decorative rings -->
+  <circle cx="200" cy="620" r="300" fill="none" stroke="#818CF8" stroke-opacity="0.06" stroke-width="1.5"/>
+  <circle cx="200" cy="620" r="200" fill="none" stroke="#818CF8" stroke-opacity="0.06" stroke-width="1"/>
+  <circle cx="1100" cy="80"  r="280" fill="none" stroke="#818CF8" stroke-opacity="0.06" stroke-width="1.5"/>
+  <circle cx="1100" cy="80"  r="180" fill="none" stroke="#818CF8" stroke-opacity="0.06" stroke-width="1"/>
+
+  <!-- Grid dots (subtle texture) -->
+  <pattern id="dots" x="0" y="0" width="40" height="40" patternUnits="userSpaceOnUse">
+    <circle cx="20" cy="20" r="1" fill="#818CF8" fill-opacity="0.08"/>
+  </pattern>
+  <rect width="1280" height="720" fill="url(#dots)"/>
+
+  <!-- ── LOGO MARK — hexagon network ──────────────────────────── -->
+  <g transform="translate(90, 270)">
+    <!-- Outer hex ring -->
+    <polygon points="64,0 128,37 128,111 64,148 0,111 0,37"
+             fill="none" stroke="#818CF8" stroke-opacity="0.4" stroke-width="1.5"/>
+    <!-- Inner fill -->
+    <polygon points="64,10 118,41 118,107 64,138 10,107 10,41"
+             fill="#818CF8" fill-opacity="0.08"/>
+
+    <!-- Three nodes representing MX / GT / HN -->
+    <!-- MX (top left) -->
+    <circle cx="32"  cy="52"  r="14" fill="#818CF8" fill-opacity="0.9"/>
+    <text x="32" y="57" font-size="11" font-weight="700" fill="#1E1B4B" text-anchor="middle">MX</text>
+
+    <!-- GT (top right) -->
+    <circle cx="96"  cy="52"  r="14" fill="#818CF8" fill-opacity="0.9"/>
+    <text x="96" y="57" font-size="11" font-weight="700" fill="#1E1B4B" text-anchor="middle">GT</text>
+
+    <!-- HN (bottom center) -->
+    <circle cx="64"  cy="110" r="14" fill="#818CF8" fill-opacity="0.9"/>
+    <text x="64" y="115" font-size="11" font-weight="700" fill="#1E1B4B" text-anchor="middle">HN</text>
+
+    <!-- Connecting lines -->
+    <line x1="46"  y1="52"  x2="82"  y2="52"  stroke="#818CF8" stroke-opacity="0.7" stroke-width="1.5"/>
+    <line x1="38"  y1="63"  x2="57"  y2="97"  stroke="#818CF8" stroke-opacity="0.7" stroke-width="1.5"/>
+    <line x1="90"  y1="63"  x2="71"  y2="97"  stroke="#818CF8" stroke-opacity="0.7" stroke-width="1.5"/>
+
+    <!-- Transfer arrows on lines -->
+    <polygon points="64,52 58,46 58,58" fill="#818CF8" fill-opacity="0.7"/>
+  </g>
+
+  <!-- ── WORDMARK ─────────────────────────────────────────────── -->
+  <text x="90" y="250" font-size="96" font-weight="800" fill="white" letter-spacing="16">LEN</text>
+  <text x="94" y="488" font-size="17" font-weight="500" fill="#818CF8" letter-spacing="4">REGIONAL DIGITAL CURRENCIES</text>
+
+  <!-- Divider line -->
+  <line x1="90" y1="510" x2="440" y2="510" stroke="#818CF8" stroke-opacity="0.3" stroke-width="1"/>
+
+  <!-- Tagline -->
+  <text x="90" y="546" font-size="15" font-weight="400" fill="white" fill-opacity="0.6" letter-spacing="1">
+    El sistema cambista, digitalizado y legal.
+  </text>
+
+  <!-- ── RIGHT SIDE — TOKEN CARDS ──────────────────────────────── -->
+
+  <!-- MEXCOIN card -->
+  <g transform="translate(580, 130)" filter="url(#cardShadow)">
+    <rect width="300" height="130" rx="20" fill="url(#cardGrad)" stroke="#818CF8" stroke-opacity="0.2" stroke-width="1"/>
+    <rect width="300" height="130" rx="20" fill="url(#tokenGrad)"/>
+    <!-- Flag emoji substitute — colored rect -->
+    <rect x="24" y="24" width="36" height="24" rx="4" fill="#006847"/>
+    <rect x="30" y="24" width="12" height="24" fill="#CE1126"/>
+    <rect x="36" y="24" width="12" height="24" fill="#FFFFFF"/>
+    <text x="76" y="42" font-size="18" font-weight="700" fill="white">MEXCOIN</text>
+    <text x="76" y="62" font-size="12" font-weight="400" fill="#818CF8">México · MXN</text>
+    <text x="24" y="105" font-size="28" font-weight="800" fill="white">1 MXN</text>
+    <text x="194" y="105" font-size="14" font-weight="500" fill="#818CF8" text-anchor="end"> = 1 MEXCOIN</text>
+  </g>
+
+  <!-- QUETZA card -->
+  <g transform="translate(580, 285)" filter="url(#cardShadow)">
+    <rect width="300" height="130" rx="20" fill="url(#cardGrad)" stroke="#818CF8" stroke-opacity="0.2" stroke-width="1"/>
+    <rect width="300" height="130" rx="20" fill="url(#tokenGrad)"/>
+    <!-- Guatemala flag -->
+    <rect x="24" y="24" width="36" height="24" rx="4" fill="#4997D0"/>
+    <rect x="30" y="24" width="12" height="24" fill="#FFFFFF"/>
+    <rect x="36" y="24" width="12" height="24" fill="#4997D0"/>
+    <text x="76" y="42" font-size="18" font-weight="700" fill="white">QUETZA</text>
+    <text x="76" y="62" font-size="12" font-weight="400" fill="#818CF8">Guatemala · GTQ</text>
+    <text x="24" y="105" font-size="28" font-weight="800" fill="white">1 GTQ</text>
+    <text x="194" y="105" font-size="14" font-weight="500" fill="#818CF8" text-anchor="end"> = 1 QUETZA</text>
+  </g>
+
+  <!-- LEMPI card -->
+  <g transform="translate(580, 440)" filter="url(#cardShadow)">
+    <rect width="300" height="130" rx="20" fill="url(#cardGrad)" stroke="#818CF8" stroke-opacity="0.2" stroke-width="1"/>
+    <rect width="300" height="130" rx="20" fill="url(#tokenGrad)"/>
+    <!-- Honduras flag -->
+    <rect x="24" y="24" width="36" height="24" rx="4" fill="#003DA5"/>
+    <rect x="24" y="32" width="36" height="8" fill="#FFFFFF"/>
+    <text x="76" y="42" font-size="18" font-weight="700" fill="white">LEMPI</text>
+    <text x="76" y="62" font-size="12" font-weight="400" fill="#818CF8">Honduras · HNL</text>
+    <text x="24" y="105" font-size="28" font-weight="800" fill="white">1 HNL</text>
+    <text x="194" y="105" font-size="14" font-weight="500" fill="#818CF8" text-anchor="end"> = 1 LEMPI</text>
+  </g>
+
+  <!-- FX fee badge -->
+  <g transform="translate(580, 595)">
+    <rect width="300" height="52" rx="14" fill="#059669" fill-opacity="0.15" stroke="#059669" stroke-opacity="0.4" stroke-width="1"/>
+    <text x="150" y="32" font-size="14" font-weight="600" fill="#34D399" text-anchor="middle" letter-spacing="1">
+      0.3% FX — sin USD como base
+    </text>
+  </g>
+
+  <!-- ── RIGHT EDGE — Stellar badge ────────────────────────────── -->
+  <g transform="translate(940, 130)">
+    <rect width="260" height="460" rx="24" fill="white" fill-opacity="0.04" stroke="#818CF8" stroke-opacity="0.15" stroke-width="1"/>
+
+    <!-- Arrow flow diagram -->
+    <text x="130" y="60"  font-size="13" font-weight="600" fill="white" fill-opacity="0.5" text-anchor="middle">POWERED BY</text>
+
+    <!-- Stellar logo text -->
+    <text x="130" y="110" font-size="36" font-weight="800" fill="white" text-anchor="middle">Stellar</text>
+    <line x1="40" y1="130" x2="220" y2="130" stroke="#818CF8" stroke-opacity="0.2" stroke-width="1"/>
+
+    <!-- Flow -->
+    <text x="130" y="180" font-size="12" fill="#818CF8" text-anchor="middle">Settlement Layer</text>
+
+    <rect x="50" y="200" width="160" height="32" rx="8" fill="#4338CA" fill-opacity="0.4"/>
+    <text x="130" y="221" font-size="12" font-weight="600" fill="white" text-anchor="middle">Stellar DEX / AMM</text>
+
+    <text x="130" y="265" font-size="11" fill="white" fill-opacity="0.4" text-anchor="middle">Path Payments</text>
+
+    <rect x="50" y="280" width="160" height="32" rx="8" fill="#4338CA" fill-opacity="0.4"/>
+    <text x="130" y="301" font-size="12" font-weight="600" fill="white" text-anchor="middle">3-5 seg · 24/7</text>
+
+    <text x="130" y="350" font-size="11" fill="white" fill-opacity="0.4" text-anchor="middle">Anchors por país</text>
+
+    <rect x="50" y="365" width="160" height="32" rx="8" fill="#059669" fill-opacity="0.3"/>
+    <text x="130" y="386" font-size="12" font-weight="600" fill="#34D399" text-anchor="middle">Banrural · STP · BAC</text>
+
+    <text x="130" y="430" font-size="10" fill="#818CF8" fill-opacity="0.6" text-anchor="middle">Integration Track · SCF 2026</text>
+  </g>
+
+  <!-- ── BOTTOM BAR ─────────────────────────────────────────────── -->
+  <rect x="0" y="670" width="1280" height="50" fill="#1E1B4B" fill-opacity="0.6"/>
+  <line x1="0" y1="670" x2="1280" y2="670" stroke="#818CF8" stroke-opacity="0.2" stroke-width="1"/>
+
+  <text x="90"  y="700" font-size="13" font-weight="500" fill="white" fill-opacity="0.5">
+    LEN — Economia informal MX · GT · HN
+  </text>
+  <text x="1190" y="700" font-size="13" font-weight="500" fill="#818CF8" fill-opacity="0.7" text-anchor="end">
+    len.finance · 2026
+  </text>
+
+  <!-- TAM badge -->
+  <g transform="translate(500, 676)">
+    <rect width="280" height="38" rx="8" fill="#4338CA" fill-opacity="0.3"/>
+    <text x="140" y="24" font-size="13" font-weight="600" fill="white" fill-opacity="0.8" text-anchor="middle">
+      TAM $500M · Comercio informal LATAM
+    </text>
+  </g>
+</svg>
