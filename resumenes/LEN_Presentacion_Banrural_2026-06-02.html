@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LEN × Banrural — Presentación de Alianza</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --purple:#4338CA; --violet:#818CF8; --dark:#1E1B4B; --mid:#312E81;
+    --light:#EEF2FF; --border:#E0E7FF; --surface:#F9FAFB;
+    --grad:linear-gradient(135deg,#1E1B4B 0%,#312E81 55%,#4338CA 100%);
+  }
+  *{box-sizing:border-box;-webkit-print-color-adjust:exact;print-color-adjust:exact;margin:0;padding:0;}
+  body{font-family:'Inter',-apple-system,'Segoe UI',sans-serif;color:var(--dark);background:#cbd5e1;line-height:1.5;}
+  .deck{max-width:960px;margin:0 auto;}
+  .slide{background:#fff;margin:24px auto;border-radius:18px;overflow:hidden;box-shadow:0 10px 40px rgba(30,27,75,.15);min-height:540px;position:relative;page-break-after:always;}
+  .pad{padding:48px 56px;}
+  .eyebrow{font-size:11px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:var(--violet);margin-bottom:10px;}
+  h1{font-size:38px;font-weight:900;letter-spacing:-1px;line-height:1.1;}
+  h2{font-size:27px;font-weight:800;letter-spacing:-.5px;color:var(--dark);margin-bottom:6px;}
+  h3{font-size:15px;font-weight:800;color:var(--mid);}
+  p{font-size:14.5px;color:#374151;}
+  .muted{color:#6B7280;}
+  .grad{background:var(--grad);color:#fff;}
+  .grad h1,.grad h2,.grad p,.grad .eyebrow{color:#fff;}
+  .grad .eyebrow{color:rgba(255,255,255,.6);}
+  .tag{display:inline-block;background:var(--light);color:var(--purple);font-weight:700;font-size:12px;padding:5px 12px;border-radius:20px;margin:3px 4px 3px 0;border:1px solid var(--border);}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px;}
+  .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px 20px;}
+  .card .big{font-size:30px;font-weight:900;color:var(--purple);line-height:1;}
+  .card .lbl{font-size:12px;color:#6B7280;font-weight:600;margin-top:6px;}
+  ul{list-style:none;}
+  li{font-size:14px;color:#374151;padding:7px 0 7px 26px;position:relative;border-bottom:1px solid #F3F4F6;}
+  li:before{content:"→";position:absolute;left:0;color:var(--purple);font-weight:800;}
+  table{width:100%;border-collapse:collapse;font-size:13px;margin-top:8px;}
+  th{background:var(--surface);text-align:left;padding:9px 12px;font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--mid);border-bottom:2px solid var(--border);}
+  td{padding:9px 12px;border-bottom:1px solid #F3F4F6;vertical-align:top;}
+  .num{display:inline-flex;width:26px;height:26px;border-radius:50%;background:var(--purple);color:#fff;font-weight:800;font-size:12px;align-items:center;justify-content:center;}
+  .ok{color:#059669;font-weight:700;}
+  .flow{background:var(--dark);color:#c7d2fe;border-radius:14px;padding:22px;font-family:'Courier New',monospace;font-size:12.5px;line-height:1.9;white-space:pre-wrap;}
+  .pill{background:var(--grad);color:#fff;border-radius:14px;padding:20px 24px;margin-top:16px;}
+  .pill .q{font-size:16px;font-weight:700;font-style:italic;}
+  .lev{background:var(--light);border-left:4px solid var(--purple);border-radius:0 10px 10px 0;padding:14px 18px;margin-top:12px;}
+  .foot{position:absolute;bottom:16px;left:56px;right:56px;display:flex;justify-content:space-between;font-size:10.5px;color:#9CA3AF;border-top:1px solid #F3F4F6;padding-top:10px;}
+  .logo{font-size:22px;font-weight:900;letter-spacing:-1px;}
+  .logo .dot{color:var(--violet);}
+  @media print{body{background:#fff;}.slide{box-shadow:none;margin:0;border-radius:0;min-height:100vh;}@page{size:A4 landscape;margin:0;}}
+</style>
+</head>
+<body>
+<div class="deck">
+
+<!-- 1 · PORTADA -->
+<section class="slide grad">
+  <div class="pad" style="display:flex;flex-direction:column;justify-content:center;height:540px;">
+    <div class="logo">LEN<span class="dot">.</span></div>
+    <div class="eyebrow" style="margin-top:40px;">Propuesta de alianza estratégica</div>
+    <h1 style="font-size:46px;">LEN × Banrural</h1>
+    <p style="font-size:18px;max-width:620px;margin-top:16px;color:rgba(255,255,255,.85);">
+      La capa digital que conecta a Banrural con el corredor de remesas y comercio
+      México&nbsp;–&nbsp;Guatemala&nbsp;–&nbsp;Honduras. Fideicomiso + conectividad ACH/BANGUAT.
+    </p>
+    <div style="margin-top:36px;">
+      <span class="tag" style="background:rgba(255,255,255,.12);color:#fff;border-color:rgba(255,255,255,.25);">QUETZA · GTQ 1:1</span>
+      <span class="tag" style="background:rgba(255,255,255,.12);color:#fff;border-color:rgba(255,255,255,.25);">No somos un banco</span>
+      <span class="tag" style="background:rgba(255,255,255,.12);color:#fff;border-color:rgba(255,255,255,.25);">Fondos en Banrural</span>
+    </div>
+    <p style="margin-top:48px;font-size:13px;color:rgba(255,255,255,.6);">Ricardo · Founder, LEN · agroajua@gmail.com · Guatemala 2026</p>
+  </div>
+</section>
+
+<!-- 2 · QUÉ ES LEN -->
+<section class="slide">
+  <div class="pad">
+    <div class="eyebrow">Qué es LEN</div>
+    <h2>Una plataforma fintech, no un banco</h2>
+    <p class="muted" style="margin-bottom:18px;">LEN es la capa tecnológica que conecta bancos regulados con usuarios digitales en GT, MX y HN.</p>
+    <div class="grid2">
+      <ul>
+        <li>El usuario deposita desde <b>cualquier banco</b> por transferencia</li>
+        <li>Mantiene saldo en una <b>wallet digital</b> respaldada 1:1 por su moneda local</li>
+        <li>Envía dinero <b>instantáneo entre países</b> (GT→MX, MX→HN…)</li>
+        <li>Paga con <b>tarjeta virtual Mastercard</b> (integración Pomelo)</li>
+      </ul>
+      <div class="card">
+        <h3 style="margin-bottom:10px;">El principio clave</h3>
+        <p style="font-size:15px;"><b>El dinero nunca cruza la frontera.</b> En Guatemala siempre hay GTQ; en México siempre hay MXN. LEN mueve la <i>representación</i> del dinero, no los fondos.</p>
+        <div class="lev" style="margin-top:14px;"><b>Banrural = la custodia regulada.</b> LEN = la tecnología. El usuario ve LEN; el respaldo vive en Banrural.</div>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>LEN × Banrural</span><span>02</span></div>
+</section>
+
+<!-- 3 · OPORTUNIDAD -->
+<section class="slide">
+  <div class="pad">
+    <div class="eyebrow">La oportunidad</div>
+    <h2>Un corredor de miles de millones, hoy informal</h2>
+    <p class="muted" style="margin-bottom:18px;">Los cambistas de frontera ya mueven este dinero — sin regulación, sin trazabilidad, sin banco. LEN lo digitaliza y lo legaliza con Banrural.</p>
+    <div class="grid3" style="margin-bottom:18px;">
+      <div class="card"><div class="big">$2.8B</div><div class="lbl">Remesas entrantes a Guatemala / año (Banguat 2025)</div></div>
+      <div class="card"><div class="big">$8.5B</div><div class="lbl">Movimiento informal estimado en el corredor GT–MX–HN</div></div>
+      <div class="card"><div class="big">0.3%</div><div class="lbl">Costo LEN por envío — vs 3–7% de la banca/remesadoras</div></div>
+    </div>
+    <div class="lev">
+      <h3>Para Banrural</h3>
+      <p>Nuevos clientes digitales sin costo de adquisición, volumen transaccional desde el día 1 (usuarios MX enviando a GT), y posicionamiento como banco fintech de vanguardia en inclusión financiera.</p>
+    </div>
+  </div>
+  <div class="foot"><span>LEN × Banrural</span><span>03</span></div>
+</section>
+
+<!-- 4 · MODELO OPERATIVO / FLUJO -->
+<section class="slide">
+  <div class="pad">
+    <div class="eyebrow">Modelo operativo</div>
+    <h2>Cómo funciona con Banrural</h2>
+    <p class="muted" style="margin-bottom:16px;">Los fondos de los usuarios guatemaltecos <b>siempre</b> están en Banrural. LEN solo opera la capa digital.</p>
+    <div class="flow">Usuario GT deposita GTQ
+   → Transferencia a la cuenta <b>fideicomiso LEN en Banrural</b>
+   → LEN acredita QUETZA (token 1:1 con GTQ) en su wallet
+   → El usuario ve su saldo en la app LEN
+
+Usuario GT quiere retirar
+   → LEN da de baja el QUETZA equivalente
+   → LEN ordena transferencia desde el fideicomiso Banrural
+   → El usuario recibe GTQ en su cuenta bancaria</div>
+    <div class="lev"><b>Sub-cuentas virtuales por usuario</b> (modelo análogo a STP en México): cada usuario tiene su referencia única dentro de la cuenta fideicomiso de Banrural.</div>
+  </div>
+  <div class="foot"><span>LEN × Banrural</span><span>04</span></div>
+</section>
+
+<!-- 5 · SEGURIDAD -->
+<section class="slide">
+  <div class="pad">
+    <div class="eyebrow">Seguridad bancaria</div>
+    <h2>8 capas alineadas a FATF / GAFILAT</h2>
+    <table>
+      <tr><th style="width:30px;">#</th><th>Capa</th><th>Implementación</th></tr>
+      <tr><td><span class="num">1</span></td><td><b>Autenticación</b></td><td>Hashing fuerte de credenciales (estándar OWASP)</td></tr>
+      <tr><td><span class="num">2</span></td><td><b>Sesiones JWT</b></td><td>Access corto + refresh con rotación</td></tr>
+      <tr><td><span class="num">3</span></td><td><b>Cifrado PII</b></td><td>AES-256-GCM, IV por operación</td></tr>
+      <tr><td><span class="num">4</span></td><td><b>Webhooks bancarios</b></td><td>HMAC-SHA256, comparación de tiempo constante</td></tr>
+      <tr><td><span class="num">5</span></td><td><b>Idempotencia</b></td><td>ID único por evento — imposible doble crédito</td></tr>
+      <tr><td><span class="num">6</span></td><td><b>Anti-replay</b></td><td>Rechazo de webhooks con &gt;5 min de antigüedad</td></tr>
+      <tr><td><span class="num">7</span></td><td><b>Fondos segregados</b></td><td>Fideicomiso Banrural — nunca mezclados con capital LEN</td></tr>
+      <tr><td><span class="num">8</span></td><td><b>Trazabilidad on-chain</b></td><td>Cada acreditación/baja registrada y auditable</td></tr>
+    </table>
+    <div class="lev"><b>Compliance AML/CFT:</b> KYC escalonado por niveles, monitoreo de transacciones y detección de fraccionamiento, reporte de operaciones sospechosas y conservación de registros.</div>
+  </div>
+  <div class="foot"><span>LEN × Banrural</span><span>05</span></div>
+</section>
+
+<!-- 6 · ESTADO TÉCNICO -->
+<section class="slide">
+  <div class="pad">
+    <div class="eyebrow">No es una idea — está construido</div>
+    <h2>Estado técnico actual</h2>
+    <div class="grid2">
+      <ul>
+        <li>App web <b class="ok">LIVE</b> · panel admin con bancos, KYC/AML y FX</li>
+        <li>Contratos del token <b>QUETZA (GTQ)</b> desplegados y verificables en celoscan</li>
+        <li>Backend de integración bancaria y de tarjeta <b>escrito y compilando</b></li>
+        <li>Verificación de webhooks, idempotencia y límites AML implementados</li>
+      </ul>
+      <div class="card">
+        <h3 style="margin-bottom:8px;">Stack</h3>
+        <p style="font-size:13px;">Next.js 14 · TypeScript · NestJS · PostgreSQL + Firestore · Celo (EVM, ~$0.001/tx, ~5s) · ERC-20 OpenZeppelin v5 · monorepo pnpm/Turborepo.</p>
+        <h3 style="margin:14px 0 6px;">Por qué Celo</h3>
+        <p style="font-size:13px;">No es DeFi especulativo: tokens 1:1 con fiat que no fluctúan. Cada movimiento es público y auditable. Usado para inclusión financiera real en LATAM.</p>
+      </div>
+    </div>
+    <p class="muted" style="margin-top:14px;font-size:12px;">Contrato QUETZA verificable: celoscan.io/address/0xba45b516C4fC485231863681B5ECc4E385105a13</p>
+  </div>
+  <div class="foot"><span>LEN × Banrural</span><span>06</span></div>
+</section>
+
+<!-- 7 · LA PROPUESTA / ASKS -->
+<section class="slide">
+  <div class="pad">
+    <div class="eyebrow">Lo que proponemos</div>
+    <h2>3 cosas concretas de Banrural</h2>
+    <table>
+      <tr><th style="width:30px;">#</th><th>Pedimos</th><th>Para qué</th></tr>
+      <tr><td><span class="num">1</span></td><td><b>Cuenta fideicomiso LEN</b></td><td>Custodia de fondos de usuarios GT, con sub-cuentas virtuales por usuario. Banrural recibe el float.</td></tr>
+      <tr><td><span class="num">2</span></td><td><b>Conectividad ACH / BANGUAT</b></td><td>API o acuerdo para depósitos y retiros en GTQ + webhook de confirmación al recibir un depósito.</td></tr>
+      <tr><td><span class="num">3</span></td><td><b>Co-marketing (opcional)</b></td><td>LEN como canal digital de Banrural para población no bancarizada.</td></tr>
+    </table>
+    <h3 style="margin:18px 0 6px;">Lo que LEN aporta</h3>
+    <ul>
+      <li>Tecnología completa desarrollada y funcional + equipo dedicado a la integración</li>
+      <li>Cumplimiento AML/KYC desde el día 1</li>
+      <li>Modelo regulatorio claro: <b>LEN = tech, Banrural = custodia regulada</b></li>
+    </ul>
+  </div>
+  <div class="foot"><span>LEN × Banrural</span><span>07</span></div>
+</section>
+
+<!-- 8 · NEGOCIO + ROADMAP -->
+<section class="slide">
+  <div class="pad">
+    <div class="eyebrow">Negocio y ruta</div>
+    <h2>Modelo de ingresos y roadmap 2026</h2>
+    <div class="grid2">
+      <div>
+        <h3 style="margin-bottom:6px;">Fuentes de ingreso</h3>
+        <table>
+          <tr><th>Concepto</th><th>Fee</th></tr>
+          <tr><td>FX cross-country</td><td>0.3%</td></tr>
+          <tr><td>Retiro a banco</td><td>Q0.50–Q2.00</td></tr>
+          <tr><td>Tarjeta Mastercard</td><td>1.5–2.5% interchange</td></tr>
+        </table>
+        <p class="muted" style="font-size:12px;margin-top:10px;">Volumen año 1 — conservador: <b>$500K</b> · optimista: <b>$2M</b> USD equiv. en GTQ.</p>
+      </div>
+      <div>
+        <h3 style="margin-bottom:6px;">Roadmap</h3>
+        <table>
+          <tr><th>Trim.</th><th>Hito</th></tr>
+          <tr><td>Q2'26</td><td>Alianza Banrural GT + Conekta MX</td></tr>
+          <tr><td>Q3'26</td><td>Tarjeta Mastercard · 1,000 usuarios</td></tr>
+          <tr><td>Q4'26</td><td>Honduras (BAC) · 10,000 usuarios</td></tr>
+        </table>
+      </div>
+    </div>
+    <div class="pill">
+      <div class="eyebrow">Ask estrella para la reunión</div>
+      <p class="q">"Queremos salir de esta junta con tres cosas: (a) interés formal en una cuenta fideicomiso, (b) a quién contactar para la conectividad ACH/BANGUAT, y (c) una fecha para el siguiente paso. ¿Es viable?"</p>
+    </div>
+  </div>
+  <div class="foot"><span>LEN × Banrural</span><span>08</span></div>
+</section>
+
+<!-- 9 · FAQ / CIERRE -->
+<section class="slide grad">
+  <div class="pad">
+    <div class="eyebrow">Para la conversación</div>
+    <h2 style="color:#fff;">Preguntas que probablemente surjan</h2>
+    <div style="margin-top:16px;display:grid;gap:14px;">
+      <div><b>¿LEN necesita licencia bancaria?</b><br><span style="color:rgba(255,255,255,.8);font-size:13.5px;">No. LEN es la capa tecnológica; Banrural es la entidad regulada. Modelo análogo a fintech + banco custodio.</span></div>
+      <div><b>¿Qué pasa si LEN deja de operar?</b><br><span style="color:rgba(255,255,255,.8);font-size:13.5px;">Los fondos están en el fideicomiso de Banrural — intocables por LEN. Los usuarios siempre pueden retirar.</span></div>
+      <div><b>¿Es seguro el respaldo digital?</b><br><span style="color:rgba(255,255,255,.8);font-size:13.5px;">Cada token equivale a 1 GTQ custodiado. Todo movimiento es público y verificable; no hay especulación ni fluctuación.</span></div>
+    </div>
+    <div style="margin-top:40px;border-top:1px solid rgba(255,255,255,.2);padding-top:20px;">
+      <div class="logo">LEN<span class="dot">.</span></div>
+      <p style="color:rgba(255,255,255,.85);margin-top:8px;">Hagamos legal y digital lo que la frontera ya hace todos los días.</p>
+      <p style="color:rgba(255,255,255,.6);font-size:13px;margin-top:14px;">Ricardo · Founder, LEN · agroajua@gmail.com</p>
+    </div>
+  </div>
+</section>
+
+</div>
+</body>
+</html>
