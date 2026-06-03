@@ -62,6 +62,9 @@ export default function AdquirirPage() {
   const { user }      = useAuthStore();
   const wallets       = useWalletStore(s => s.wallets);
   const [copied, setCopied] = useState<string | null>(null);
+  const [depAmount,  setDepAmount]  = useState('');
+  const [depLoading, setDepLoading] = useState(false);
+  const [depDone,    setDepDone]    = useState<string | null>(null);
 
   const country   = (user?.country ?? 'GT') as BankCountry;
   const coin      = COUNTRY_TO_COIN[country] ?? 'QUETZA';
@@ -77,6 +80,33 @@ export default function AdquirirPage() {
     navigator.clipboard.writeText(text).catch(() => {});
     setCopied(key);
     setTimeout(() => setCopied(null), 2500);
+  }
+
+  const isReal   = (user?.id ?? '').startsWith('usr_');
+  const bankName = country === 'GT' ? 'Banrural' : country === 'MX' ? 'Conekta/SPEI' : 'BAC';
+
+  async function simulateDeposit() {
+    const amt = parseFloat(depAmount);
+    if (!amt || amt <= 0) return;
+    setDepLoading(true); setDepDone(null);
+    try {
+      const token = useAuthStore.getState().accessToken;
+      const res = await fetch('/api/wallet/deposit', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        body:    JSON.stringify({ amount: amt }),
+      });
+      const json = await res.json();
+      if (!res.ok || !json.ok) throw new Error(json.error || 'No se pudo depositar');
+      const { syncFromBackend } = await import('@/lib/wallet-sync');
+      if (token) await syncFromBackend(token);
+      setDepDone(`✓ +${fmt(json.data.net)} ${coin} acreditados · comisión ${fmt(json.data.fee)} ${coinMeta.fiat} (${json.data.fee_percent}%)`);
+      setDepAmount('');
+    } catch (e) {
+      setDepDone(e instanceof Error ? e.message : 'Error');
+    } finally {
+      setDepLoading(false);
+    }
   }
 
   return (
@@ -105,6 +135,34 @@ export default function AdquirirPage() {
         </div>
         <span className="text-2xl">{coinMeta.flag}</span>
       </div>
+
+      {/* Simular depósito (DEMO) — acredita al ledger menos comisión */}
+      {isReal && (
+        <div className="bg-white rounded-3xl border-2 border-dashed border-len-purple/40 p-4 mb-5">
+          <p className="text-[10px] font-bold text-len-purple uppercase tracking-widest mb-2">
+            🧪 Demo · simular depósito en {bankName}
+          </p>
+          <div className="flex gap-2">
+            <input
+              type="number" inputMode="decimal" value={depAmount}
+              onChange={e => { setDepAmount(e.target.value); setDepDone(null); }}
+              placeholder={`Monto en ${coinMeta.fiat}`}
+              className="input-field flex-1"
+            />
+            <button
+              onClick={simulateDeposit}
+              disabled={depLoading || !depAmount}
+              className="btn-primary px-5 whitespace-nowrap disabled:opacity-50"
+            >
+              {depLoading ? '…' : 'Depositar'}
+            </button>
+          </div>
+          {depDone && <p className="text-xs text-emerald-600 font-semibold mt-2">{depDone}</p>}
+          <p className="text-[10px] text-gray-400 mt-2 leading-relaxed">
+            Simula la confirmación del banco → se acredita {coin} 1:1 menos comisión (configurable en LEN Admin).
+          </p>
+        </div>
+      )}
 
       {/* How it works */}
       <div className="bg-len-light rounded-3xl px-4 py-4 border border-len-border mb-5">

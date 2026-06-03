@@ -213,8 +213,8 @@ export default function WithdrawPage() {
   const { wallets }  = useWalletStore();
   const { accounts, addAccount, removeAccount } = useBankStore();
 
-  // Retiros deshabilitados hasta integrar proveedor SPEI/ACH
-  if (process.env.NEXT_PUBLIC_WITHDRAWALS_ENABLED !== 'true') {
+  // Retiros: habilitados para usuarios reales (ledger). Demo legacy detrás del flag.
+  if (process.env.NEXT_PUBLIC_WITHDRAWALS_ENABLED !== 'true' && !(user?.id ?? '').startsWith('usr_')) {
     return (
       <div className="min-h-[70vh] flex flex-col items-center justify-center px-4 text-center">
         <div className="w-16 h-16 bg-len-light rounded-3xl flex items-center justify-center mx-auto mb-4">
@@ -240,7 +240,8 @@ export default function WithdrawPage() {
   const meta     = COINS[coin];
   const wallet   = wallets.find(w => w.coin === coin);
 
-  const fiatAvailable = parseFloat(wallet?.fiatBalance ?? '0');
+  // Saldo del coin (modelo de una sola moneda); el retiro debita el coin y paga fiat 1:1.
+  const fiatAvailable = parseFloat(wallet?.available ?? '0');
 
   const [step,       setStep]      = useState<Step>('accounts');
   const [selected,   setSelected]  = useState<BankAccount | null>(null);
@@ -255,6 +256,9 @@ export default function WithdrawPage() {
 
   const numAmount  = parseFloat(amount) || 0;
   const isValid    = numAmount > 0 && numAmount <= fiatAvailable && !!selected;
+  // Comisión estimada (servidor es autoritativo): 1.5% con mínimo por país.
+  const estFee = numAmount > 0 ? Math.round(Math.max(numAmount * 0.015, country === 'GT' ? 1 : 5) * 100) / 100 : 0;
+  const estNet = Math.max(0, numAmount - estFee);
 
   const fmt = (n: number) =>
     n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -282,6 +286,31 @@ export default function WithdrawPage() {
       setPinLoading(false);
       throw new Error('PIN incorrecto');
     }
+    // ── Usuario REAL (usr_*): retiro autoritativo contra el ledger ──
+    const authUser = useAuthStore.getState().user;
+    const token    = useAuthStore.getState().accessToken;
+    if (authUser?.id?.startsWith('usr_') && token) {
+      try {
+        const res = await fetch('/api/wallet/withdraw', {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body:    JSON.stringify({ amount: numAmount, bankName: selected!.bankName, accountLast4: selected!.accountNumber.slice(-4) }),
+        });
+        const json = await res.json();
+        if (!res.ok || !json.ok) throw new Error(json.error || 'No se pudo procesar el retiro');
+        const { syncFromBackend } = await import('@/lib/wallet-sync');
+        await syncFromBackend(token);
+        setTxId(json.data.ref);
+        setTxDate(new Date().toISOString());
+        setPinLoading(false);
+        setStep('success');
+      } catch (e) {
+        setPinLoading(false);
+        throw new Error(e instanceof Error ? e.message : 'Error al retirar');
+      }
+      return;
+    }
+
     await new Promise(r => setTimeout(r, 800));
 
     // Deduct fiat balance
@@ -531,13 +560,13 @@ export default function WithdrawPage() {
                 <span className="font-bold text-len-dark tabular-nums">{fmt(numAmount)} {meta.fiat}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-500">Comisión de retiro</span>
-                <span className="font-bold text-emerald-600">Sin comisión</span>
+                <span className="text-gray-500">Comisión de retiro (1.5%)</span>
+                <span className="font-bold text-len-dark">-{fmt(estFee)} {meta.fiat}</span>
               </div>
               <div className="flex justify-between pt-2 border-t border-len-border">
                 <span className="font-black text-len-dark">Recibirás en tu banco</span>
                 <span className="font-black text-emerald-600 text-base tabular-nums">
-                  {fmt(numAmount)} {meta.fiat}
+                  {fmt(estNet)} {meta.fiat}
                 </span>
               </div>
             </div>
@@ -589,12 +618,12 @@ export default function WithdrawPage() {
                 <div>
                   <p className="text-xs text-emerald-600 font-medium">Monto a recibir</p>
                   <p className="font-black text-emerald-800 text-2xl tabular-nums">
-                    {fmt(numAmount)} <span className="text-sm font-bold">{meta.fiat}</span>
+                    {fmt(estNet)} <span className="text-sm font-bold">{meta.fiat}</span>
                   </p>
                 </div>
                 <div className="text-right">
-                  <p className="text-xs text-emerald-600 font-bold">Sin</p>
-                  <p className="text-xs text-emerald-600 font-bold">comisión</p>
+                  <p className="text-[11px] text-emerald-600">Retiras {fmt(numAmount)}</p>
+                  <p className="text-[11px] text-emerald-600">Comisión {fmt(estFee)}</p>
                 </div>
               </div>
 
