@@ -137,19 +137,20 @@ Usuario GT quiere retirar
 <section class="slide">
   <div class="pad">
     <div class="eyebrow">Seguridad bancaria</div>
-    <h2>8 capas, alineadas a FATF / GAFILAT</h2>
+    <h2>9 capas, alineadas a FATF / GAFILAT</h2>
     <table>
       <tr><th style="width:30px;">#</th><th>Capa</th><th>Implementación (en producción hoy)</th></tr>
       <tr><td><span class="num">1</span></td><td><b>Autenticación</b></td><td>PIN con scrypt (salt único, comparación timing-safe) — estándar OWASP</td></tr>
-      <tr><td><span class="num">2</span></td><td><b>Sesiones</b></td><td>JWT HS256 firmado; valida algoritmo y emisor (anti alg-confusion)</td></tr>
-      <tr><td><span class="num">3</span></td><td><b>Ledger de doble entrada</b></td><td>Asientos atómicos e idempotentes: imposible doble crédito o crear/destruir valor</td></tr>
-      <tr><td><span class="num">4</span></td><td><b>Webhooks bancarios</b></td><td>HMAC-SHA256 timing-safe + anti-replay (timestamp ≤5 min)</td></tr>
-      <tr><td><span class="num">5</span></td><td><b>Fondos segregados</b></td><td>Fideicomiso Banrural — nunca mezclados con capital de LEN</td></tr>
-      <tr><td><span class="num">6</span></td><td><b>Acceso a datos</b></td><td>Firestore cerrado: solo el backend (Admin SDK) escribe; el cliente nunca toca la base</td></tr>
-      <tr><td><span class="num">7</span></td><td><b>Límites AML/UIF</b></td><td>Tope por transacción y por usuario; detección de fraccionamiento</td></tr>
-      <tr><td><span class="num">8</span></td><td><b>Trazabilidad</b></td><td>Cada movimiento es un asiento auditable + hash on-chain en Celo</td></tr>
+      <tr><td><span class="num">2</span></td><td><b>Anti-bruteforce</b></td><td>Bloqueo temporal del login tras intentos fallidos, con backoff creciente</td></tr>
+      <tr><td><span class="num">3</span></td><td><b>Sesiones</b></td><td>JWT HS256 firmado; valida algoritmo y emisor (anti alg-confusion)</td></tr>
+      <tr><td><span class="num">4</span></td><td><b>Ledger de doble entrada</b></td><td>Asientos atómicos e idempotentes: imposible doble crédito o crear/destruir valor</td></tr>
+      <tr><td><span class="num">5</span></td><td><b>Webhooks bancarios</b></td><td>HMAC-SHA256 timing-safe + anti-replay (timestamp ≤5 min)</td></tr>
+      <tr><td><span class="num">6</span></td><td><b>Fondos segregados</b></td><td>Fideicomiso Banrural — nunca mezclados con capital de LEN</td></tr>
+      <tr><td><span class="num">7</span></td><td><b>Acceso a datos</b></td><td>Firestore cerrado: solo el backend (Admin SDK) escribe; el cliente nunca toca la base</td></tr>
+      <tr><td><span class="num">8</span></td><td><b>Límites AML/UIF</b></td><td>Tope por transacción y por usuario; detección de fraccionamiento</td></tr>
+      <tr><td><span class="num">9</span></td><td><b>Trazabilidad</b></td><td>Cada movimiento es un asiento auditable + hash on-chain en Celo</td></tr>
     </table>
-    <div class="lev"><b>Compliance AML/CFT:</b> KYC escalonado (DPI + selfie + comprobante de domicilio), monitoreo de transacciones, reporte de operaciones sospechosas y conservación de registros. El dinero y las cuentas viven en Banrural; <b>LEN no custodia fondos</b>.</div>
+    <div class="lev"><b>Compliance AML/CFT:</b> KYC escalonado (DPI + selfie + comprobante de domicilio), monitoreo de transacciones, reporte de operaciones sospechosas y conservación de registros. El dinero y las cuentas viven en Banrural; <b>LEN no custodia fondos</b>.<br><span style="font-size:8.5pt;color:#6B7280;">Antes de operar dinero real: auditoría externa de smart contracts + custodia multisig (Gnosis Safe) — en hoja de ruta.</span></div>
   </div>
   <div class="foot"><span>LEN × Banrural</span><span>05</span></div>
 </section>
