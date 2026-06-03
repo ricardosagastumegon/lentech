@@ -33,6 +33,8 @@ export interface LenUser {
   pomelo_user_id?:     string;
   kyc_level?:          number;          // 0=anónimo, 1=básico, 2=verificado, 3=empresarial
   kyc_status?:         string;          // none | in_review | approved | rejected
+  failed_logins?:      number;          // intentos fallidos consecutivos (anti-bruteforce)
+  locked_until?:       Date;            // bloqueo temporal tras superar el umbral
   created_at:          Date;
   updated_at:          Date;
   last_login_at?:      Date;
@@ -205,28 +207,57 @@ export async function softDeleteUser(userId: string): Promise<boolean> {
   return true;
 }
 
-// ── Auth ──────────────────────────────────────────────────────────────────────
+// ── Auth + anti-bruteforce ──────────────────────────────────────────────────
+
+const MAX_ATTEMPTS = 5;                       // intentos antes de bloquear
+const BACKOFF_SEC  = [60, 300, 900, 1800, 3600]; // 1m, 5m, 15m, 30m, 60m
+
+export type AuthResult =
+  | { ok: true;  user: LenUser }
+  | { ok: false; reason: "invalid" }
+  | { ok: false; reason: "locked"; retryAfterSec: number };
+
+/** Convierte un Timestamp de Firestore / Date / string a milisegundos. */
+function toMillis(v: unknown): number {
+  if (!v) return 0;
+  if (typeof (v as { toDate?: () => Date }).toDate === "function") return (v as { toDate: () => Date }).toDate().getTime();
+  const t = new Date(v as string | number | Date).getTime();
+  return isNaN(t) ? 0 : t;
+}
 
 /**
- * Autentica un usuario por phone + PIN.
- * Retorna el user si las credenciales son correctas y el usuario está activo.
+ * Autentica por phone + PIN con lockout temporal anti-bruteforce.
+ * - Tras MAX_ATTEMPTS fallos seguidos, bloquea con backoff creciente.
+ * - Mensaje genérico "invalid" para no enumerar usuarios.
  */
-export async function authenticateUser(
-  phone: string,
-  pin:   string,
-): Promise<LenUser | null> {
+export async function authenticateUser(phone: string, pin: string): Promise<AuthResult> {
   const user = await getUserByPhone(phone);
-  if (!user) return null;
-  if (user.status !== "active") return null;
-  if (!verifyPassword(pin, user.pin_hash)) return null;
+  if (!user || user.status !== "active") return { ok: false, reason: "invalid" };
 
-  // Update last_login (best-effort)
+  const db  = getAdminDb();
+  const now = Date.now();
+  const lockedMs = toMillis(user.locked_until);
+  if (lockedMs > now) {
+    return { ok: false, reason: "locked", retryAfterSec: Math.ceil((lockedMs - now) / 1000) };
+  }
+
+  if (!verifyPassword(pin, user.pin_hash)) {
+    const failed = (user.failed_logins ?? 0) + 1;
+    const update: Record<string, unknown> = { failed_logins: failed };
+    if (failed >= MAX_ATTEMPTS) {
+      const secs = BACKOFF_SEC[Math.min(failed - MAX_ATTEMPTS, BACKOFF_SEC.length - 1)];
+      update.locked_until = new Date(now + secs * 1000);
+    }
+    try { await db.collection(COLLECTION).doc(user.user_id).update(update); } catch { /* non-blocking */ }
+    return { ok: false, reason: "invalid" };
+  }
+
+  // Éxito → resetear contador y bloqueo
   try {
-    const db = getAdminDb();
     await db.collection(COLLECTION).doc(user.user_id).update({
-      last_login_at: new Date(),
+      failed_logins: 0, locked_until: null, last_login_at: new Date(),
     });
   } catch { /* non-blocking */ }
 
-  return user;
+  return { ok: true, user };
 }

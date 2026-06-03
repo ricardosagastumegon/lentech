@@ -54,17 +54,26 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    // Autenticar contra Firestore
-    const user = await authenticateUser(phone, pin);
+    // Autenticar contra Firestore (con lockout anti-bruteforce)
+    const result = await authenticateUser(phone, pin);
     await delayUntil(start);
 
-    if (!user) {
+    if (!result.ok) {
+      if (result.reason === "locked") {
+        const mins = Math.max(1, Math.ceil(result.retryAfterSec / 60));
+        return NextResponse.json(
+          { ok: false, error: `Demasiados intentos fallidos. Intenta de nuevo en ${mins} min.`, code: "LOCKED" },
+          { status: 429 },
+        );
+      }
       // Mensaje genérico — no reveles si el usuario existe o no
       return NextResponse.json(
         { ok: false, error: "Credenciales inválidas", code: "INVALID_CREDENTIALS" },
         { status: 401 },
       );
     }
+
+    const user = result.user;
 
     // Firmar JWT
     const accessToken = await signToken({
