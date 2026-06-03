@@ -137,43 +137,47 @@ Usuario GT quiere retirar
 <section class="slide">
   <div class="pad">
     <div class="eyebrow">Seguridad bancaria</div>
-    <h2>8 capas alineadas a FATF / GAFILAT</h2>
+    <h2>8 capas, alineadas a FATF / GAFILAT</h2>
     <table>
-      <tr><th style="width:30px;">#</th><th>Capa</th><th>Implementación</th></tr>
-      <tr><td><span class="num">1</span></td><td><b>Autenticación</b></td><td>Hashing fuerte de credenciales (estándar OWASP)</td></tr>
-      <tr><td><span class="num">2</span></td><td><b>Sesiones JWT</b></td><td>Access corto + refresh con rotación</td></tr>
-      <tr><td><span class="num">3</span></td><td><b>Cifrado PII</b></td><td>AES-256-GCM, IV por operación</td></tr>
-      <tr><td><span class="num">4</span></td><td><b>Webhooks bancarios</b></td><td>HMAC-SHA256, comparación de tiempo constante</td></tr>
-      <tr><td><span class="num">5</span></td><td><b>Idempotencia</b></td><td>ID único por evento — imposible doble crédito</td></tr>
-      <tr><td><span class="num">6</span></td><td><b>Anti-replay</b></td><td>Rechazo de webhooks con &gt;5 min de antigüedad</td></tr>
-      <tr><td><span class="num">7</span></td><td><b>Fondos segregados</b></td><td>Fideicomiso Banrural — nunca mezclados con capital LEN</td></tr>
-      <tr><td><span class="num">8</span></td><td><b>Trazabilidad on-chain</b></td><td>Cada acreditación/baja registrada y auditable</td></tr>
+      <tr><th style="width:30px;">#</th><th>Capa</th><th>Implementación (en producción hoy)</th></tr>
+      <tr><td><span class="num">1</span></td><td><b>Autenticación</b></td><td>PIN con scrypt (salt único, comparación timing-safe) — estándar OWASP</td></tr>
+      <tr><td><span class="num">2</span></td><td><b>Sesiones</b></td><td>JWT HS256 firmado; valida algoritmo y emisor (anti alg-confusion)</td></tr>
+      <tr><td><span class="num">3</span></td><td><b>Ledger de doble entrada</b></td><td>Asientos atómicos e idempotentes: imposible doble crédito o crear/destruir valor</td></tr>
+      <tr><td><span class="num">4</span></td><td><b>Webhooks bancarios</b></td><td>HMAC-SHA256 timing-safe + anti-replay (timestamp ≤5 min)</td></tr>
+      <tr><td><span class="num">5</span></td><td><b>Fondos segregados</b></td><td>Fideicomiso Banrural — nunca mezclados con capital de LEN</td></tr>
+      <tr><td><span class="num">6</span></td><td><b>Acceso a datos</b></td><td>Firestore cerrado: solo el backend (Admin SDK) escribe; el cliente nunca toca la base</td></tr>
+      <tr><td><span class="num">7</span></td><td><b>Límites AML/UIF</b></td><td>Tope por transacción y por usuario; detección de fraccionamiento</td></tr>
+      <tr><td><span class="num">8</span></td><td><b>Trazabilidad</b></td><td>Cada movimiento es un asiento auditable + hash on-chain en Celo</td></tr>
     </table>
-    <div class="lev"><b>Compliance AML/CFT:</b> KYC escalonado por niveles, monitoreo de transacciones y detección de fraccionamiento, reporte de operaciones sospechosas y conservación de registros.</div>
+    <div class="lev"><b>Compliance AML/CFT:</b> KYC escalonado (DPI + selfie + comprobante de domicilio), monitoreo de transacciones, reporte de operaciones sospechosas y conservación de registros. El dinero y las cuentas viven en Banrural; <b>LEN no custodia fondos</b>.</div>
   </div>
   <div class="foot"><span>LEN × Banrural</span><span>05</span></div>
 </section>
 
-<!-- 6 · ESTADO TÉCNICO -->
+<!-- 6 · FUNCIONALIDAD -->
 <section class="slide">
   <div class="pad">
-    <div class="eyebrow">No es una idea — está construido</div>
-    <h2>Estado técnico actual</h2>
+    <div class="eyebrow">No es una idea — funciona hoy</div>
+    <h2>Funcionalidad: el círculo del dinero, completo</h2>
     <div class="grid2">
       <ul>
-        <li>App web <b class="ok">LIVE</b> · panel admin con bancos, KYC/AML y FX</li>
-        <li>Contratos del token <b>QUETZA (GTQ)</b> desplegados y verificables en celoscan</li>
-        <li>Backend de integración bancaria y de tarjeta <b>escrito y compilando</b></li>
-        <li>Verificación de webhooks, idempotencia y límites AML implementados</li>
+        <li><b>Onboarding KYC real:</b> foto de DPI + selfie + comprobante de domicilio</li>
+        <li><b>Depósito → QUETZA:</b> lo depositado en banco se acredita 1:1 (menos comisión) automáticamente</li>
+        <li><b>Envío cross-border:</b> GT↔MX↔HN con FX directo, sin pasar por USD</li>
+        <li><b>Retiro → GTQ:</b> de QUETZA a cualquier banco vía Banrural/ACH</li>
+        <li><b>Una sola moneda</b> para el usuario; saldo leído del ledger (fuente de verdad)</li>
+        <li><b>Comisión configurable</b> desde el panel admin · cada movimiento auditable</li>
       </ul>
       <div class="card">
-        <h3 style="margin-bottom:8px;">Stack</h3>
-        <p style="font-size:13px;">Next.js 14 · TypeScript · NestJS · PostgreSQL + Firestore · Celo (EVM, ~$0.001/tx, ~5s) · ERC-20 OpenZeppelin v5 · monorepo pnpm/Turborepo.</p>
+        <h3 style="margin-bottom:8px;">Demo en vivo</h3>
+        <p style="font-size:13px;">App web <b class="ok">LIVE</b>: login real, depósito, envío y retiro funcionando contra un ledger de doble entrada. Token <b>QUETZA</b> verificable en celoscan.</p>
+        <h3 style="margin:14px 0 6px;">Stack</h3>
+        <p style="font-size:13px;">Next.js 14 · TypeScript · Firestore (Admin SDK) · Celo (EVM, ~$0.001/tx, ~5s) · ERC-20 OpenZeppelin v5.</p>
         <h3 style="margin:14px 0 6px;">Por qué Celo</h3>
-        <p style="font-size:13px;">No es DeFi especulativo: tokens 1:1 con fiat que no fluctúan. Cada movimiento es público y auditable. Usado para inclusión financiera real en LATAM.</p>
+        <p style="font-size:13px;">No es DeFi especulativo: tokens 1:1 con fiat que no fluctúan, públicos y auditables.</p>
       </div>
     </div>
-    <p class="muted" style="margin-top:14px;font-size:12px;">Contrato QUETZA verificable: celoscan.io/address/0xba45b516C4fC485231863681B5ECc4E385105a13</p>
+    <p class="muted" style="margin-top:14px;font-size:12px;">QUETZA verificable: celoscan.io/address/0xba45b516C4fC485231863681B5ECc4E385105a13</p>
   </div>
   <div class="foot"><span>LEN × Banrural</span><span>06</span></div>
 </section>
@@ -231,6 +235,24 @@ Usuario GT quiere retirar
     </div>
   </div>
   <div class="foot"><span>LEN × Banrural</span><span>08</span></div>
+</section>
+
+<!-- 8b · PASOS A SEGUIR -->
+<section class="slide">
+  <div class="pad">
+    <div class="eyebrow">Pasos a seguir</div>
+    <h2>Ruta de integración con Banrural</h2>
+    <table>
+      <tr><th style="width:30px;">#</th><th>Paso</th><th>Resultado</th></tr>
+      <tr><td><span class="num">1</span></td><td><b>Interés + NDA</b></td><td>Marco para compartir detalle técnico y comercial</td></tr>
+      <tr><td><span class="num">2</span></td><td><b>Cuenta fideicomiso + sub-cuentas</b></td><td>Estructura de custodia GTQ y referencia por usuario</td></tr>
+      <tr><td><span class="num">3</span></td><td><b>Acceso técnico (sandbox)</b></td><td>API/ACH de Banrural + webhook de confirmación de depósitos; contacto técnico asignado</td></tr>
+      <tr><td><span class="num">4</span></td><td><b>Piloto cerrado</b></td><td>10–50 usuarios reales: depósito GTQ → QUETZA → retiro GTQ, de punta a punta</td></tr>
+      <tr><td><span class="num">5</span></td><td><b>Producción + co-marketing</b></td><td>Apertura gradual; LEN como canal digital de Banrural</td></tr>
+    </table>
+    <div class="lev"><b>El producto ya funciona</b> — el único cuello de botella es el acceso bancario. Lo que necesitamos cerrar hoy: (a) confirmación de interés, (b) contacto para el sandbox técnico/ACH, (c) fecha del siguiente paso.</div>
+  </div>
+  <div class="foot"><span>LEN × Banrural</span><span>09</span></div>
 </section>
 
 <!-- 9 · FAQ / CIERRE -->
