@@ -15,13 +15,21 @@ import { randomUUID } from "crypto";
 
 const COUNTRY_COIN: Record<string, string> = { GT: "QUETZA", MX: "MEXCOIN", HN: "LEMPI" };
 
-export async function POST(req: NextRequest) {
-  if (process.env.DEMO_MODE === "false") {
-    return NextResponse.json({ ok: false, error: "Depósito simulado deshabilitado" }, { status: 403 });
-  }
+// Usuarios demo sembrados a los que se permite el depósito simulado.
+const DEMO_USERS = new Set(["usr_gt_demo01", "usr_mx_demo01", "usr_hn_demo01"]);
 
+export async function POST(req: NextRequest) {
   const userId = await verifyAuth(req);
   if (!userId) return NextResponse.json({ ok: false, error: "UNAUTHORIZED" }, { status: 401 });
+
+  // El depósito simulado SOLO funciona para usuarios demo (o si DEMO_MODE=true explícito).
+  // En producción real el depósito lo confirma el banco vía webhook verificado, NUNCA el usuario.
+  if (process.env.DEMO_MODE !== "true" && !DEMO_USERS.has(userId)) {
+    return NextResponse.json(
+      { ok: false, error: "Depósito simulado deshabilitado (en producción lo confirma el banco vía webhook)" },
+      { status: 403 },
+    );
+  }
 
   let body: { amount?: number | string; source?: string };
   try { body = await req.json(); } catch { return NextResponse.json({ ok: false, error: "JSON inválido" }, { status: 400 }); }

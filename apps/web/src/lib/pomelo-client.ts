@@ -11,7 +11,9 @@
  *   POMELO_WEBHOOK_API_KEY — Valor esperado en header x-api-key de webhooks entrantes
  */
 
-import { createHmac } from "crypto";
+import { createHmac, timingSafeEqual as cryptoTimingSafeEqual } from "crypto";
+
+const REPLAY_WINDOW_MS = 5 * 60 * 1000; // rechaza webhooks con >5 min de antigüedad
 import type { PomeloTokenResponse, PomeloTransactionResponse } from "@/types/pomelo";
 
 const BASE_URL  = process.env.POMELO_API_URL      ?? "https://api-dev.pomelo.la";
@@ -104,6 +106,12 @@ export function verifyPomeloWebhook(
     return false;
   }
 
+  // Anti-replay: el timestamp del webhook debe ser reciente (≤5 min).
+  const tsMs = /^\d+$/.test(xTimestamp)
+    ? (xTimestamp.length >= 13 ? Number(xTimestamp) : Number(xTimestamp) * 1000)
+    : new Date(xTimestamp).getTime();
+  if (isNaN(tsMs) || Math.abs(Date.now() - tsMs) > REPLAY_WINDOW_MS) return false;
+
   if (!timingSafeEqual(xApiKey, apiKey)) return false;
 
   // Pomelo firma: HMAC-SHA256(secret, timestamp + endpoint + body)
@@ -118,12 +126,11 @@ export function verifyPomeloWebhook(
 }
 
 function timingSafeEqual(a: string, b: string): boolean {
-  if (a.length !== b.length) return false;
-  let diff = 0;
-  for (let i = 0; i < a.length; i++) {
-    diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
-  }
-  return diff === 0;
+  // Compara digests de longitud fija con la primitiva nativa: timing-safe real
+  // y sin filtrar la longitud de los valores comparados.
+  const ha = createHmac("sha256", "len-cmp").update(a).digest();
+  const hb = createHmac("sha256", "len-cmp").update(b).digest();
+  return cryptoTimingSafeEqual(ha, hb);
 }
 
 // ── Firma de respuesta de autorización ────────────────────────────────────────
