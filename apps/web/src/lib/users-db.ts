@@ -15,6 +15,7 @@
 import { getAdminDb } from "@/lib/firebase-admin";
 import { hashPassword, verifyPassword } from "@/lib/password";
 import { generateAccountNumber, type AccountType } from "@/lib/account-number";
+import { defaultSettlementMode, type SettlementMode } from "@/lib/settlement-config";
 import { randomBytes } from "crypto";
 
 export type UserCountry = "MX" | "GT" | "HN";
@@ -32,9 +33,10 @@ export interface LenUser {
   celo_address?:       string;
   conduit_customer_id?: string;
   pomelo_user_id?:     string;
-  account_number?:     string;          // cuenta interna LEN (canónica / sub-cuenta)
-  bank_account_number?: string;         // cuenta Banrural real (tras homologar)
-  account_type?:       AccountType;     // "virtual" (sub-cuenta) | "bank" (homologada)
+  account_number?:     string;          // cuenta interna LEN (ancla AML/ledger — NO custodia)
+  bank_account_number?: string;         // cuenta propia del usuario en el banco (tras homologar)
+  account_type?:       AccountType;     // "virtual" (sin cuenta banco aún) | "bank" (homologada)
+  settlement_mode?:    SettlementMode;  // "individual" (default) | "concentradora" (fallback)
   kyc_level?:          number;          // 0=anónimo, 1=básico, 2=verificado, 3=empresarial
   kyc_status?:         string;          // none | in_review | approved | rejected
   failed_logins?:      number;          // intentos fallidos consecutivos (anti-bruteforce)
@@ -147,6 +149,7 @@ export async function createUser(input: CreateUserInput): Promise<PublicUser> {
     conduit_customer_id: input.conduit_customer_id,
     account_number:      generateAccountNumber(input.country),
     account_type:        "virtual",
+    settlement_mode:     defaultSettlementMode(input.country),
     created_at:          now,
     updated_at:          now,
   };

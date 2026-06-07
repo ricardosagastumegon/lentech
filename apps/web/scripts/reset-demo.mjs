@@ -45,7 +45,7 @@ for (const u of USERS) {
   await db.collection('len_users').doc(u.id).set({
     phone: u.phone, display_name: u.name, country: u.country,
     pin_hash: hashPin(PIN), role: 'user', status: 'active',
-    account_number: u.account, account_type: 'virtual',
+    account_number: u.account, account_type: 'virtual', settlement_mode: 'individual',
     kyc_level: 2, kyc_status: 'approved', created_at: now, updated_at: now,
   });
   const entryId = `seed_${u.id}_${Date.now()}`;
