@@ -19,9 +19,9 @@ const hashPin = (pin) => {
 
 const PIN = '111111';
 const USERS = [
-  { id: 'usr_gt_demo01', phone: '50211111111',  name: 'Carlos Mendoza',  country: 'GT', coin: 'QUETZA',  balance: 55000 },
-  { id: 'usr_mx_demo01', phone: '5215511111111', name: 'Sofía Hernández', country: 'MX', coin: 'MEXCOIN', balance: 250000 },
-  { id: 'usr_hn_demo01', phone: '50411111111',  name: 'José Reyes',      country: 'HN', coin: 'LEMPI',   balance: 500000 },
+  { id: 'usr_gt_demo01', phone: '50211111111',  name: 'Carlos Mendoza',  country: 'GT', coin: 'QUETZA',  balance: 55000,  account: '10101001' },
+  { id: 'usr_mx_demo01', phone: '5215511111111', name: 'Sofía Hernández', country: 'MX', coin: 'MEXCOIN', balance: 250000, account: '20202002' },
+  { id: 'usr_hn_demo01', phone: '50411111111',  name: 'José Reyes',      country: 'HN', coin: 'LEMPI',   balance: 500000, account: '30303003' },
 ];
 const ALL_IDS = [...USERS.map(u => u.id), 'len_treasury'];
 
@@ -45,6 +45,7 @@ for (const u of USERS) {
   await db.collection('len_users').doc(u.id).set({
     phone: u.phone, display_name: u.name, country: u.country,
     pin_hash: hashPin(PIN), role: 'user', status: 'active',
+    account_number: u.account, account_type: 'virtual',
     kyc_level: 2, kyc_status: 'approved', created_at: now, updated_at: now,
   });
   const entryId = `seed_${u.id}_${Date.now()}`;
@@ -56,7 +57,7 @@ for (const u of USERS) {
   await db.collection('len_balances').doc(`${u.id}__${u.coin}`).set({
     user_id: u.id, coin: u.coin, balance: u.balance, updated_at: now,
   });
-  console.log(`✓ ${u.name} · ${u.phone} · PIN ${PIN} · ${u.balance.toLocaleString()} ${u.coin}`);
+  console.log(`✓ ${u.name} · cuenta ${u.account} · ${u.phone} · PIN ${PIN} · ${u.balance.toLocaleString()} ${u.coin}`);
 }
 
 console.log('\nEstado demo limpio. Login: teléfono + PIN 111111.');

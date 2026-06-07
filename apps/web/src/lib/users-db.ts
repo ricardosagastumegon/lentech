@@ -14,6 +14,7 @@
 
 import { getAdminDb } from "@/lib/firebase-admin";
 import { hashPassword, verifyPassword } from "@/lib/password";
+import { generateAccountNumber, type AccountType } from "@/lib/account-number";
 import { randomBytes } from "crypto";
 
 export type UserCountry = "MX" | "GT" | "HN";
@@ -31,6 +32,9 @@ export interface LenUser {
   celo_address?:       string;
   conduit_customer_id?: string;
   pomelo_user_id?:     string;
+  account_number?:     string;          // cuenta interna LEN (canónica / sub-cuenta)
+  bank_account_number?: string;         // cuenta Banrural real (tras homologar)
+  account_type?:       AccountType;     // "virtual" (sub-cuenta) | "bank" (homologada)
   kyc_level?:          number;          // 0=anónimo, 1=básico, 2=verificado, 3=empresarial
   kyc_status?:         string;          // none | in_review | approved | rejected
   failed_logins?:      number;          // intentos fallidos consecutivos (anti-bruteforce)
@@ -141,6 +145,8 @@ export async function createUser(input: CreateUserInput): Promise<PublicUser> {
     status:              "active",
     celo_address:        input.celo_address,
     conduit_customer_id: input.conduit_customer_id,
+    account_number:      generateAccountNumber(input.country),
+    account_type:        "virtual",
     created_at:          now,
     updated_at:          now,
   };
