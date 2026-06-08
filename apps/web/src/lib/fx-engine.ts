@@ -1,14 +1,18 @@
 /**
- * LEN FX Engine — Client-side
+ * LEN FX Engine
  *
  * Architecture: cada coin está anclada 1:1 a su fiat nacional.
  * La conversión usa USD como unidad interna invisible:
  *
  *   QUETZA → USD → MEXCOIN
  *
- * En producción los rates vienen del fx-engine service (puerto 3003)
- * que los obtiene de Chainlink + Open Exchange Rates + Fixer.io con fallback.
- * Aquí usamos rates base reales con variación demo.
+ * MODELO LEGAL (ver docs/money-architecture.md):
+ *   - La conversión usa `midRate` PURO (tasa cruzada, SIN margen de LEN) → pass-through.
+ *   - El ingreso de LEN es una COMISIÓN DE SERVICIO explícita (`feePercent`), NO un
+ *     spread oculto en la tasa. Así LEN no es casa de cambio.
+ *   - 🧑‍⚖️ En PRODUCCIÓN la tasa debe venir del BANCO (la tasa real a la que liquidan),
+ *     no de USD_RATES hardcodeado. El FX/liquidación real lo ejecutan los bancos
+ *     off-system; aquí solo se refleja (pass-through).
  */
 
 import { CoinCode } from '@/store/wallet.store';
