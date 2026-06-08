@@ -13,6 +13,7 @@ import { getUserById } from "@/lib/users-db";
 import { getCommissionRule, calculateCommission, type CommissionCountry } from "@/lib/commission-config";
 import { randomUUID } from "crypto";
 import { railCoin } from "@/lib/rails";
+import { checkLimits, limitMessage } from "@/lib/limits";
 
 // Usuarios demo sembrados a los que se permite el depósito simulado.
 const DEMO_USERS = new Set(["usr_gt_demo01", "usr_mx_demo01", "usr_hn_demo01"]);
@@ -40,6 +41,9 @@ export async function POST(req: NextRequest) {
     const user = await getUserById(userId);
     if (!user) return NextResponse.json({ ok: false, error: "Usuario no encontrado" }, { status: 404 });
     const coin = railCoin(user.country);
+
+    const limit = await checkLimits({ userId, kycLevel: user.kyc_level, coin, amount, aggregate: false });
+    if (!limit.ok) return NextResponse.json({ ok: false, error: limitMessage(limit) }, { status: 422 });
 
     const rule = await getCommissionRule("deposit", user.country as CommissionCountry);
     const calc = calculateCommission(rule, amount);

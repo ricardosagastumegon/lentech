@@ -46,7 +46,7 @@ for (const u of USERS) {
     phone: u.phone, display_name: u.name, country: u.country,
     pin_hash: hashPin(PIN), role: 'user', status: 'active',
     account_number: u.account, account_type: 'virtual', settlement_mode: 'individual',
-    kyc_level: 2, kyc_status: 'approved', created_at: now, updated_at: now,
+    kyc_level: 3, kyc_status: 'approved', created_at: now, updated_at: now,
   });
   const entryId = `seed_${u.id}_${Date.now()}`;
   await db.collection('len_ledger_entries').doc(entryId).set({

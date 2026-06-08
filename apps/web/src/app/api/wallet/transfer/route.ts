@@ -13,6 +13,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { verifyAuth } from "@/lib/auth";
 import { postEntries, type LedgerLeg } from "@/lib/ledger";
 import { calculateFXQuote } from "@/lib/fx-engine";
+import { getUserById } from "@/lib/users-db";
+import { checkLimits, limitMessage } from "@/lib/limits";
 import type { CoinCode } from "@/store/wallet.store";
 import { randomUUID } from "crypto";
 
@@ -46,6 +48,11 @@ export async function POST(req: NextRequest) {
   const toAmount = Math.round(quote.toAmount * 100) / 100;
   const fee      = Math.round(quote.feeAmount * 100) / 100;
   if (!(toAmount > 0)) return bad("El monto es demasiado pequeño para convertir");
+
+  // Límite por nivel KYC (single + acumulado de salida) — cierra C4.
+  const sender = await getUserById(senderId);
+  const limit  = await checkLimits({ userId: senderId, kycLevel: sender?.kyc_level, coin: fromCoin, amount, aggregate: true });
+  if (!limit.ok) return bad(limitMessage(limit), 422);
 
   const recipient = body.toUserId && body.toUserId !== senderId ? body.toUserId : senderId;
   const isFx      = fromCoin !== toCoin;
