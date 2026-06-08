@@ -15,6 +15,7 @@ import { railCoin } from "@/lib/rails";
 import { checkLimits, limitMessage } from "@/lib/limits";
 import { isFrozen } from "@/lib/reconciliation";
 import { recordWithdrawal } from "@/lib/withdrawals";
+import { screenTransaction } from "@/lib/aml";
 
 export async function POST(req: NextRequest) {
   const userId = await verifyAuth(req);
@@ -66,6 +67,7 @@ export async function POST(req: NextRequest) {
       splits: calc.split_breakdown.map(s => ({ recipient_id: s.recipient_id, amount: s.amount, name: s.name })),
       destination: dest,
     });
+    await screenTransaction({ userId, coin, amount, ref, type: "withdraw" });
 
     return NextResponse.json({
       ok: true,

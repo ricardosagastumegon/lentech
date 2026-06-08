@@ -15,6 +15,7 @@ import { postEntries, type LedgerLeg } from "@/lib/ledger";
 import { calculateFXQuote } from "@/lib/fx-engine";
 import { getUserById } from "@/lib/users-db";
 import { checkLimits, limitMessage } from "@/lib/limits";
+import { screenTransaction } from "@/lib/aml";
 import type { CoinCode } from "@/store/wallet.store";
 import { randomUUID } from "crypto";
 
@@ -83,6 +84,7 @@ export async function POST(req: NextRequest) {
 
   try {
     await postEntries(legs);
+    await screenTransaction({ userId: senderId, coin: fromCoin, amount, ref, type: isFx ? "swap" : "transfer" });
     return NextResponse.json({
       ok: true,
       data: { ref, fromCoin, toCoin, fromAmount: amount, toAmount, rate: quote.midRate, feePercent: quote.feePercent, feeAmount: fee },

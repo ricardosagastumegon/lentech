@@ -8,10 +8,11 @@
  *   CUENCA_WEBHOOK_SECRET — Secreto para verificar firmas de webhooks (HMAC-SHA256)
  */
 
-import { createHmac } from "crypto";
+import { createHmac, timingSafeEqual as cryptoTimingSafeEqual } from "crypto";
 
 const BASE_URL = process.env.CUENCA_API_URL ?? "https://sandbox.cuenca.com";
 const API_KEY  = process.env.CUENCA_API_KEY ?? "";
+const REPLAY_WINDOW_MS = 5 * 60 * 1000; // anti-replay de webhooks (±5 min)
 
 // ── HTTP helper ───────────────────────────────────────────────────────────────
 
@@ -47,29 +48,33 @@ async function cuencaRequest<T>(
  */
 export function verifyWebhookSignature(
   rawBody: string,
-  signatureHeader: string | null
+  signatureHeader: string | null,
+  timestampHeader: string | null = null,
 ): boolean {
   const secret = process.env.CUENCA_WEBHOOK_SECRET;
   if (!secret || !signatureHeader) return false;
 
+  // Anti-replay: si llega timestamp, rechazar fuera de la ventana de 5 min.
+  if (timestampHeader) {
+    const ts = Number(timestampHeader);
+    if (!Number.isFinite(ts) || Math.abs(Date.now() - ts) > REPLAY_WINDOW_MS) return false;
+  }
+
   const [algo, receivedSig] = signatureHeader.split("=");
   if (algo !== "sha256" || !receivedSig) return false;
 
-  const expectedSig = createHmac("sha256", secret)
-    .update(rawBody, "utf8")
-    .digest("hex");
-
-  // Comparación de tiempo constante para evitar timing attacks
-  return timingSafeEqual(expectedSig, receivedSig);
+  const expectedSig = createHmac("sha256", secret).update(rawBody, "utf8").digest("hex");
+  return safeEqualHex(expectedSig, receivedSig);
 }
 
-function timingSafeEqual(a: string, b: string): boolean {
+/** Comparación timing-safe real (crypto) sobre digests hex de longitud fija. */
+function safeEqualHex(a: string, b: string): boolean {
   if (a.length !== b.length) return false;
-  let diff = 0;
-  for (let i = 0; i < a.length; i++) {
-    diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  try {
+    return cryptoTimingSafeEqual(Buffer.from(a, "hex"), Buffer.from(b, "hex"));
+  } catch {
+    return false;
   }
-  return diff === 0;
 }
 
 // ── Operaciones de wallet ─────────────────────────────────────────────────────

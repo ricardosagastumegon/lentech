@@ -15,6 +15,7 @@ import { randomUUID } from "crypto";
 import { railCoin } from "@/lib/rails";
 import { checkLimits, limitMessage } from "@/lib/limits";
 import { isFrozen } from "@/lib/reconciliation";
+import { screenTransaction } from "@/lib/aml";
 
 // Usuarios demo sembrados a los que se permite el depósito simulado.
 const DEMO_USERS = new Set(["usr_gt_demo01", "usr_mx_demo01", "usr_hn_demo01"]);
@@ -70,6 +71,7 @@ export async function POST(req: NextRequest) {
     });
 
     await postEntries(legs);
+    await screenTransaction({ userId, coin, amount, ref, type: "deposit" });
 
     return NextResponse.json({
       ok: true,
