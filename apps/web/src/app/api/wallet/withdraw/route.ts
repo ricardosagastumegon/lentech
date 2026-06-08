@@ -14,6 +14,7 @@ import { randomUUID } from "crypto";
 import { railCoin } from "@/lib/rails";
 import { checkLimits, limitMessage } from "@/lib/limits";
 import { isFrozen } from "@/lib/reconciliation";
+import { recordWithdrawal } from "@/lib/withdrawals";
 
 export async function POST(req: NextRequest) {
   const userId = await verifyAuth(req);
@@ -58,6 +59,13 @@ export async function POST(req: NextRequest) {
     });
 
     await postEntries(legs);
+
+    // Saga: registrar la obligación de pago. Si el pago fiat falla, se compensa (re-acredita).
+    await recordWithdrawal({
+      ref, user_id: userId, coin, gross: amount, fee: calc.fee_amount, net: calc.net_amount,
+      splits: calc.split_breakdown.map(s => ({ recipient_id: s.recipient_id, amount: s.amount, name: s.name })),
+      destination: dest,
+    });
 
     return NextResponse.json({
       ok: true,

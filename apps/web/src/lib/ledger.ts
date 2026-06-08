@@ -18,7 +18,8 @@ import { getAdminDb } from "@/lib/firebase-admin";
 export type LedgerDirection = "credit" | "debit";
 export type LedgerEntryType =
   | "deposit" | "withdraw" | "transfer_in" | "transfer_out"
-  | "fee" | "fx_in" | "fx_out" | "adjustment";
+  | "fee" | "fx_in" | "fx_out" | "adjustment"
+  | "withdraw_reversal" | "fee_reversal";   // compensación de saga de retiro
 
 export interface LedgerEntry {
   entry_id:     string;            // único — sirve de idempotency key
