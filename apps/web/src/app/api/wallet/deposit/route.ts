@@ -14,6 +14,7 @@ import { getCommissionRule, calculateCommission, type CommissionCountry } from "
 import { randomUUID } from "crypto";
 import { railCoin } from "@/lib/rails";
 import { checkLimits, limitMessage } from "@/lib/limits";
+import { isFrozen } from "@/lib/reconciliation";
 
 // Usuarios demo sembrados a los que se permite el depósito simulado.
 const DEMO_USERS = new Set(["usr_gt_demo01", "usr_mx_demo01", "usr_hn_demo01"]);
@@ -21,6 +22,8 @@ const DEMO_USERS = new Set(["usr_gt_demo01", "usr_mx_demo01", "usr_hn_demo01"]);
 export async function POST(req: NextRequest) {
   const userId = await verifyAuth(req);
   if (!userId) return NextResponse.json({ ok: false, error: "UNAUTHORIZED" }, { status: 401 });
+
+  if (await isFrozen()) return NextResponse.json({ ok: false, error: "Sistema en pausa por reconciliación" }, { status: 503 });
 
   // El depósito simulado SOLO funciona para usuarios demo (o si DEMO_MODE=true explícito).
   // En producción real el depósito lo confirma el banco vía webhook verificado, NUNCA el usuario.

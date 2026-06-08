@@ -13,10 +13,13 @@ import { getCommissionRule, calculateCommission, type CommissionCountry } from "
 import { randomUUID } from "crypto";
 import { railCoin } from "@/lib/rails";
 import { checkLimits, limitMessage } from "@/lib/limits";
+import { isFrozen } from "@/lib/reconciliation";
 
 export async function POST(req: NextRequest) {
   const userId = await verifyAuth(req);
   if (!userId) return NextResponse.json({ ok: false, error: "UNAUTHORIZED" }, { status: 401 });
+
+  if (await isFrozen()) return NextResponse.json({ ok: false, error: "Sistema en pausa por reconciliación" }, { status: 503 });
 
   let body: { amount?: number | string; bankName?: string; accountLast4?: string };
   try { body = await req.json(); } catch { return NextResponse.json({ ok: false, error: "JSON inválido" }, { status: 400 }); }
