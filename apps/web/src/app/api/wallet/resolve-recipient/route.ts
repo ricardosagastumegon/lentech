@@ -6,8 +6,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyAuth } from "@/lib/auth";
 import { getUserByPhone } from "@/lib/users-db";
-
-const COUNTRY_COIN: Record<string, string> = { GT: "QUETZA", MX: "MEXCOIN", HN: "LEMPI" };
+import { railCoin } from "@/lib/rails";
 
 export async function POST(req: NextRequest) {
   const senderId = await verifyAuth(req);
@@ -35,7 +34,7 @@ export async function POST(req: NextRequest) {
       country:       user.country,
       kycLevel:      user.kyc_level ?? 0,
       walletAddress: user.phone,
-      coin:          COUNTRY_COIN[user.country] ?? "QUETZA",
+      coin:          railCoin(user.country),
     },
   });
 }

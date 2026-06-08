@@ -11,8 +11,7 @@ import { postEntries, type LedgerLeg } from "@/lib/ledger";
 import { getUserById } from "@/lib/users-db";
 import { getCommissionRule, calculateCommission, type CommissionCountry } from "@/lib/commission-config";
 import { randomUUID } from "crypto";
-
-const COUNTRY_COIN: Record<string, string> = { GT: "QUETZA", MX: "MEXCOIN", HN: "LEMPI" };
+import { railCoin } from "@/lib/rails";
 
 export async function POST(req: NextRequest) {
   const userId = await verifyAuth(req);
@@ -27,7 +26,7 @@ export async function POST(req: NextRequest) {
   try {
     const user = await getUserById(userId);
     if (!user) return NextResponse.json({ ok: false, error: "Usuario no encontrado" }, { status: 404 });
-    const coin = COUNTRY_COIN[user.country] ?? "QUETZA";
+    const coin = railCoin(user.country);
 
     const rule = await getCommissionRule("withdrawal", user.country as CommissionCountry);
     const calc = calculateCommission(rule, amount);

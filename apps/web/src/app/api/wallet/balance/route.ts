@@ -7,9 +7,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { verifyAuth } from "@/lib/auth";
 import { getBalances } from "@/lib/ledger";
 import { getUserById } from "@/lib/users-db";
+import { railCoin } from "@/lib/rails";
 
 const COIN_FIAT: Record<string, string> = { QUETZA: "GTQ", MEXCOIN: "MXN", LEMPI: "HNL" };
-const COUNTRY_COIN: Record<string, string> = { GT: "QUETZA", MX: "MEXCOIN", HN: "LEMPI" };
 
 export async function GET(req: NextRequest) {
   const userId = await verifyAuth(req);
@@ -20,7 +20,7 @@ export async function GET(req: NextRequest) {
   // Si aún no tiene asientos, expone su coin de país con saldo 0.
   if (balances.length === 0) {
     const user = await getUserById(userId);
-    const coin = COUNTRY_COIN[user?.country ?? "GT"] ?? "QUETZA";
+    const coin = railCoin(user?.country ?? "GT");
     balances.push({ coin, balance: 0 });
   }
 
